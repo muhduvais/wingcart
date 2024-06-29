@@ -1,0 +1,40 @@
+<%- include('./layout/adminHeader.ejs') %>
+
+			<div class="row full-height justify-content-center">
+				<div class="col-12 text-center align-self-center py-5">
+					<div class="section pb-5 pt-5 pt-sm-2 text-center">
+						<div class="card-3d-wrap mx-auto">
+							<div class="card-3d-wrapper">
+								<div class="card-front">
+									<div class="center-wrap">
+										<form action="/admin/Login" method="POST">
+                      <div class="section text-center">
+                        <h4 class="mb-4 pb-3">LOG IN</h4>
+                          <% if(locals.errMsg) { %>
+                          <p class="text-danger"><%= errMsg %></p>
+                          <% } else if(locals.logoutMsg) {%>
+                          <p class="text-success"><%= logoutMsg %></p>
+                          <% } else {%>
+                          <p><%= "" %></p>
+                          <% }%>
+                        <div class="form-group">
+                          <input type="text" name="email" class="form-style" placeholder="Your Email" id="logemail" value="<%= locals.loginData? loginData: "" %>">
+                          <i class="input-icon uil uil-at"></i>
+                        </div>	
+                        <div class="form-group mt-2">
+                          <input type="password" name="password" class="form-style" placeholder="Your Password" id="logpass">
+                          <i class="input-icon uil uil-lock-alt"></i>
+                        </div>
+                        <button class="btn mt-4" type="submit">submit</button>
+                        <p class="mb-0 mt-4 text-center"><a href="#" class="link">Forgot your password?</a></p>
+                      </div>
+                    </form>
+			      			</div>
+			      		</div>
+			      	</div>
+		      	</div>
+	      	</div>
+	    </div>
+	</div>
+
+<%- include('./layout/adminFooter.ejs') %>
