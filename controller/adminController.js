@@ -4,38 +4,19 @@ const Category = require("../model/categoriesModel");
 const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
 
-// const fs = require('fs');
-// const multer = require('multer');
+const multer = require('multer');
+const path = require('path');
 
-// Set storage engine
-// const storage = multer.diskStorage({
-//     destination: '../assets2/img',
-//     filename: function (req, file, cb) {
-//       cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-//     }
-//   });
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../assets2/img'));
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
 
-  // Initialize upload
-// const upload = multer({
-//     storage: storage,
-//     limits: { fileSize: 1000000 },
-//     fileFilter: function (req, file, cb) {
-//       checkFileType(file, cb);
-//     }
-//   }).single('categoryImg');
-
-  // Check file type
-// function checkFileType(file, cb) {
-//     const filetypes = /jpeg|jpg|png|gif/;
-//     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-//     const mimetype = filetypes.test(file.mimetype);
-  
-//     if (mimetype && extname) {
-//       return cb(null, true);
-//     } else {
-//       cb('Error: Images Only!');
-//     }
-//   }
+const upload = multer({ storage: storage });
 
 
 
@@ -206,27 +187,81 @@ const toAddProduct = async (req, res) => {
     res.render('addProduct', {categories, brands});
 }
 
-// const verifyAddProduct = async (req, res) => {
-//     const {brandName, brandDesc} = req.body;
-//     const brand = new Brand({
-//         name: brandName,
-//         description: brandDesc
-//     });
-//     await brand.save();
-//     res.redirect('/admin/brandList?message=Brand added successfully...');
-// }
+const verifyAddProduct = async (req, res) => {
+    const categories = await Category.find({});
+    const brands = await Brand.find({});
+    const { productName, model, description, price, type, strapType, color, category, brand, stock } = req.body;
+  
+  const images = [];
+  if (req.files.image1) images.push(req.files.image1[0].filename);
+  if (req.files.image2) images.push(req.files.image2[0].filename);
+  if (req.files.image3) images.push(req.files.image3[0].filename);
 
-// const toEditProduct = async (req,res) => {
-//     const brandId = req.params.brand_id;
-//     const brand = await Brand.findOne({_id: brandId});
-//     res.render('editBrand', {brand});
-// }
+  const newProduct = new Product({
+    name: productName,
+    model: model,
+    description: description,
+    price: price,
+    type: type,
+    strapType: strapType,
+    color: color,
+    category: category,
+    brand: brand,
+    stock: stock,
+    images: images,
+    addedDate: new Date(),
+    isDeleted: false
+  });
 
-// const verifyEditProduct = async (req, res) => {
-//     const {brandName, brandDesc} = req.body;
-//     await Brand.updateOne({_id: req.params.brand_id}, {name: brandName, description: brandDesc});
-//     res.redirect('/admin/brandList?message=Brand edited successfully...');
-// }
+  newProduct.save()
+    .then(() => res.redirect('/admin/productManagement'))
+    .catch((err) => {
+        console.log("Error saving the product", err);
+        res.render('addProduct', {categories, brands, productName, model, description, price, type, strapType, color, category, brand, stock });
+    });
+}
+
+const toEditProduct = async (req,res) => {
+    const categories = await Category.find({});
+    const brands = await Brand.find({});
+    const productId = req.params.product_id;
+    const product = await Product.findOne({_id: productId});
+    res.render('editProduct', {product, categories, brands});
+}
+
+const verifyEditProduct = async (req, res) => {
+    const categories = await Category.find({});
+    const brands = await Brand.find({});
+    const { productName, model, description, price, type, strapType, color, category, brand, stock } = req.body;
+    
+    try {
+  const images = [];
+  if (req.files.image1) images.push(req.files.image1[0].filename);
+  if (req.files.image2) images.push(req.files.image2[0].filename);
+  if (req.files.image3) images.push(req.files.image3[0].filename);
+
+  await Product.updateOne({_id: req.params.product_id}, {
+    name: productName,
+    model: model,
+    description: description,
+    price: price,
+    type: type,
+    strapType: strapType,
+    color: color,
+    category: category,
+    brand: brand,
+    stock: stock,
+    images: images,
+    addedDate: new Date(),
+    isDeleted: false
+  });
+
+    res.redirect('/admin/productManagement');
+
+    }catch(err) {
+        res.render('editProduct', {categories, brands, productName, model, description, price, type, strapType, color, category, brand, stock})
+    }
+}
 
 
 module.exports = {
@@ -249,5 +284,9 @@ module.exports = {
     toEditBrand,
     verifyEditBrand,
     toAddProduct,
+    verifyAddProduct,
+    upload,
+    toEditProduct,
+    verifyEditProduct,
 
 }

@@ -1,40 +1,48 @@
 const express = require("express");
-const adminRoute = express.Router();
+const adminRouter = express.Router();
 const nocache = require("nocache");
 const adminController = require("../controller/adminController");
 const adminAuth = require("../middlewares/adminAuth");
 
 
-adminRoute.use(nocache());
+adminRouter.use(nocache());
 
-adminRoute.get('/dashboard', adminAuth, adminController.toAdminDash);
-adminRoute.get('/login', adminController.loginHome);
-adminRoute.post('/login', adminController.verifyLogin);
-adminRoute.get('/logout', adminController.adminLogout);
-adminRoute.get('/userManagement', adminAuth,  adminController.toUserMgmt);
-adminRoute.post('/userListed/:user_id', adminController.userBlockToggle);
-adminRoute.get('/categoryManagement', adminAuth, adminController.toCategoryMgmt);
-adminRoute.get('/addCategory', adminAuth, adminController.toAddCategory);
-// adminRoute.post('/addCategory', upload.single('categoryImg'), adminController.verifyAddCategory);
-adminRoute.post('/addCategory', adminController.verifyAddCategory);
-adminRoute.get('/editCategory/:category_id', adminAuth, adminController.toEditCategory);
-// adminRoute.post('/editCategory', upload.single('categoryImg'), adminController.verifyEditCategory);
-adminRoute.post('/editCategory/:category_id', adminController.verifyEditCategory);
-adminRoute.post('/categoryListed/:category_id', adminController.categoryListToggle);
-adminRoute.get('/productManagement', adminAuth, adminController.toProductMgmt);
-adminRoute.get('/brandList', adminAuth, adminController.toBrandList);
-adminRoute.get('/addBrand', adminAuth, adminController.toAddBrand);
-adminRoute.post('/addBrand', adminController.verifyAddBrand);
-adminRoute.get('/editBrand/:brand_id', adminAuth, adminController.toEditBrand);
-adminRoute.post('/editBrand/:brand_id', adminController.verifyEditBrand);
-adminRoute.get('/addproduct', adminAuth, adminController.toAddProduct);
-// adminRoute.post('/addproduct', adminController.verifyAddproduct);
-// adminRoute.get('/editProduct/:product_id', adminAuth, adminController.toEditProduct);
-// adminRoute.post('/editProduct/:product_id', adminController.verifyEditProduct);
+adminRouter.get('/dashboard', adminAuth, adminController.toAdminDash);
+adminRouter.get('/login', adminController.loginHome);
+adminRouter.post('/login', adminController.verifyLogin);
+adminRouter.get('/logout', adminController.adminLogout);
+adminRouter.get('/userManagement', adminAuth,  adminController.toUserMgmt);
+adminRouter.post('/userListed/:user_id', adminController.userBlockToggle);
+adminRouter.get('/categoryManagement', adminAuth, adminController.toCategoryMgmt);
+adminRouter.get('/addCategory', adminAuth, adminController.toAddCategory);
+// adminRouter.post('/addCategory', upload.single('categoryImg'), adminController.verifyAddCategory);
+adminRouter.post('/addCategory', adminController.verifyAddCategory);
+adminRouter.get('/editCategory/:category_id', adminAuth, adminController.toEditCategory);
+// adminRouter.post('/editCategory', upload.single('categoryImg'), adminController.verifyEditCategory);
+adminRouter.post('/editCategory/:category_id', adminController.verifyEditCategory);
+adminRouter.post('/categoryListed/:category_id', adminController.categoryListToggle);
+adminRouter.get('/productManagement', adminAuth, adminController.toProductMgmt);
+adminRouter.get('/brandList', adminAuth, adminController.toBrandList);
+adminRouter.get('/addBrand', adminAuth, adminController.toAddBrand);
+adminRouter.post('/addBrand', adminController.verifyAddBrand);
+adminRouter.get('/editBrand/:brand_id', adminAuth, adminController.toEditBrand);
+adminRouter.post('/editBrand/:brand_id', adminController.verifyEditBrand);
+adminRouter.get('/addproduct', adminAuth, adminController.toAddProduct);
+adminRouter.post('/addProduct', adminController.upload.fields([
+    { name: 'image1', maxCount: 1 },
+    { name: 'image2', maxCount: 1 },
+    { name: 'image3', maxCount: 1 }
+  ]), adminController.verifyAddProduct);
+adminRouter.get('/editProduct/:product_id', adminAuth, adminController.toEditProduct);
+adminRouter.post('/editProduct/:product_id', adminController.upload.fields([
+    { name: 'image1', maxCount: 1 },
+    { name: 'image2', maxCount: 1 },
+    { name: 'image3', maxCount: 1 }
+  ]), adminController.verifyEditProduct);
 
-adminRoute.get('/ddd', (req, res) => {
+adminRouter.get('/ddd', (req, res) => {
     res.render('ddddddddddddd');
 })
 
 
-module.exports = adminRoute;
+module.exports = adminRouter;

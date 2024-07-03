@@ -119,4 +119,37 @@ async function updateListStatus(categoryId, isListed) {
   }
 }
 
+// Image cropping
+function handleFileSelect(event, previewId, croppedInputId) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const imgElement = document.getElementById(previewId);
+      imgElement.src = e.target.result;
+      imgElement.style.display = 'block';
+      const cropper = new Cropper(imgElement, {
+        aspectRatio: 1,
+        viewMode: 1,
+        autoCropArea: 1,
+        crop(event) {
+          const canvas = cropper.getCroppedCanvas();
+          document.getElementById(croppedInputId).value = canvas.toDataURL();
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+document.getElementById('image1').addEventListener('change', function(event) {
+  handleFileSelect(event, 'previewImage1', 'croppedImage1');
+});
+document.getElementById('image2').addEventListener('change', function(event) {
+  handleFileSelect(event, 'previewImage2', 'croppedImage2');
+});
+document.getElementById('image3').addEventListener('change', function(event) {
+  handleFileSelect(event, 'previewImage3', 'croppedImage3');
+});
+
 });

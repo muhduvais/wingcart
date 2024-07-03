@@ -17,3 +17,8 @@
     display: flex;
     flex-direction: column;
   }
+
+  /* Product image styles */
+  img.productImg {
+    width: 60px;
+  }

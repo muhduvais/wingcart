@@ -310,10 +310,11 @@
                       <tr>
                         <td><%= index + 1 %></td>
                         <td><%= product.description ? product.description : "" %></td>
-                        <td><%= product.images ? product.images: "" %></td>
-                        <td><%= product.stocks ? product.stocks: "" %></td>
+                        <!-- <td><%= product.images[0] ? product.images[0]: "" %></td> -->
+                        <td><img class="productImg" src="/assets2/img/<%= product.images[0] %>" alt="Product image"></td>
+                        <td><%= product.stock ? product.stock: "" %></td>
                         <td><%= product.price ? product.price: "" %></td>
-                        <td><%= product.addedDate ? product.addedDate: "" %></td>
+                        <td><%= product.addedDate ? new Date(product.addedDate).toISOString().split('T')[0]: "" %></td>
                         <!-- <td>
                           <% if (product.image) { %>
                             <img src="/assets2/img/<%= product.image %>" alt="product Image" style="max-width: 100px; height: auto;">
