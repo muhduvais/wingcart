@@ -17,10 +17,11 @@ userRoutes.post('/verifyOtp', userController.verifyOtp);
 userRoutes.post('/resendOtp', userController.resendOtp);
 userRoutes.get('/userHome', userController.userHome);
 userRoutes.get('/logout', userController.userLogout);
+
+
+
 //Google-authentication-callback
-userRoutes.get('/googleSessionAuth', userController.googleAuth);
-
-
+// userRoutes.get('/googleSessionAuth', userController.googleAuth);
 
 // userRoutes.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 

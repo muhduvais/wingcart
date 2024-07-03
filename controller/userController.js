@@ -1,4 +1,4 @@
-const User = require("../model/config");
+const User = require("../model/usersModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
 const generateOtp = require("../model/generateOtp");
@@ -191,15 +191,15 @@ const userHome = (req, res) => {
 
 //google auth
 
-const googleAuth = (req, res) => {
-    if(req.session.passport.user) {
-        req.session.user = req.session.passport.user;
-        res.redirect("/userHome");
-    }
-    else {
-        console.log("No passport data!");
-    }
-}
+// const googleAuth = (req, res) => {
+//     if(req.session.passport.user) {
+//         req.session.user = req.session.passport.user;
+//         res.redirect("/userHome");
+//     }
+//     else {
+//         console.log("No google data!");
+//     }
+// }
 
 // const googleMid = (req, res) => {
 //     passport.authenticate('google', { scope: ['profile', 'email'] });
@@ -231,7 +231,7 @@ module.exports = {
     resendOtp,
     userHome,
     userLogout,
-    googleAuth,
+    // googleAuth,
     // googleMid,
     // googleCallBack,
     // googleCallBackTwo,

@@ -1,0 +1,19 @@
+.addCategoryBtn {
+    margin: 30px;
+    padding: 10px 20px;
+}
+
+
+#addCategory {
+    background-color: #f8f9fa; /* Light gray background color */
+    padding: 20px; /* Add padding around the form */
+    border-radius: 5px; /* Optional: Add rounded corners */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle shadow for depth */
+  }
+
+  /* Ensure the container takes up the full height of the viewport and centers the content */
+  .page-inner {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }

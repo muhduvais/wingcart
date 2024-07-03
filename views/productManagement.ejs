@@ -38,6 +38,7 @@
     <link rel="stylesheet" href="/assets2/css/plugins.min.css" />
     <link rel="stylesheet" href="/assets2/css/kaiadmin.min.css" />
     <link rel="stylesheet" href="/assets2/css/loginStyle.css" />
+    <link rel="stylesheet" href="/assets2/css/adminStyle.css">
     <!-- Sweet Alert CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   </head>
@@ -70,7 +71,6 @@
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
             <ul class="nav nav-secondary">
-              
               <li class="nav-item active">
                 <a href="/admin/dashboard">
                   <i class="fas fa-home"></i>
@@ -264,7 +264,7 @@
         <div class="container">
           <div class="page-inner">
             <div class="page-header">
-              <h4 class="page-title">User Management</h4>
+              <h4 class="page-title">Product Management</h4>
               <ul class="breadcrumbs">
                 <li class="nav-home">
                   <a href="/admin/dashboard">
@@ -275,12 +275,10 @@
                   <i class="icon-arrow-right"></i>
                 </li>
                 <li class="nav-item">
-                  <a href="/admin/userManagement">User Management</a>
-                </li>
-                <li class="separator">
-                  <i class="icon-arrow-right"></i>
+                  <p>Product Management</p>
                 </li>
               </ul>
+              <a href="/admin/addProduct"><button class="btn btn-primary text-white addCategoryBtn my-3">Add Product</button></a>
             </div>
 
 <!-- User List Table -->
@@ -297,25 +295,40 @@
             <thead>
               <tr>
                 <th>Sl.No.</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>DOJ</th>
-                <th style="width: 10%">Action</th>
+                <th>Product</th>
+                <th>Images</th>
+                <th>Stocks</th>
+                <th>Price</th>
+                <th>Added Date</th>
+                <th></th>
+                <th></th>
               </tr>
             </thead>
-            <tbody id="user-table-body">
-                <% if (locals.users && users !== null) { %>
-                    <% users.forEach((user, index) => { %>
+            <tbody id="category-table-body">
+                <% if (locals.products && products !== null) { %>
+                    <% products.forEach((product, index) => { %>
                       <tr>
                         <td><%= index + 1 %></td>
-                        <td><%= user.fname ? (user.lname ? user.fname + " " + user.lname : user.fname) : "" %></td>
-                        <td><%= user.email? user.email: "" %></td>
-                        <td><%= user.date ? new Date(user.date).toISOString().split('T')[0] : "" %></td>
+                        <td><%= product.description ? product.description : "" %></td>
+                        <td><%= product.images ? product.images: "" %></td>
+                        <td><%= product.stocks ? product.stocks: "" %></td>
+                        <td><%= product.price ? product.price: "" %></td>
+                        <td><%= product.addedDate ? product.addedDate: "" %></td>
+                        <!-- <td>
+                          <% if (product.image) { %>
+                            <img src="/assets2/img/<%= product.image %>" alt="product Image" style="max-width: 100px; height: auto;">
+                          <% } else { %>
+                            <p>No Image</p>
+                          <% } %>
+                        </td> -->
                         <td>
-                          <div class="form-button-action">
-                            <button class="btn btn-primary text-white" id="<%= user.isBlocked ? 'unblock-btn' : 'block-btn' %>" type="button" data-user-id="<%= user._id %>">
-                                <%= user.isBlocked ? 'Unblock' : 'Block' %>
-                              </button>
+                          <div class="form-button-action mx-1">
+                            <a href="/admin/editProduct/<%= product._id %>"><button class="btn btn-secondary text-white" id="editProduct" type="button">Edit</button></a>
+                          </div>
+                          <div class="form-button-action mx-1">
+                            <button class="btn btn-secondary text-white" id="deleteProduct" type="button" data-product-id="<%= product._id %>">
+                              Delete
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -327,6 +340,8 @@
       </div>
     </div>
   </div>
+
+  <a href="/admin/brandList"><button class="btn btn-secondary text-white">View Brands</button></a>
   <!-- User List Table End-->
 
           </div>

@@ -70,7 +70,6 @@
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
             <ul class="nav nav-secondary">
-              
               <li class="nav-item active">
                 <a href="/admin/dashboard">
                   <i class="fas fa-home"></i>
@@ -84,7 +83,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="/admin/categoryManagement">
+                <a href="/admin/Management">
                   <i class="fas fa-layer-group"></i>
                   <p>Category Management</p>
 
@@ -264,7 +263,7 @@
         <div class="container">
           <div class="page-inner">
             <div class="page-header">
-              <h4 class="page-title">User Management</h4>
+              <h4 class="page-title">Add Product</h4>
               <ul class="breadcrumbs">
                 <li class="nav-home">
                   <a href="/admin/dashboard">
@@ -275,59 +274,136 @@
                   <i class="icon-arrow-right"></i>
                 </li>
                 <li class="nav-item">
-                  <a href="/admin/userManagement">User Management</a>
+                  <a href="/admin/productManagement">Product Management</a>
                 </li>
                 <li class="separator">
                   <i class="icon-arrow-right"></i>
                 </li>
+                <li class="nav-item">
+                  <p>Add Product</p>
+                </li>
               </ul>
             </div>
+<!-- //////////////////////////////////////// -->
 
-<!-- User List Table -->
-<div class="col-md-12">
-    <div class="card">
-      <div class="card-body">
-        <!-- Modal -->
-<!-- /////////////////// -->
-        <div class="table-responsive">
-          <table
-            id="add-row"
-            class="display table table-striped table-hover"
-          >
-            <thead>
-              <tr>
-                <th>Sl.No.</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>DOJ</th>
-                <th style="width: 10%">Action</th>
-              </tr>
-            </thead>
-            <tbody id="user-table-body">
-                <% if (locals.users && users !== null) { %>
-                    <% users.forEach((user, index) => { %>
-                      <tr>
-                        <td><%= index + 1 %></td>
-                        <td><%= user.fname ? (user.lname ? user.fname + " " + user.lname : user.fname) : "" %></td>
-                        <td><%= user.email? user.email: "" %></td>
-                        <td><%= user.date ? new Date(user.date).toISOString().split('T')[0] : "" %></td>
-                        <td>
-                          <div class="form-button-action">
-                            <button class="btn btn-primary text-white" id="<%= user.isBlocked ? 'unblock-btn' : 'block-btn' %>" type="button" data-user-id="<%= user._id %>">
-                                <%= user.isBlocked ? 'Unblock' : 'Block' %>
-                              </button>
-                          </div>
-                        </td>
-                      </tr>
+<div class="row justify-content-center my-5">
+    <div class="col-md-8">
+      <form id="addProduct" class="form-horizontal" action="/admin/addProduct" method="post" enctype="multipart/form-data">
+        <fieldset>
+          <div class="row">
+            <!-- Left column -->
+            <div class="col-md-6">
+              <!-- Text input for Product Name -->
+              <div class="form-group">
+                <label class="control-label" for="productName">Product Name</label>
+                <input id="productName" name="productName" class="form-control" type="text" required>
+              </div>
+  
+              <!-- Text input for Model -->
+              <div class="form-group">
+                <label class="control-label" for="model">Model</label>
+                <input id="model" name="model" class="form-control" type="text" required>
+              </div>
+  
+              <!-- Textarea for Description -->
+              <div class="form-group">
+                <label class="control-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3" required></textarea>
+              </div>
+  
+              <!-- Dropdown for Type -->
+              <div class="form-group">
+                <label class="control-label" for="type">Type</label>
+                <select id="type" name="type" class="form-control" required>
+                  <option value="" selected disabled>-Select-</option>
+                  <option value="Digital">Digital</option>
+                  <option value="Analog">Analog</option>
+                  <option value="Digital & Analog">Digital & Analog</option>
+                </select>
+              </div>
+  
+              <!-- Text input for Strap Type -->
+              <div class="form-group">
+                <label class="control-label" for="strapType">Strap Type</label>
+                <input id="strapType" name="strapType" class="form-control" type="text" required>
+              </div>
+            </div>
+  
+            <!-- Right column -->
+            <div class="col-md-6">
+              <!-- Text input for Color -->
+              <div class="form-group">
+                <label class="control-label" for="color">Color</label>
+                <input id="color" name="color" class="form-control" type="text" required>
+              </div>
+  
+              <!-- Dropdown for Category -->
+              <div class="form-group">
+                <label class="control-label" for="category">Category</label>
+                <select id="category" name="category" class="form-control" required>
+                  <option value="" selected disabled>-Select-</option>
+                  <% if (categories && categories.length) { %>
+                    <% categories.forEach((category) => { %>
+                        <option value="<%= category._id %>"><%= category.name %></option>
                     <% }) %>
                   <% } %>
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </select>
+              </div>
+  
+              <!-- Dropdown for Brand -->
+              <div class="form-group">
+                <label class="control-label" for="brand">Brand</label>
+                <select id="brand" name="brand" class="form-control" required>
+                  <option value="" selected disabled>-Select-</option>
+                  <% if (brands && brands.length) { %>
+                    <% brands.forEach((brand) => { %>
+                        <option value="<%= brand._id %>"><%= brand.name %></option>
+                    <% }) %>
+                  <% } %>
+                </select>
+              </div>
+  
+              <!-- Text input for Stock -->
+              <div class="form-group">
+                <label class="control-label" for="stock">Stock</label>
+                <input id="stock" name="stock" class="form-control" type="number" required>
+              </div>
+            </div>
+          </div>
+  
+          <!-- File inputs for Images, aligned in a row -->
+          <div class="form-group mt-4">
+            <div class="row">
+              <div class="col-md-4">
+                <label class="control-label" for="image1">Image 1</label>
+                <input class="form-control" name="image1" type="file" id="image1" required>
+              </div>
+              <div class="col-md-4">
+                <label class="control-label" for="image2">Image 2</label>
+                <input class="form-control" name="image2" type="file" id="image2">
+              </div>
+              <div class="col-md-4">
+                <label class="control-label" for="image3">Image 3</label>
+                <input class="form-control" name="image3" type="file" id="image3">
+              </div>
+            </div>
+          </div>
+  
+          <!-- Submit Button -->
+          <div class="form-group mt-3 text-center">
+            <button type="submit" id="addProductBtn" name="addProductBtn" class="btn btn-primary text-white mt-2">Submit</button>
+          </div>
+        </fieldset>
+      </form>
     </div>
   </div>
-  <!-- User List Table End-->
+
+
+
+
+
+
+<!-- //////////////////////////////////////// -->
 
           </div>
         </div>

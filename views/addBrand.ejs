@@ -70,7 +70,6 @@
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
             <ul class="nav nav-secondary">
-              
               <li class="nav-item active">
                 <a href="/admin/dashboard">
                   <i class="fas fa-home"></i>
@@ -264,7 +263,7 @@
         <div class="container">
           <div class="page-inner">
             <div class="page-header">
-              <h4 class="page-title">User Management</h4>
+              <h4 class="page-title">Add Brand</h4>
               <ul class="breadcrumbs">
                 <li class="nav-home">
                   <a href="/admin/dashboard">
@@ -275,59 +274,57 @@
                   <i class="icon-arrow-right"></i>
                 </li>
                 <li class="nav-item">
-                  <a href="/admin/userManagement">User Management</a>
+                  <a href="/admin/brandList">Brands List</a>
                 </li>
                 <li class="separator">
                   <i class="icon-arrow-right"></i>
                 </li>
+                <li class="nav-item">
+                    <p>Add Brand</p>
+                </li>
               </ul>
             </div>
+<!-- //////////////////////////////////////// -->
 
-<!-- User List Table -->
-<div class="col-md-12">
-    <div class="card">
-      <div class="card-body">
-        <!-- Modal -->
-<!-- /////////////////// -->
-        <div class="table-responsive">
-          <table
-            id="add-row"
-            class="display table table-striped table-hover"
-          >
-            <thead>
-              <tr>
-                <th>Sl.No.</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>DOJ</th>
-                <th style="width: 10%">Action</th>
-              </tr>
-            </thead>
-            <tbody id="user-table-body">
-                <% if (locals.users && users !== null) { %>
-                    <% users.forEach((user, index) => { %>
-                      <tr>
-                        <td><%= index + 1 %></td>
-                        <td><%= user.fname ? (user.lname ? user.fname + " " + user.lname : user.fname) : "" %></td>
-                        <td><%= user.email? user.email: "" %></td>
-                        <td><%= user.date ? new Date(user.date).toISOString().split('T')[0] : "" %></td>
-                        <td>
-                          <div class="form-button-action">
-                            <button class="btn btn-primary text-white" id="<%= user.isBlocked ? 'unblock-btn' : 'block-btn' %>" type="button" data-user-id="<%= user._id %>">
-                                <%= user.isBlocked ? 'Unblock' : 'Block' %>
-                              </button>
-                          </div>
-                        </td>
-                      </tr>
-                    <% }) %>
-                  <% } %>
-            </tbody>
-          </table>
+<div class="row justify-content-center my-5">
+  <div class="col-md-6">
+    <form id="addBrand" class="form-vertical" action="/admin/addBrand" method="post">
+      <fieldset>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="control-label" for="brandName">Brand Name</label>
+          <input id="categoryName" name="brandName" class="form-control input-md" type="text" required>
         </div>
-      </div>
-    </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="control-label" for="brandDesc">Description</label>
+          <textarea id="categoryDesc" name="brandDesc" class="form-control input-md" type="text" required></textarea>
+        </div>
+
+        <!-- File Button -->
+        <!-- <div class="form-group">
+          <label class="control-label" for="formFile">Image</label>
+          <input class="form-control" name="categoryImg" type="file" id="formFile" required>
+        </div> -->
+
+        <!-- Button -->
+        <div class="form-group mt-3">
+          <button type="submit" id="addBrandBtn" name="addBrandBtn" class="btn btn-primary text-white mt-2">Submit</button>
+        </div>
+
+      </fieldset>
+    </form>
   </div>
-  <!-- User List Table End-->
+</div>
+
+
+
+
+
+
+<!-- //////////////////////////////////////// -->
 
           </div>
         </div>
