@@ -1,4 +1,5 @@
 const User = require("../model/usersModel");
+const Product = require("../model/productsModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
 const generateOtp = require("../model/generateOtp");
@@ -187,10 +188,27 @@ const userLogout = (req, res) => {
     res.redirect("/");
 }
 
-const toshop = (req, res) => {
-    const user = req.session.user;
-    res.render('shop', {user});
+const toshop = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const products = await Product.find({});
+        res.render('shop', {user, products});
+    } catch (err) {
+        console.error(err, "Error rendering shop");
+    }
 }
+
+const toProdDetails = async (req, res) => {
+    try {
+        const user = await User.find();
+        const product = await Product.findOne({_id: req.params.product_id});
+        res.render('prodDetails', {user, product})
+    } catch (err) {
+        console.error(err, "Error rendering product details");
+    }
+}
+
+
 
 module.exports = {
     userHome,
@@ -203,4 +221,5 @@ module.exports = {
     resendOtp,
     userLogout,
     toshop,
+    toProdDetails,
 }

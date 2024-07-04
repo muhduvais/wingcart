@@ -300,7 +300,7 @@
                 <th>Stocks</th>
                 <th>Price</th>
                 <!-- <th>category</th> -->
-                <th>Added Date</th>
+                <th>Category</th>
                 <th></th>
                 <th></th>
               </tr>
@@ -315,7 +315,6 @@
                         <td><img class="productImg" src="/assets2/img/<%= product.images[0] %>" alt="Product image"></td>
                         <td><%= product.stock ? product.stock: "" %></td>
                         <td>₹<%= product.price ? product.price: "" %></td>
-                        <!-- <td><%= product.category ? product.category: "" %></td> -->
                         <td><%= product.addedDate ? new Date(product.addedDate).toISOString().split('T')[0]: "" %></td>
                         <!-- <td>
                           <% if (product.image) { %>
@@ -340,6 +339,32 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination -->
+        <% if (pagination.pages > 1) { %>
+          <nav>
+              <ul class="pagination justify-content-center">
+                  <% if (pagination.currentPage > 1) { %>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>">Previous</a>
+                      </li>
+                  <% } %>
+
+                  <% for (let i = 1; i <= pagination.pages; i++) { %>
+                      <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                      </li>
+                  <% } %>
+
+                  <% if (pagination.currentPage < pagination.pages) { %>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>">Next</a>
+                      </li>
+                  <% } %>
+              </ul>
+          </nav>
+      <% } %>
+      <!-- End Pagination -->
       </div>
     </div>
   </div>

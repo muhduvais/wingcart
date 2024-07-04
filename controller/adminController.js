@@ -2,6 +2,7 @@ const User = require("../model/usersModel");
 const Category = require("../model/categoriesModel");
 const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
+const Admin = require("../model/adminModel");
 
 const multer = require('multer');
 const path = require('path');
@@ -22,9 +23,10 @@ const upload = multer({ storage: storage });
 
 ///////////////////////////////////////////////////////////////////////
 
-const toAdminDash = (req, res) => {
+const toAdminDash = async (req, res) => {
     const admin = req.session.admin;
-    res.render("adminDash",{admin});
+    const users = await User.find();
+    res.render("adminDash",{admin, users});
 }
 
 const loginHome = (req, res) => {
@@ -39,7 +41,6 @@ const loginHome = (req, res) => {
 const verifyLogin = async (req, res) => {
     try {
         const {email, password} = req.body;
-
         const admin = await User.findOne({email})
 
     if (!email || !password) {
@@ -63,10 +64,35 @@ const adminLogout = (req, res) => {
     res.render("adminLogin", {logoutMsg: "Logout successfully..."});
 }
 
+//////////////////////////////////
+const ITEMS_PER_PAGE = 5;
+
 const toUserMgmt = async (req, res) => {
-    const users = await User.find({email: {$ne: "uadmin@gmail.com"}})
-    res.render("userManagement", {users});
+    try {
+        const page = parseInt(req.query.page) || 1; // Current page, default to 1 if not provided
+        const skip = (page - 1) * ITEMS_PER_PAGE; // Calculate how many users to skip
+
+        const users = await User.find({email: {$ne: "uadmin@gmail.com"}}).skip(skip).limit(ITEMS_PER_PAGE); // Fetch users for the current page
+
+        const totalUsers = await User.countDocuments({}) - 1; // Count total users for pagination
+
+        const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE); // Calculate total pages
+
+        res.render('userManagement', {
+            users: users,
+            pagination: {
+                currentPage: page,
+                pages: totalPages
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        res.status(500).send('Internal Server Error');
+    }
 }
+
+
+//////////////////////////////////
 
 const userBlockToggle = async (req, res) => {
     const {userId, isBlocked} = req.body;
@@ -81,8 +107,27 @@ const userBlockToggle = async (req, res) => {
 }
 
 const toCategoryMgmt = async (req, res) => {
-    const categories = await Category.find({});
-    res.render("categoryManagement", {categories});
+    try {
+        const page = parseInt(req.query.page) || 1; // Current page, default to 1 if not provided
+        const skip = (page - 1) * ITEMS_PER_PAGE; // Calculate how many users to skip
+
+        const categories = await Category.find({}).skip(skip).limit(ITEMS_PER_PAGE); // Fetch users for the current page
+
+        const totalCategories = await User.countDocuments({}); // Count total users for pagination
+
+        const totalPages = Math.ceil(totalCategories / ITEMS_PER_PAGE); // Calculate total pages
+
+        res.render('categoryManagement', {
+            categories: categories,
+            pagination: {
+                currentPage: page,
+                pages: totalPages
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching categories:', err);
+        res.status(500).send('Internal Server Error');
+    }
 }
 
 const toAddCategory = async (req, res) => {
@@ -146,13 +191,52 @@ const verifyEditCategory = async (req, res) => {
 // }
 
 const toProductMgmt = async (req, res) => {
-    const products = await Product.find({});
-    res.render('productManagement', {products});
+    try {
+        const page = parseInt(req.query.page) || 1; // Current page, default to 1 if not provided
+        const skip = (page - 1) * ITEMS_PER_PAGE; // Calculate how many users to skip
+
+        const products = await Product.find({}).skip(skip).limit(ITEMS_PER_PAGE); // Fetch users for the current page
+        const categories = await Category.find({});
+        const totalProducts = await Product.countDocuments({}); // Count total users for pagination
+
+        const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE); // Calculate total pages
+
+        res.render('productManagement', {
+            products: products,
+            categories: categories,
+            pagination: {
+                currentPage: page,
+                pages: totalPages
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching products:', err);
+        res.status(500).send('Internal Server Error');
+    }
 }
 
 const toBrandList = async (req, res) => {
-    const brands = await Brand.find({});
-    res.render('brandList', {brands});
+    try {
+        const page = parseInt(req.query.page) || 1; // Current page, default to 1 if not provided
+        const skip = (page - 1) * ITEMS_PER_PAGE; // Calculate how many users to skip
+
+        const brands = await Brand.find({}).skip(skip).limit(ITEMS_PER_PAGE); // Fetch users for the current page
+
+        const totalBrands = await Brand.countDocuments({}); // Count total users for pagination
+
+        const totalPages = Math.ceil(totalBrands / ITEMS_PER_PAGE); // Calculate total pages
+
+        res.render('brandList', {
+            brands: brands,
+            pagination: {
+                currentPage: page,
+                pages: totalPages
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching brands:', err);
+        res.status(500).send('Internal Server Error');
+    }
 }
 
 const toAddBrand = async (req, res) => {

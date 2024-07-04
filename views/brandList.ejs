@@ -338,6 +338,32 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination -->
+        <% if (pagination.pages > 1) { %>
+          <nav>
+              <ul class="pagination justify-content-center">
+                  <% if (pagination.currentPage > 1) { %>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>">Previous</a>
+                      </li>
+                  <% } %>
+
+                  <% for (let i = 1; i <= pagination.pages; i++) { %>
+                      <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                      </li>
+                  <% } %>
+
+                  <% if (pagination.currentPage < pagination.pages) { %>
+                      <li class="page-item">
+                          <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>">Next</a>
+                      </li>
+                  <% } %>
+              </ul>
+          </nav>
+      <% } %>
+      <!-- End Pagination -->
       </div>
     </div>
   </div>

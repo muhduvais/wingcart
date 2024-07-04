@@ -285,49 +285,75 @@
 
 <!-- User List Table -->
 <div class="col-md-12">
-    <div class="card">
+  <div class="card">
       <div class="card-body">
-        <!-- Modal -->
-<!-- /////////////////// -->
-        <div class="table-responsive">
-          <table
-            id="add-row"
-            class="display table table-striped table-hover"
-          >
-            <thead>
-              <tr>
-                <th>Sl.No.</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>DOJ</th>
-                <th style="width: 10%">Action</th>
-              </tr>
-            </thead>
-            <tbody id="user-table-body">
-                <% if (locals.users && users !== null) { %>
-                    <% users.forEach((user, index) => { %>
+          <div class="table-responsive">
+              <table id="user-table" class="display table table-striped table-hover">
+                  <thead>
                       <tr>
-                        <td><%= index + 1 %></td>
-                        <td><%= user.fname ? (user.lname ? user.fname + " " + user.lname : user.fname) : "" %></td>
-                        <td><%= user.email? user.email: "" %></td>
-                        <td><%= user.date ? new Date(user.date).toISOString().split('T')[0] : "" %></td>
-                        <td>
-                          <div class="form-button-action">
-                            <button class="btn btn-primary text-white" id="<%= user.isBlocked ? 'unblock-btn' : 'block-btn' %>" type="button" data-user-id="<%= user._id %>">
-                                <%= user.isBlocked ? 'Unblock' : 'Block' %>
-                              </button>
-                          </div>
-                        </td>
+                          <th>Sl.No.</th>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>DOJ</th>
+                          <th style="width: 10%">Action</th>
                       </tr>
-                    <% }) %>
-                  <% } %>
-            </tbody>
-          </table>
-        </div>
+                  </thead>
+                  <tbody id="user-table-body">
+                      <% if (users && users.length > 0) { %>
+                          <% users.forEach((user, index) => { %>
+                              <tr>
+                                  <td><%= index + 1 %></td>
+                                  <td><%= user.fname ? (user.lname ? user.fname + " " + user.lname : user.fname) : "" %></td>
+                                  <td><%= user.email ? user.email : "" %></td>
+                                  <td><%= user.date ? new Date(user.date).toISOString().split('T')[0] : "" %></td>
+                                  <td>
+                                      <div class="form-button-action">
+                                          <button class="btn btn-primary text-white" id="<%= user.isBlocked ? 'unblock-btn' : 'block-btn' %>"
+                                              type="button" data-user-id="<%= user._id %>">
+                                              <%= user.isBlocked ? 'Unblock' : 'Block' %>
+                                          </button>
+                                      </div>
+                                  </td>
+                              </tr>
+                          <% }) %>
+                      <% } else { %>
+                          <tr>
+                              <td colspan="5">No users found.</td>
+                          </tr>
+                      <% } %>
+                  </tbody>
+              </table>
+          </div>
+          
+          <!-- Pagination -->
+          <% if (pagination.pages > 1) { %>
+              <nav>
+                  <ul class="pagination justify-content-center">
+                      <% if (pagination.currentPage > 1) { %>
+                          <li class="page-item">
+                              <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>">Previous</a>
+                          </li>
+                      <% } %>
+
+                      <% for (let i = 1; i <= pagination.pages; i++) { %>
+                          <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                              <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                          </li>
+                      <% } %>
+
+                      <% if (pagination.currentPage < pagination.pages) { %>
+                          <li class="page-item">
+                              <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>">Next</a>
+                          </li>
+                      <% } %>
+                  </ul>
+              </nav>
+          <% } %>
+          <!-- End Pagination -->
       </div>
-    </div>
   </div>
-  <!-- User List Table End-->
+</div>
+<!-- User List Table End -->
 
           </div>
         </div>

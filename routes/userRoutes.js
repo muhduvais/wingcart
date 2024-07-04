@@ -16,6 +16,7 @@ userRoutes.get('/verifyOtp', userController.getVerifyOtp);
 userRoutes.post('/verifyOtp', userController.verifyOtp);
 userRoutes.post('/resendOtp', userController.resendOtp);
 userRoutes.get('/logout', userController.userLogout);
-userRoutes.get('/shop', userAuth, userController.toshop);
+userRoutes.get('/shop', userController.toshop);
+userRoutes.get('/prodDetails/:product_id', userController.toProdDetails);
 
 module.exports = userRoutes;
