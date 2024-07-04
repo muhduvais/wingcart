@@ -119,6 +119,8 @@ async function updateListStatus(categoryId, isListed) {
   }
 }
 
+///////////////////////////
+
 // Image cropping
 function handleFileSelect(event, previewId, croppedInputId) {
   const file = event.target.files[0];

@@ -17,6 +17,9 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
+      type: {
+        type: String,
+      },
       brand: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Brand',
@@ -39,9 +42,9 @@ const productSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
       },
-      isDeleted: {
+      isListed: {
         type: Boolean,
-        default: false,
+        default: true,
       },
       strapType: {
         type: String,

@@ -22,3 +22,8 @@
   img.productImg {
     width: 60px;
   }
+
+  .previewImage {
+    width: 150px;
+    padding: 10px;
+  }

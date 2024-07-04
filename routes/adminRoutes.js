@@ -27,6 +27,7 @@ adminRouter.get('/addBrand', adminAuth, adminController.toAddBrand);
 adminRouter.post('/addBrand', adminController.verifyAddBrand);
 adminRouter.get('/editBrand/:brand_id', adminAuth, adminController.toEditBrand);
 adminRouter.post('/editBrand/:brand_id', adminController.verifyEditBrand);
+adminRouter.post('/brandListed/:brandId', adminController.brandListToggle);
 adminRouter.get('/addproduct', adminAuth, adminController.toAddProduct);
 adminRouter.post('/addProduct', adminController.upload.fields([
     { name: 'image1', maxCount: 1 },
@@ -39,6 +40,7 @@ adminRouter.post('/editProduct/:product_id', adminController.upload.fields([
     { name: 'image2', maxCount: 1 },
     { name: 'image3', maxCount: 1 }
   ]), adminController.verifyEditProduct);
+adminRouter.post('/productListed/:product_id', adminController.productListToggle);
 
 adminRouter.get('/ddd', (req, res) => {
     res.render('ddddddddddddd');

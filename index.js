@@ -45,7 +45,7 @@ app.get('/googleAuth',
     passport.authenticate('google', { failureRedirect: '/login' }),
     async (req, res) => {
         req.session.user = req.session.passport.user;
-        res.redirect("/userHome");
+        res.redirect("/");
     }
 );
 

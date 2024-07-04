@@ -42,6 +42,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- cropping JS -->
     <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet">
+    <!-- adminStyle -->
+     <link rel="stylesheet" href="/assets2/css/adminStyle.css">
   </head>
   <body>
     
@@ -290,7 +292,7 @@
 
 <div class="row justify-content-center my-5">
     <div class="col-md-8">
-      <form id="addProduct" class="form-horizontal" action="/admin/editProduct/<%= product._id %>" method="post" enctype="multipart/form-data">
+      <form id="addProduct" class="form-horizontal" action="/admin/editProduct/<%= locals.product ? product._id: '' %>" method="post" enctype="multipart/form-data">
         <fieldset>
           <div class="row">
             <!-- Left column -->
@@ -317,10 +319,10 @@
               <div class="form-group">
                 <label class="control-label" for="type">Type</label>
                 <select id="type" name="type" class="form-control" required>
-                  <option value="" selected disabled>-Select-</option>
-                  <option value="Digital" <% locals.product && product.type === "Digital" ? selected : '' %>>Digital</option>
-                  <option value="Analog" <% locals.product && product.type === "Analog" ? selected : '' %>>Analog</option>
-                  <option value="Digital & Analog" <% locals.product && product.type === "Digital & Analog" ? selected : '' %>>Digital & Analog</option>
+                  <option value="" disabled>-Select-</option>
+                  <option value="Digital" <%= locals.product && product.type === "Digital" ? "selected" : "" %>>Digital</option>
+                  <option value="Analog" <%= locals.product && product.type === "Analog" ? "selected" : "" %>>Analog</option>
+                  <option value="Digital & Analog" <%= locals.product && product.type === "Digital & Analog" ? "selected" : "" %>>Digital & Analog</option>
                 </select>
               </div>
   
@@ -339,14 +341,15 @@
                 <input id="color" name="color" class="form-control" type="text" value="<%= locals.product ? product.color : '' %>" required>
               </div>
   
-              <!-- Dropdown for Category -->
               <div class="form-group">
                 <label class="control-label" for="category">Category</label>
                 <select id="category" name="category" class="form-control" required>
-                  <option value="" selected disabled>-Select-</option>
+                  <option value="" disabled>-Select-</option>
                   <% if (locals.categories && categories.length) { %>
                     <% categories.forEach((category) => { %>
-                        <option value="<%= category._id %>"><%= category.name %></option>
+                      <option value="<%= category._id %>" <%= locals.product && product.category.toString() === category._id.toString() ? "selected" : "" %>>
+                        <%= category.name %>
+                      </option>
                     <% }) %>
                   <% } %>
                 </select>
@@ -359,7 +362,9 @@
                   <option value="" selected disabled>-Select-</option>
                   <% if (locals.brands && brands.length) { %>
                     <% brands.forEach((brand) => { %>
-                        <option value="<%= brand._id %>"><%= brand.name %></option>
+                        <option value="<%= brand._id %>" <%= locals.product && product.brand.toString() === brand._id.toString() ? "selected" : "" %>>
+                          <%= brand.name %>
+                        </option>
                     <% }) %>
                   <% } %>
                 </select>
@@ -386,21 +391,30 @@
             <div class="row">
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold" for="image1">Image 1</label>
-                <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" value="<%= locals.product && product.image ? product.image[0] : '' %>" required>
-                <img id="previewImage1" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage1" name="croppedImage1"/>
+                <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" onchange="previewImage(event, 'previewImage1')">
+                <img id="previewImage1" class="previewImage" src="<%= locals.product && product.images && product.images[0] ? '/assets2/img/' + product.images[0] : '' %>" style="display: <%= locals.product && product.images && product.images[0] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 1"/>
+                <input type="hidden" name="existingImage1" value="<%= locals.product && product.images ? product.images[0] : '' %>">
+                <% if (locals.product && product.images && product.images[0]) { %>
+                  <p>Current file: <%= product.images[0] %></p>
+                <% } %>
               </div>
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold" for="image2">Image 2</label>
-                <input class="form-control bg-light text-dark" name="image2" type="file" id="image2" value="<%= locals.product&& product.image ? product.image[1] : '' %>">
-                <img id="previewImage2" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage2" name="croppedImage2"/>
+                <input class="form-control bg-light text-dark" name="image2" type="file" id="image2" onchange="previewImage(event, 'previewImage2')">
+                <img id="previewImage2" class="previewImage" src="<%= locals.product && product.images && product.images[1] ? '/assets2/img/' + product.images[1] : '' %>" style="display: <%= locals.product && product.images && product.images[1] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 2"/>
+                <input type="hidden" name="existingImage2" value="<%= locals.product && product.images ? product.images[1] : '' %>">
+                <% if (locals.product && product.images && product.images[1]) { %>
+                  <p>Current file: <%= product.images[1] %></p>
+                <% } %>
               </div>
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold" for="image3">Image 3</label>
-                <input class="form-control bg-light text-dark" name="image3" type="file" id="image3" value="<%= locals.product&& product.image ? product.image[2] : '' %>">
-                <img id="previewImage3" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage3" name="croppedImage3"/>
+                <input class="form-control bg-light text-dark" name="image3" type="file" id="image3" onchange="previewImage(event, 'previewImage3')">
+                <img id="previewImage3" class="previewImage" src="<%= locals.product && product.images && product.images[2] ? '/assets2/img/' + product.images[2] : '' %>" style="display: <%= locals.product && product.images && product.images[2] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 3"/>
+                <input type="hidden" name="existingImage3" value="<%= locals.product && product.images ? product.images[2] : '' %>">
+                <% if (locals.product && product.images && product.images[2]) { %>
+                  <p>Current file: <%= product.images[2] %></p>
+                <% } %>
               </div>
             </div>
           </div>
@@ -437,6 +451,19 @@
         </footer>
       </div>
     </div> -->
+
+    <!-- Image preview -->
+    <script>
+      function previewImage(event, previewId) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          const output = document.getElementById(previewId);
+          output.src = reader.result;
+          output.style.display = 'block';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      }
+    </script>
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>

@@ -299,21 +299,23 @@
                 <th>Images</th>
                 <th>Stocks</th>
                 <th>Price</th>
+                <!-- <th>category</th> -->
                 <th>Added Date</th>
                 <th></th>
                 <th></th>
               </tr>
             </thead>
-            <tbody id="category-table-body">
+            <tbody id="product-table-body">
                 <% if (locals.products && products !== null) { %>
                     <% products.forEach((product, index) => { %>
                       <tr>
                         <td><%= index + 1 %></td>
-                        <td><%= product.description ? product.description : "" %></td>
+                        <td><%= product.name ? product.name : "" %></td>
                         <!-- <td><%= product.images[0] ? product.images[0]: "" %></td> -->
                         <td><img class="productImg" src="/assets2/img/<%= product.images[0] %>" alt="Product image"></td>
                         <td><%= product.stock ? product.stock: "" %></td>
-                        <td><%= product.price ? product.price: "" %></td>
+                        <td>₹<%= product.price ? product.price: "" %></td>
+                        <!-- <td><%= product.category ? product.category: "" %></td> -->
                         <td><%= product.addedDate ? new Date(product.addedDate).toISOString().split('T')[0]: "" %></td>
                         <!-- <td>
                           <% if (product.image) { %>
@@ -327,8 +329,8 @@
                             <a href="/admin/editProduct/<%= product._id %>"><button class="btn btn-secondary text-white" id="editProduct" type="button">Edit</button></a>
                           </div>
                           <div class="form-button-action mx-1">
-                            <button class="btn btn-secondary text-white" id="deleteProduct" type="button" data-product-id="<%= product._id %>">
-                              Delete
+                            <button class="btn btn-secondary text-white" id="<%= product.isListed ? 'unlist-btn' : 'list-btn' %>" type="button" data-product-id="<%= product._id %>">
+                              <%= product.isListed ? 'Unlist' : 'List' %>
                             </button>
                           </div>
                         </td>
@@ -368,6 +370,59 @@
         </footer>
       </div>
     </div>
+
+    <script>
+      // Product-list-or-unlist
+const productTableBody = document.getElementById('product-table-body');
+productTableBody.addEventListener('click', async (event) => {
+  if (event.target.id == 'list-btn') {
+    event.preventDefault();
+
+    const productId = event.target.getAttribute('data-product-id');
+    updateProdListStatus(productId, false);
+  }
+  else if(event.target.id == 'unlist-btn'){
+    event.preventDefault();
+
+    const productId = event.target.getAttribute('data-product-id');
+    updateProdListStatus(productId, true);
+  }
+})
+
+async function updateProdListStatus(productId, isListed) {
+  try {
+    const response = await fetch(`/admin/productListed/${productId}`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId, isListed })
+    });
+    const data = await response.json();
+    if (response.ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: data.message
+      }).then(() => {
+        location.reload();
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong'
+      });
+    }
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'An error occurred. Please try again.'
+    });
+  }
+}
+    </script>
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>

@@ -275,7 +275,13 @@
                   <i class="icon-arrow-right"></i>
                 </li>
                 <li class="nav-item">
-                  <a href="/admin/brandList">Brands List</a>
+                  <a href="/admin/productManagement">Product Management</a>
+                </li>
+                <li class="separator">
+                  <i class="icon-arrow-right"></i>
+                </li>
+                <li class="nav-item">
+                  <p>Brands List</p>
                 </li>
               </ul>
               <a href="/admin/addBrand"><button class="btn btn-primary text-white addCategoryBtn my-3">Add Brand</button></a>
@@ -360,6 +366,59 @@
         </footer>
       </div>
     </div>
+
+    <!-- Brand-list-or-unlist -->
+    <script>
+const brandTableBody = document.getElementById('brand-table-body');
+brandTableBody.addEventListener('click', async (event) => {
+  if (event.target.id == 'list-btn') {
+    event.preventDefault();
+
+    const brandId = event.target.getAttribute('data-brand-id');
+    updateBrandListStatus(brandId, false);
+  }
+  else if(event.target.id == 'unlist-btn'){
+    event.preventDefault();
+
+    const brandId = event.target.getAttribute('data-brand-id');
+    updateBrandListStatus(brandId, true);
+  }
+})
+
+async function updateBrandListStatus(brandId, isListed) {
+  try {
+    const response = await fetch(`/admin/brandListed/${brandId}`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ brandId, isListed })
+    });
+    const data = await response.json();
+    if (response.ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: data.message
+      }).then(() => {
+        location.reload();
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong'
+      });
+    }
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'An error occurred. Please try again.'
+    });
+  }
+}
+    </script>
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>

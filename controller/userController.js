@@ -2,20 +2,21 @@ const User = require("../model/usersModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
 const generateOtp = require("../model/generateOtp");
-const passport = require("../model/passport");
 
-const userLoginHome = (req, res) => {
+const userHome = (req, res) => {
     if(req.session.user) {
-        res.redirect("/userHome");
+        const user = req.session.user;
+        console.log(user);
+        res.render("home", {user});
     }
     else {
-        res.render("loginHome");
+        res.render("home");
     }
 }
 
 const userLogin = (req, res) => {
     if (req.session.user) {
-        res.redirect("/userHome");
+        res.redirect("/");
     }
     else {
         successMsg = req.query.successMsg;
@@ -46,7 +47,8 @@ const verifyLogin = async (req, res) => {
         }
         else {
             req.session.user = user;
-            res.redirect("/userHome");
+            console.log(user);
+            res.redirect("/");
             return;
         }
     }
@@ -180,48 +182,18 @@ const verifyOtp = async (req, res) => {
     }
 }
 
-const userHome = (req, res) => {
-    if(req.session.user) {
-        res.render("home", { user: req.session.user });
-    }
-    else {
-        res.redirect("/");
-    }
-}
-
-//google auth
-
-// const googleAuth = (req, res) => {
-//     if(req.session.passport.user) {
-//         req.session.user = req.session.passport.user;
-//         res.redirect("/userHome");
-//     }
-//     else {
-//         console.log("No google data!");
-//     }
-// }
-
-// const googleMid = (req, res) => {
-//     passport.authenticate('google', { scope: ['profile', 'email'] });
-// }
-
-// const googleCallBack = (req, res, next) => {
-//     passport.authenticate('google', { failureRedirect: '/login' });
-//     next();
-// }
-
-// const googleCallBackTwo = async (req, res) => {
-//     console.log(req.session.passport.user);
-//     res.redirect("/googleSessionAuth");
-// }
-
 const userLogout = (req, res) => {
     delete req.session.user;
     res.redirect("/");
 }
 
+const toshop = (req, res) => {
+    const user = req.session.user;
+    res.render('shop', {user});
+}
+
 module.exports = {
-    userLoginHome,
+    userHome,
     userLogin,
     verifyLogin,
     signup,
@@ -229,10 +201,6 @@ module.exports = {
     getVerifyOtp,
     verifyOtp,
     resendOtp,
-    userHome,
     userLogout,
-    // googleAuth,
-    // googleMid,
-    // googleCallBack,
-    // googleCallBackTwo,
+    toshop,
 }

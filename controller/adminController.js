@@ -1,4 +1,3 @@
-const { response } = require("express");
 const User = require("../model/usersModel");
 const Category = require("../model/categoriesModel");
 const Product = require("../model/productsModel");
@@ -8,13 +7,14 @@ const multer = require('multer');
 const path = require('path');
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../assets2/img'));
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
+    destination: function (req, file, cb) {
+      cb(null, path.join(__dirname, '../assets2/img'));
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9); // Add a random number to the timestamp
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  });
 
 const upload = multer({ storage: storage });
 
@@ -232,13 +232,13 @@ const toEditProduct = async (req,res) => {
 const verifyEditProduct = async (req, res) => {
     const categories = await Category.find({});
     const brands = await Brand.find({});
-    const { productName, model, description, price, type, strapType, color, category, brand, stock } = req.body;
+    const { productName, model, description, price, type, strapType, color, category, brand, stock , existingImage1, existingImage2, existingImage3} = req.body;
     
     try {
   const images = [];
-  if (req.files.image1) images.push(req.files.image1[0].filename);
-  if (req.files.image2) images.push(req.files.image2[0].filename);
-  if (req.files.image3) images.push(req.files.image3[0].filename);
+    images.push(req.files['image1'] ? req.files['image1'][0].filename : existingImage1);
+    images.push(req.files['image2'] ? req.files['image2'][0].filename : existingImage2);
+    images.push(req.files['image3'] ? req.files['image3'][0].filename : existingImage3);
 
   await Product.updateOne({_id: req.params.product_id}, {
     name: productName,
@@ -260,6 +260,29 @@ const verifyEditProduct = async (req, res) => {
 
     }catch(err) {
         res.render('editProduct', {categories, brands, productName, model, description, price, type, strapType, color, category, brand, stock})
+    }
+}
+
+const productListToggle = async (req, res) => {
+    const {productId, isListed} = req.body;
+    console.log(productId, isListed);
+    if (isListed === true) {
+        await Product.updateOne({_id: productId},{$set: {isListed: false}});
+        res.status(200).json({message: 'Product Unlisted'})
+    } else {
+        await Product.updateOne({_id: productId},{$set: {isListed: true}});
+        res.status(200).json({message: 'Product Listed'})
+    }
+}
+const brandListToggle = async (req, res) => {
+    const {brandId, isListed} = req.body;
+    console.log(brandId, isListed);
+    if (isListed === true) {
+        await Brand.updateOne({_id: brandId},{$set: {isListed: false}});
+        res.status(200).json({message: 'Brand Unlisted'})
+    } else {
+        await Brand.updateOne({_id: brandId},{$set: {isListed: true}});
+        res.status(200).json({message: 'Brand Listed'})
     }
 }
 
@@ -288,5 +311,7 @@ module.exports = {
     upload,
     toEditProduct,
     verifyEditProduct,
+    productListToggle,
+    brandListToggle,
 
 }

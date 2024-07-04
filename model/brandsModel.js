@@ -7,6 +7,10 @@ const brandSchema = new mongoose.Schema({
     description: {
         type: String
     },
+    isListed: {
+        type: Boolean,
+        default: true
+    }
 });
 
 const Brand = mongoose.model('brands', brandSchema);

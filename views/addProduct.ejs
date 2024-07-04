@@ -42,6 +42,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- cropping JS -->
     <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet">
+    <!-- Admin script -->
+     <link rel="stylesheet" href="/assets2/css/adminStyle.css">
   </head>
   <body>
     
@@ -386,21 +388,24 @@
             <div class="row">
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold" for="image1">Image 1</label>
-                <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" required>
-                <img id="previewImage1" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage1" name="croppedImage1"/>
+                <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" onchange="previewImage(event, 'previewImage1')" required>
+                <img id="previewImage1" class="previewImage" src="<%= locals.product && product.images && product.images[0] ? '/assets2/img/' + product.images[0] : '' %>" style="display: <%= locals.product && product.images && product.images[0] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 1"/>
+                <!-- <img id="previewImage1" style="display: none; max-width: 100%;"/>
+                <input type="hidden" id="croppedImage1" name="croppedImage1"/> -->
               </div>
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold" for="image2">Image 2</label>
-                <input class="form-control bg-light text-dark" name="image2" type="file" id="image2">
-                <img id="previewImage2" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage2" name="croppedImage2"/>
+                <input class="form-control bg-light text-dark" name="image2" type="file" id="image2" onchange="previewImage(event, 'previewImage2')" required>
+                <img id="previewImage2" class="previewImage" src="<%= locals.product && product.images && product.images[1] ? '/assets2/img/' + product.images[1] : '' %>" style="display: <%= locals.product && product.images && product.images[1] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 2"/>
+                <!-- <img id="previewImage2" style="display: none; max-width: 100%;"/>
+                <input type="hidden" id="croppedImage2" name="croppedImage2"/> -->
               </div>
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold" for="image3">Image 3</label>
-                <input class="form-control bg-light text-dark" name="image3" type="file" id="image3">
-                <img id="previewImage3" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage3" name="croppedImage3"/>
+                <input class="form-control bg-light text-dark" name="image3" type="file" id="image3" onchange="previewImage(event, 'previewImage3')" required>
+                <img id="previewImage3" class="previewImage" src="<%= locals.product && product.images && product.images[2] ? '/assets2/img/' + product.images[2] : '' %>" style="display: <%= locals.product && product.images && product.images[2] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 3"/>
+                <!-- <img id="previewImage3" style="display: none; max-width: 100%;"/>
+                <input type="hidden" id="croppedImage3" name="croppedImage3"/> -->
               </div>
             </div>
           </div>
@@ -437,6 +442,19 @@
         </footer>
       </div>
     </div> -->
+
+    <!-- Image preview -->
+    <script>
+      function previewImage(event, previewId) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          const output = document.getElementById(previewId);
+          output.src = reader.result;
+          output.style.display = 'block';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      }
+    </script>
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>
