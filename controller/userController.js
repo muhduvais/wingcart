@@ -1,17 +1,34 @@
 const User = require("../model/usersModel");
 const Product = require("../model/productsModel");
+const Brand = require("../model/brandsModel");
+const Category = require("../model/categoriesModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
 const generateOtp = require("../model/generateOtp");
 
-const userHome = (req, res) => {
-    if(req.session.user) {
+const userHome = async (req, res) => {
+    try {
         const user = req.session.user;
-        console.log(user);
-        res.render("home", {user});
-    }
-    else {
-        res.render("home");
+        const products = await Product.find({ isListed: true })
+            .populate({
+                path: 'category',
+                match: { isListed: true }
+            })
+            .populate({
+                path: 'brand',
+                match: { isListed: true }
+            });
+
+        const filteredProducts = products.filter(product => product.category && product.brand);
+        if (!user) {
+            console.log("No user found!");
+            res.render('home' , {products: filteredProducts})
+        }
+        else {
+            res.render('home', {user, products: filteredProducts});
+        }
+    } catch (err) {
+        console.error(err, "Error rendering home");
     }
 }
 
@@ -191,8 +208,24 @@ const userLogout = (req, res) => {
 const toshop = async (req, res) => {
     try {
         const user = req.session.user;
-        const products = await Product.find({});
-        res.render('shop', {user, products});
+        const products = await Product.find({ isListed: true })
+            .populate({
+                path: 'category',
+                match: { isListed: true }
+            })
+            .populate({
+                path: 'brand',
+                match: { isListed: true }
+            });
+
+        const filteredProducts = products.filter(product => product.category && product.brand);
+        if (!user) {
+            console.log("No user found!");
+            res.render('shop' , {products: filteredProducts})
+        }
+        else {
+            res.render('shop', {user, products: filteredProducts});
+        }
     } catch (err) {
         console.error(err, "Error rendering shop");
     }

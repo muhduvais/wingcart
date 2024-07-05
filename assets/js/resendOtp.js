@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const timerText = document.getElementById('timer-text');
     const timerSpan = document.getElementById('timer');
 
-    let timer = parseInt(sessionStorage.getItem('timer')) || 60;
+    let timer = parseInt(sessionStorage.getItem('timer')) || 30;
 
     const updateTimer = () => {
         sessionStorage.setItem('timer', timer);
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }).then(response => {
             if (response.ok) {
                 // Restart the timer
-                timer = 60;
+                timer = 30;
                 updateTimer();
                 resendBtn.disabled = true;
                 timerText.style.display = 'block';

@@ -3,6 +3,7 @@ const Category = require("../model/categoriesModel");
 const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
 const Admin = require("../model/adminModel");
+const sharp = require('sharp');
 
 const multer = require('multer');
 const path = require('path');

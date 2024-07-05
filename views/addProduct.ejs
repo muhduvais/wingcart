@@ -40,8 +40,8 @@
     <link rel="stylesheet" href="/assets2/css/loginStyle.css" />
     <!-- Sweet Alert CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- cropping JS -->
-    <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet">
+    <!-- cropper JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
     <!-- Admin script -->
      <link rel="stylesheet" href="/assets2/css/adminStyle.css">
   </head>
@@ -390,6 +390,15 @@
                 <label class="control-label text-dark font-weight-bold" for="image1">Image 1</label>
                 <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" onchange="previewImage(event, 'previewImage1')" required>
                 <img id="previewImage1" class="previewImage" src="<%= locals.product && product.images && product.images[0] ? '/assets2/img/' + product.images[0] : '' %>" style="display: <%= locals.product && product.images && product.images[0] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 1"/>
+                
+                <!-- <div>
+                  <img id="image" style="max-width: 100%;">
+                </div>
+                <button id="cropButton">Crop</button>
+                <div>
+                  <img id="croppedImage" style="max-width: 100%;">
+                </div> -->
+                
                 <!-- <img id="previewImage1" style="display: none; max-width: 100%;"/>
                 <input type="hidden" id="croppedImage1" name="croppedImage1"/> -->
               </div>
@@ -397,6 +406,15 @@
                 <label class="control-label text-dark font-weight-bold" for="image2">Image 2</label>
                 <input class="form-control bg-light text-dark" name="image2" type="file" id="image2" onchange="previewImage(event, 'previewImage2')" required>
                 <img id="previewImage2" class="previewImage" src="<%= locals.product && product.images && product.images[1] ? '/assets2/img/' + product.images[1] : '' %>" style="display: <%= locals.product && product.images && product.images[1] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 2"/>
+                
+                <!-- <div>
+                  <img id="image" style="max-width: 100%;">
+                </div>
+                <button id="cropButton">Crop</button>
+                <div>
+                  <img id="croppedImage" style="max-width: 100%;">
+                </div> -->
+
                 <!-- <img id="previewImage2" style="display: none; max-width: 100%;"/>
                 <input type="hidden" id="croppedImage2" name="croppedImage2"/> -->
               </div>
@@ -404,6 +422,15 @@
                 <label class="control-label text-dark font-weight-bold" for="image3">Image 3</label>
                 <input class="form-control bg-light text-dark" name="image3" type="file" id="image3" onchange="previewImage(event, 'previewImage3')" required>
                 <img id="previewImage3" class="previewImage" src="<%= locals.product && product.images && product.images[2] ? '/assets2/img/' + product.images[2] : '' %>" style="display: <%= locals.product && product.images && product.images[2] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 3"/>
+                
+                <!-- <div>
+                  <img id="image" style="max-width: 100%;">
+                </div>
+                <button id="cropButton">Crop</button>
+                <div>
+                  <img id="croppedImage" style="max-width: 100%;">
+                </div> -->
+
                 <!-- <img id="previewImage3" style="display: none; max-width: 100%;"/>
                 <input type="hidden" id="croppedImage3" name="croppedImage3"/> -->
               </div>
@@ -455,6 +482,47 @@
         reader.readAsDataURL(event.target.files[0]);
       }
     </script>
+<!-- //////Cropper-js////////// -->
+<!-- <script>
+  let cropper;
+
+  document.getElementById('inputImage').addEventListener('change', function (event) {
+    const files = event.target.files;
+    const done = function (url) {
+      const image = document.getElementById('image');
+      image.src = url;
+      if (cropper) {
+        cropper.destroy();
+      }
+      cropper = new Cropper(image, {
+        aspectRatio: 1, // Adjust the aspect ratio as needed
+        viewMode: 1,
+      });
+    };
+    let reader;
+    let file;
+    if (files && files.length > 0) {
+      file = files[0];
+      if (URL) {
+        done(URL.createObjectURL(file));
+      } else if (FileReader) {
+        reader = new FileReader();
+        reader.onload = function (event) {
+          done(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  });
+
+  document.getElementById('cropButton').addEventListener('click', function () {
+    const canvas = cropper.getCroppedCanvas();
+    const croppedImage = document.getElementById('croppedImage');
+    croppedImage.src = canvas.toDataURL();
+  });
+</script> -->
+
+<!-- ///////////////////////// -->
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>
@@ -484,8 +552,8 @@
     <script src="/assets2/js/kaiadmin.min.js"></script>
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- cropping JS -->
-    <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
+    <!-- cropper JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 
     
   </body>

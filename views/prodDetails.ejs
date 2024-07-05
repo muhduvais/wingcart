@@ -198,6 +198,13 @@
                     <h2><%= product.name %></h2>
                     <p class="prod-details-desc"><%= product.description %></p>
                     <p class="text-success prod-details-amount">₹<%= product.price %></p>
+
+                    <div class="quantity-selector my-3">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="decrementQuantity()">-</button>
+                        <input type="text" id="quantityInput" value="1" readonly class="quantity-input mx-2" style="width: 30px; text-align: center;">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="incrementQuantity()">+</button>
+                    </div>
+
                     <div class="my-4">
                       <div class="row">
                         <div class="col-6">
@@ -625,11 +632,25 @@
 
     <script>
         function changeMainImage(element) {
-          const mainImage = document.getElementById('mainImage');
-          mainImage.src = element.src;
-          document.querySelectorAll('.thumbnail').forEach(thumbnail => thumbnail.classList.remove('active'));
-          element.parentElement.classList.add('active');
+            const mainImage = document.getElementById('mainImage');
+            mainImage.src = element.src;
+            document.querySelectorAll('.thumbnail').forEach(thumbnail => thumbnail.classList.remove('active'));
+            element.parentElement.classList.add('active');
         }
+
+        function incrementQuantity() {
+            var quantityInput = document.getElementById('quantityInput');
+            var currentQuantity = parseInt(quantityInput.value);
+            quantityInput.value = currentQuantity + 1;
+    }
+
+        function decrementQuantity() {
+            var quantityInput = document.getElementById('quantityInput');
+            var currentQuantity = parseInt(quantityInput.value);
+            if (currentQuantity > 1) {
+                quantityInput.value = currentQuantity - 1;
+            }
+    }
     </script>
     
     <!-- Plugins JS File -->
