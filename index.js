@@ -38,6 +38,8 @@ app.use(passport.session());
 app.use('/', userRoutes);
 app.use('/admin', adminRoutes);
 
+app.all('*', (req, res) => res.render('404'));
+
 // Google auth routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
