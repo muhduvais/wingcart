@@ -20,7 +20,7 @@ async (accessToken, refreshToken, profile, done) => {
             user = new User({
                 googleId: profile.id,
                 email: profile.emails[0].value,
-                fname: profile.displayName,  
+                fname: profile.displayName,
                 // Add other profile information
             });
             await user.save();

@@ -40,7 +40,7 @@ const setError = (element, message) => {
     element.classList.remove('success');
     errorDisplay.classList.remove('success');
 
-};
+}; 
 
 const setSuccess = (element, message) => {
     const formGroup = element.parentElement;

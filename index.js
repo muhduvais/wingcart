@@ -38,7 +38,6 @@ app.use(passport.session());
 app.use('/', userRoutes);
 app.use('/admin', adminRoutes);
 
-app.all('*', (req, res) => res.render('404'));
 
 // Google auth routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
@@ -52,7 +51,7 @@ app.get('/googleAuth',
 );
 
 //database-connection
-mongoose.connect("mongodb://localhost:27017/WingCart")
+mongoose.connect("mongodb://localhost:27017/WingCart") //env
 .then(() => console.log("successfully connected to database"))
 .catch((err) => console.log("Error connecting to database"));
 
