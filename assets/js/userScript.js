@@ -12,15 +12,15 @@ const cpass = document.getElementById('register-cpassword');
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    validateInputs();
+    validateSignup();
 
-    if (isFormValid()) {
+    if (isSignupValid()) {
         
         form.submit();
     }
 });
 
-const isFormValid = () => {
+const isSignupValid = () => {
     return fname.classList.contains('success') &&
            lname.classList.contains('success') &&
            age.classList.contains('success') &&
@@ -69,7 +69,7 @@ const isValidPhone = phone => {
     return re.test(phone);
 }
 
-const validateInputs = () => {
+const validateSignup = () => {
     const fnameValue = fname.value.trim();
     const lnameValue = lname.value.trim();
     const ageValue = age.value.trim();
@@ -135,43 +135,5 @@ const validateInputs = () => {
     }
 };
 
-//OTP-Validation
-
-// const otpForm = document.getElementById('verifyOtpForm');
-// const otpInput = document.getElementById('otpInput');
-// const errMsg = document.getElementById('errMsg');
-
-//             otpForm.addEventListener('submit', async (e) => {
-//                 console.log("One");
-//                 e.preventDefault();
-//                 const otp = otpInput.value.trim();
-//                 console.log(otp);
-
-//                 if (!otp) {
-//                     errMsg.textContent = "Please enter the OTP.";
-//                     return;
-//                 }
-
-//                 try {
-//                     const response = await fetch('/verifyOtp', {
-//                         method: 'POST',
-//                         headers: {
-//                             'Content-Type': 'application/json'
-//                         },
-//                         body: JSON.stringify({ otp })
-//                     });
-
-//                     const data = await response.json();
-
-//                     if (data.success) {
-//                         window.location.href = '/userLogin?registerMsg=Registered Successfully...';
-//                     } else {
-//                         errMsg.textContent = "Invalid OTP!";
-//                     }
-//                 } catch (error) {
-//                     console.error("Error verifying OTP:", error);
-//                     errMsg.textContent = "An error occurred. Please try again.";
-//                 }
-//             });
 
 });

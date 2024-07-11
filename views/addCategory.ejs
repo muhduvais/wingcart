@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="/assets2/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/assets2/css/plugins.min.css" />
     <link rel="stylesheet" href="/assets2/css/kaiadmin.min.css" />
-    <link rel="stylesheet" href="/assets2/css/loginStyle.css" />
+    <link rel="stylesheet" href="/assets2/css/adminValidationStyle.css" />
     <!-- Sweet Alert CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   </head>
@@ -288,19 +288,21 @@
 
 <div class="row justify-content-center my-5">
   <div class="col-md-6">
-    <form id="addCategory" class="form-vertical" action="/admin/addCategory" method="post">
+    <form id="addCategoryForm" class="form-vertical">
       <fieldset>
+
+        <p class="text-danger main-error"></p>
 
         <!-- Text input-->
         <div class="form-group">
-          <label class="control-label" for="categoryName">Category Name</label>
-          <input id="categoryName" name="categoryName" class="form-control input-md" type="text" required>
+          <label class="control-label errorMsg" for="categoryName">Category Name</label>
+          <input id="categoryName" name="categoryName" class="form-control input-md" type="text">
         </div>
 
         <!-- Text input-->
         <div class="form-group">
-          <label class="control-label" for="categoryDesc">Description</label>
-          <textarea id="categoryDesc" name="categoryDesc" class="form-control input-md" type="text" required></textarea>
+          <label class="control-label errorMsg" for="categoryDesc">Description</label>
+          <textarea id="categoryDesc" name="categoryDesc" class="form-control input-md" type="text"></textarea>
         </div>
 
         <!-- File Button -->
@@ -312,6 +314,7 @@
         <!-- Button -->
         <div class="form-group mt-3">
           <button type="submit" id="addCategoryBtn" name="addCategoryBtn" class="btn btn-primary text-white mt-2">Submit</button>
+          <a href="/admin/categoryManagement"><button type="button" id="addCategoryCancel" name="addCategoryCancel" class="btn btn-primary text-light mt-2">Cancel</button></a>
         </div>
 
       </fieldset>
@@ -349,6 +352,104 @@
         </footer>
       </div>
     </div>
+
+    <script>
+        const addCategoryForm = document.getElementById('addCategoryForm');
+        const categoryName = document.getElementById('categoryName');
+        const categoryDesc = document.getElementById('categoryDesc');
+
+        addCategoryForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const categoryNameValue = categoryName.value.trim();
+        const categoryDescValue = categoryDesc.value.trim();
+
+        validateCategory(categoryNameValue, categoryDescValue);
+        });
+
+        const setLoginError = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+        
+
+        errorDisplay.innerText = message;
+        element.classList.add('error');
+        errorDisplay.classList.add('error');
+        element.classList.remove('success');
+        errorDisplay.classList.remove('success');
+
+        }; 
+
+        const setLoginSuccess = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
+
+        };
+
+        const isValidCategory = categoryValue => {
+            let regex = /^[a-zA-Z0-9\s\-_]+$/;
+            return regex.test(categoryValue);
+        }
+
+
+        async function validateCategory (categoryNameValue, categoryDescValue) {
+
+          let isValid = false;
+
+        if(!categoryNameValue) {
+            setLoginError(categoryName, "*Please enter the category name");
+        }
+        else if(!isValidCategory(categoryNameValue)) {
+            setLoginError(categoryName, "*Please enter a valid category name");
+        }
+        else {
+            setLoginSuccess(categoryName, "Category Name");
+            isValid = true;
+        }
+
+
+        if(!categoryDescValue) {
+            setLoginError(categoryDesc, "*Please enter the category description");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(categoryDesc, "Description");
+        }
+
+        if(!isValid) {
+          return;
+        }
+
+        const response = await fetch('/admin/addCategory', {
+                method: "POST",
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({ name: categoryNameValue, description: categoryDescValue })
+            });
+
+            const categoryData = await response.json();
+
+            if(categoryData.success) {
+                    window.location.href = "/admin/categoryManagement?message=Category added successfully...";
+            }
+            else if(response.ok) {
+                const errorDisplay = document.querySelector('.main-error');
+                const categoryName = document.getElementById('categoryName');
+                const categoryDesc = document.getElementById('categoryDesc');
+
+                errorDisplay.innerText = categoryData.message;
+                categoryName.classList.add('error');
+                categoryName.classList.remove('success');
+            }
+        }
+    </script>
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>

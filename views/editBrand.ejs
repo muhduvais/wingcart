@@ -38,6 +38,7 @@
     <link rel="stylesheet" href="/assets2/css/plugins.min.css" />
     <link rel="stylesheet" href="/assets2/css/kaiadmin.min.css" />
     <link rel="stylesheet" href="/assets2/css/loginStyle.css" />
+    <link rel="stylesheet" href="/assets2/css/adminValidationStyle.css" />
     <!-- Sweet Alert CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   </head>
@@ -294,38 +295,27 @@
 
 <div class="row justify-content-center my-5">
   <div class="col-md-6">
-    <form id="editBrand" class="form-vertical" action="/admin/editBrand/<%= brand._id %>" method="post">
+    <form id="editBrandForm" class="form-vertical">
       <fieldset>
 
+        <p class="text-danger main-error"></p>
+
         <!-- Text input-->
         <div class="form-group">
-          <label class="control-label" for="brandName">Brand Name</label>
-          <input id="brandName" name="brandName" class="form-control input-md" type="text" value="<%= locals.brand ? brand.name : ''  %>" required>
+          <label class="control-label errorMsg" for="brandName">Brand Name</label>
+          <input id="brandName" name="brandName" class="form-control input-md" type="text" value="<%= locals.brand ? brand.name : ''  %>">
         </div>
 
         <!-- Text input-->
         <div class="form-group">
-          <label class="control-label" for="brandDesc">Description</label>
-          <textarea id="brandDesc" name="brandDesc" class="form-control input-md" type="text" required><%= locals.brand ? brand.description : ''  %></textarea>
+          <label class="control-label errorMsg" for="brandDesc">Description</label>
+          <textarea id="brandDesc" name="brandDesc" class="form-control input-md" type="text"><%= locals.brand ? brand.description : ''  %></textarea>
         </div>
-
-        <!-- File Button -->
-        <!-- <div class="form-group">
-          <label class="control-label" for="formFile">Image</label>
-          <input class="form-control" name="brandImg" type="file" id="formFile" value="<%= locals.brand ? brand.image : ''  %>" required>
-        </div> -->
-
-        <!-- <td>
-          <% if (brand.image && brand.image) { %>
-            <img src="/assets2/img/<%= brand.image %>" alt="brand Image" style="max-width: 100px; height: auto;">
-          <% } else { %>
-            <p>No Image</p>
-          <% } %>
-        </td> -->
 
         <!-- Button -->
         <div class="form-group mt-3">
-          <button type="submit" id="editBrandBtn" name="editBrandBtn" class="btn btn-primary text-white mt-2">Submit</button>
+          <button type="submit" id="editBrandBtn" name="editBrandBtn" class="btn btn-primary text-white mt-2" data-brand-id="<%= brandId %>">Submit</button>
+          <a href="/admin/brandList"><button type="button" id="editBrandCancel" name="editBrandCancel" class="btn btn-primary text-light mt-2">Cancel</button></a>
         </div>
 
       </fieldset>
@@ -363,6 +353,108 @@
         </footer>
       </div>
     </div>
+
+    <script>
+      const editBrandForm = document.getElementById('editBrandForm');
+      const brandName = document.getElementById('brandName');
+      const brandDesc = document.getElementById('brandDesc');
+
+      editBrandForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      validateBrand();
+      });
+
+      const setLoginError = (element, message) => {
+          const formGroup = element.parentElement;
+          const errorDisplay = formGroup.querySelector('.errorMsg');
+      
+
+      errorDisplay.innerText = message;
+      element.classList.add('error');
+      errorDisplay.classList.add('error');
+      element.classList.remove('success');
+      errorDisplay.classList.remove('success');
+
+      }; 
+
+      const setLoginSuccess = (element, message) => {
+          const formGroup = element.parentElement;
+          const errorDisplay = formGroup.querySelector('.errorMsg');
+
+      errorDisplay.innerText = message;
+      element.classList.add('success');
+      errorDisplay.classList.add('success');
+      element.classList.remove('error');
+      errorDisplay.classList.remove('error');
+
+      };
+
+      const isValidBrand = brandValue => {
+          let regex = /^[a-zA-Z0-9\s\-_]+$/;
+          return regex.test(brandValue);
+      }
+
+
+      async function validateBrand () {
+
+        const editBrandBtn = document.getElementById('editBrandBtn');
+        const brandId = editBrandBtn.dataset.brandId;
+        const brandNameValue = brandName.value.trim();
+        const brandDescValue = brandDesc.value.trim();
+
+        let isValid = true;
+        console.log(brandId)
+
+      if(!brandNameValue) {
+          setLoginError(brandName, "*Please enter the brand name");
+          isValid = false;
+      }
+      else if(!isValidBrand(brandNameValue)) {
+          setLoginError(brandName, "*Please enter a valid brand name");
+          isValid = false;
+      }
+      else {
+          setLoginSuccess(brandName, "Category Name");
+      }
+
+
+      if(!brandDescValue) {
+          setLoginError(brandDesc, "*Please enter the brand description");
+          isValid = false;
+      }
+      else {
+          setLoginSuccess(brandDesc, "Description");
+      }
+
+      if (!isValid) {
+        return;
+      }
+
+      const response = await fetch(`/admin/editBrand/${brandId}`, {
+              method: "POST",
+              headers: {
+                  'content-type': 'application/json'
+              },
+              body: JSON.stringify({ name: brandNameValue, description: brandDescValue })
+          });
+
+          const brandData = await response.json();
+
+          if(brandData.success) {
+                  window.location.href = "/admin/brandList?message=Brand updated successfully...";
+          }
+          else if(response.ok) {
+              const errorDisplay = document.querySelector('.main-error');
+              const brandName = document.getElementById('brandName');
+              const brandDesc = document.getElementById('brandDesc');
+
+              errorDisplay.innerText = brandData.message;
+              brandName.classList.add('error');
+              brandName.classList.remove('success');
+          }
+      }
+  </script>
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>

@@ -127,24 +127,23 @@
             			<div class="form-tab">
 	            			<ul class="nav nav-pills nav-fill" role="tablist">
 							    <li class="nav-item">
-							        <a class="nav-link" id="signin-tab-2" href="">Login</a>
-                                    <p class="text-success pb-3"><%= locals.successMsg ? successMsg : "" %></p>
-                                    <p class="text-danger pb-3"><%= locals.errMessage ? errMessage : "" %></p>
+							        <h3 class="p-2">Login</h3>
+                                    <p class="text-danger main-error"></p>
 							    </li>
 							</ul>
 							<div class="tab-content">
 							    <div class="" id="register-2">
 
-							    	<form action="/userLogin" method="POST">
+							    	<form id="userLoginForm">
 
 							    		<div class="form-group">
-							    			<label for="register-email-2">Email*</label>
-							    			<input type="text" class="form-control" id="register-email-2" name="email" value="<%= locals.loginData ? loginData : "" %>">
+							    			<label for="loginEmail" id="emailLabel" class="errorMsg">Email *</label>
+							    			<input type="text" class="form-control" id="loginEmail" name="email" value="<%= locals.loginData ? loginData : "" %>">
 							    		</div><!-- End .form-group -->
 
 							    		<div class="form-group">
-							    			<label for="register-password-2">Password *</label>
-							    			<input type="password" class="form-control" id="register-password-2" name="password">
+							    			<label for="loginPassword" id="passLabel" class="errorMsg">Password *</label>
+							    			<input type="password" class="form-control" id="loginPassword" name="password">
 							    		</div><!-- End .form-group -->
 
 							    		<div class="form-footer justify-content-between">
@@ -536,5 +535,91 @@
             </div><!-- End .modal-content -->
         </div><!-- End .modal-dialog -->
     </div><!-- End .modal -->
+
+    <script>
+
+        const userLoginForm = document.getElementById('userLoginForm');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPass = document.getElementById('loginPassword');
+
+        userLoginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const loginEmailValue = loginEmail.value.trim();
+        const loginPassValue = loginPass.value.trim();
+
+        validateLogin(loginEmailValue, loginPassValue);
+        });
+
+        const setLoginError = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+        
+
+        errorDisplay.innerText = message;
+        element.classList.add('error');
+        errorDisplay.classList.add('error');
+        element.classList.remove('success');
+        errorDisplay.classList.remove('success');
+
+        }; 
+
+        const setLoginSuccess = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
+
+        };
+
+
+        async function validateLogin (email, password) {
+
+        if(!email) {
+            setLoginError(loginEmail, "*Please enter the email");
+        }
+        else {
+            setLoginSuccess(loginEmail, "Email");
+        }
+
+
+        if(!password) {
+            setLoginError(loginPass, "*Please enter the password");
+            return;
+        }
+        else {
+            setLoginSuccess(loginPass, "Password");
+        }
+
+        const response = await fetch('/userLogin', {
+                method: "POST",
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const loginData = await response.json();
+
+            if(loginData.success) {
+                    window.location.href = "/";
+            }
+            else if(response.ok) {
+                const errorDisplay = document.querySelector('.main-error');
+                const loginEmail = document.getElementById('loginEmail');
+                const loginPass = document.getElementById('loginPassword');
+
+                errorDisplay.innerText = loginData.message;
+                loginEmail.classList.add('error');
+                loginEmail.classList.remove('success');
+                loginPass.classList.add('error');
+                loginPass.classList.remove('success');
+            }
+        }
+    </script>
 
 <%- include('./layout/footer.ejs') %>

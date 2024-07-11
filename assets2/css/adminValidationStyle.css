@@ -294,3 +294,68 @@ h6 span{
 	width: auto;
 	display: block;
 }
+
+/* // preview & --// */
+
+.addCategoryBtn {
+  margin: 30px;
+  padding: 10px 20px;
+}
+
+
+#addCategory {
+  background-color: #f8f9fa; /* Light gray background color */
+  padding: 20px; /* Add padding around the form */
+  border-radius: 5px; /* Optional: Add rounded corners */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle shadow for depth */
+}
+
+/* Ensure the container takes up the full height of the viewport and centers the content */
+.page-inner {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Product image styles */
+img.productImg {
+  width: 60px;
+}
+
+.previewImage {
+  width: 150px;
+  padding: 10px;
+}
+
+/* //Validation-styles//// */
+input.error {
+  border-color: #fa0b0b;
+}
+
+label.error {
+    color: #fa0b0b;
+}
+
+textarea.error {
+  border-color: #fa0b0b;
+}
+
+select.error {
+  border-color: #fa0b0b;
+}
+
+input.success {
+  border-color: #000;
+}
+
+label.success {
+  color: #000;
+}
+
+textarea.success {
+border-color: #000;
+}
+
+select.success {
+  border-color: #000;
+}

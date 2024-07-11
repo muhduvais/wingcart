@@ -43,7 +43,7 @@
     <!-- cropper JS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
     <!-- Admin script -->
-     <link rel="stylesheet" href="/assets2/css/adminStyle.css">
+     <link rel="stylesheet" href="/assets2/css/adminValidationStyle.css">
   </head>
   <body>
     
@@ -292,33 +292,36 @@
 
 <div class="row justify-content-center my-5">
     <div class="col-md-8">
-      <form id="addProduct" class="form-horizontal" action="/admin/addProduct" method="post" enctype="multipart/form-data">
+      <form id="addProductForm" class="form-horizontal">
         <fieldset>
+
+          <p class="text-danger main-error"></p>
+
           <div class="row">
             <!-- Left column -->
             <div class="col-md-6">
               <!-- Text input for Product Name -->
               <div class="form-group">
-                <label class="control-label" for="productName">Product Name</label>
-                <input id="productName" name="productName" class="form-control" type="text" value="<%= locals.productName ? productName : '' %>" required>
+                <label class="control-label errorMsg" for="productName">Product Name</label>
+                <input id="productName" name="productName" class="form-control" type="text" value="<%= locals.productName ? productName : '' %>">
               </div>
   
               <!-- Text input for Model -->
               <div class="form-group">
-                <label class="control-label" for="model">Model</label>
-                <input id="model" name="model" class="form-control" type="text" value="<%= locals.model ? model : '' %>" required>
+                <label class="control-label errorMsg" for="model">Model</label>
+                <input id="model" name="model" class="form-control" type="text" value="<%= locals.model ? model : '' %>">
               </div>
   
               <!-- Textarea for Description -->
               <div class="form-group">
-                <label class="control-label" for="description">Description</label>
-                <textarea id="description" name="description" class="form-control" rows="3" required><%= locals.description ? description : '' %></textarea>
+                <label class="control-label errorMsg" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3"><%= locals.description ? description : '' %></textarea>
               </div>
   
               <!-- Dropdown for Type -->
               <div class="form-group">
-                <label class="control-label" for="type">Type</label>
-                <select id="type" name="type" class="form-control" required>
+                <label class="control-label errorMsg" for="type">Type</label>
+                <select id="type" name="type" class="form-control">
                   <option value="" selected disabled>-Select-</option>
                   <option value="Digital" <% locals.type && type === "Digital" ? selected : '' %>>Digital</option>
                   <option value="Analog" <% locals.type && type === "Analog" ? selected : '' %>>Analog</option>
@@ -328,8 +331,8 @@
   
               <!-- Text input for Strap Type -->
               <div class="form-group">
-                <label class="control-label" for="strapType">Strap Type</label>
-                <input id="strapType" name="strapType" class="form-control" type="text" value="<%= locals.strapType ? strapType : '' %>" required>
+                <label class="control-label errorMsg" for="strapType">Strap Type</label>
+                <input id="strapType" name="strapType" class="form-control" type="text" value="<%= locals.strapType ? strapType : '' %>">
               </div>
             </div>
   
@@ -337,14 +340,14 @@
             <div class="col-md-6">
               <!-- Text input for Color -->
               <div class="form-group">
-                <label class="control-label" for="color">Color</label>
-                <input id="color" name="color" class="form-control" type="text" value="<%= locals.color ? color : '' %>" required>
+                <label class="control-label errorMsg" for="color">Color</label>
+                <input id="color" name="color" class="form-control" type="text" value="<%= locals.color ? color : '' %>">
               </div>
   
               <!-- Dropdown for Category -->
               <div class="form-group">
-                <label class="control-label" for="category">Category</label>
-                <select id="category" name="category" class="form-control" required>
+                <label class="control-label errorMsg" for="category">Category</label>
+                <select id="category" name="category" class="form-control">
                   <option value="" selected disabled>-Select-</option>
                   <% if (categories && categories.length) { %>
                     <% categories.forEach((category) => { %>
@@ -356,8 +359,8 @@
   
               <!-- Dropdown for Brand -->
               <div class="form-group">
-                <label class="control-label" for="brand">Brand</label>
-                <select id="brand" name="brand" class="form-control" required>
+                <label class="control-label errorMsg" for="brand">Brand</label>
+                <select id="brand" name="brand" class="form-control">
                   <option value="" selected disabled>-Select-</option>
                   <% if (brands && brands.length) { %>
                     <% brands.forEach((brand) => { %>
@@ -369,14 +372,14 @@
   
               <!-- Text input for Stock -->
               <div class="form-group">
-                <label class="control-label" for="stock">Stock</label>
-                <input id="stock" name="stock" class="form-control" type="number" value="<%= locals.stock ? stock : '' %>" required>
+                <label class="control-label errorMsg" for="stock">Stock</label>
+                <input id="stock" name="stock" class="form-control" type="number" value="<%= locals.stock ? stock : '' %>">
               </div>
 
           <!-- Text input for Price -->
           <div class="form-group">
-            <label class="control-label" for="price">Price</label>
-            <input id="price" name="price" class="form-control" type="number" value="<%= locals.price ? price : '' %>" required>
+            <label class="control-label errorMsg" for="price">Price</label>
+            <input id="price" name="price" class="form-control" type="number" value="<%= locals.price ? price : '' %>">
           </div>
         </div>
       </div>
@@ -390,56 +393,29 @@
           <div class="form-group mt-4">
             <div class="row">
               <div class="col-md-4">
-                <label class="control-label text-dark font-weight-bold" for="image1">Image 1</label>
-                <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" onchange="previewImage(event, 'previewImage1')" required>
+                <label class="control-label text-dark font-weight-bold errorMsg" for="image1">Image 1</label>
+                <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" onchange="previewImage(event, 'previewImage1')">
                 <img id="previewImage1" class="previewImage" src="<%= locals.product && product.images && product.images[0] ? '/assets2/img/' + product.images[0] : '' %>" style="display: <%= locals.product && product.images && product.images[0] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 1"/>
                 
-                <!-- <div>
-                  <img id="image" style="max-width: 100%;">
-                </div>
-                <button id="cropButton">Crop</button>
-                <div>
-                  <img id="croppedImage" style="max-width: 100%;">
-                </div> -->
-
-                <!-- <img id="previewImage1" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage1" name="croppedImage1"/> -->
               </div>
               <div class="col-md-4">
-                <label class="control-label text-dark font-weight-bold" for="image2">Image 2</label>
-                <input class="form-control bg-light text-dark" name="image2" type="file" id="image2" onchange="previewImage(event, 'previewImage2')" required>
+                <label class="control-label text-dark font-weight-bold errorMsg" for="image2">Image 2</label>
+                <input class="form-control bg-light text-dark" name="image2" type="file" id="image2" onchange="previewImage(event, 'previewImage2')">
                 <img id="previewImage2" class="previewImage" src="<%= locals.product && product.images && product.images[1] ? '/assets2/img/' + product.images[1] : '' %>" style="display: <%= locals.product && product.images && product.images[1] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 2"/>
                 
-                <!-- <div>
-                  <img id="image" style="max-width: 100%;">
-                </div>
-                <button id="cropButton">Crop</button>
-                <div>
-                  <img id="croppedImage" style="max-width: 100%;">
-                </div> -->
-
-                <!-- <img id="previewImage2" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage2" name="croppedImage2"/> -->
               </div>
               <div class="col-md-4">
-                <label class="control-label text-dark font-weight-bold" for="image3">Image 3</label>
-                <input class="form-control bg-light text-dark" name="image3" type="file" id="image3" onchange="previewImage(event, 'previewImage3')" required>
+                <label class="control-label text-dark font-weight-bold errorMsg" for="image3">Image 3</label>
+                <input class="form-control bg-light text-dark" name="image3" type="file" id="image3" onchange="previewImage(event, 'previewImage3')">
                 <img id="previewImage3" class="previewImage" src="<%= locals.product && product.images && product.images[2] ? '/assets2/img/' + product.images[2] : '' %>" style="display: <%= locals.product && product.images && product.images[2] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 3"/>
-
-                <!-- <img id="previewImage3" style="display: none; max-width: 100%;"/>
-                <input type="hidden" id="croppedImage3" name="croppedImage3"/> -->
               </div>
             </div>
           </div>
-
-
-
-
-
   
           <!-- Submit Button -->
           <div class="form-group mt-3 text-center">
             <button type="submit" id="addProductBtn" name="addProductBtn" class="btn btn-primary text-white mt-2">Submit</button>
+            <a href="/admin/productManagement"><button type="button" id="addProductCancel" name="addProductCancel" class="btn btn-primary text-light mt-2">Cancel</button></a>
           </div>
         </fieldset>
       </form>
@@ -481,48 +457,241 @@
         };
         reader.readAsDataURL(event.target.files[0]);
       }
-    </script>
 
 
-<!-- //////Cropper-js////////// -->
-<!-- <script>
-  let cropper;
+      const addProductForm = document.getElementById('addProductForm');
+        const productName = document.getElementById('productName');
+        const model = document.getElementById('model');
+        const description = document.getElementById('description');
+        const type = document.getElementById('type');
+        const strapType = document.getElementById('strapType');
+        const color = document.getElementById('color');
+        const category = document.getElementById('category');
+        const brand = document.getElementById('brand');
+        const stock = document.getElementById('stock');
+        const price = document.getElementById('price');
+        const image1 = document.getElementById('image1');
+        const image2 = document.getElementById('image2');
+        const image3 = document.getElementById('image3');
 
-  document.getElementById('inputImage').addEventListener('change', function (event) {
-    const files = event.target.files;
-    const done = function (url) {
-      const image = document.getElementById('image');
-      image.src = url;
-      if (cropper) {
-        cropper.destroy();
-      }
-      cropper = new Cropper(image, {
-        aspectRatio: 1, // Adjust the aspect ratio as needed
-        viewMode: 1,
-      });
-    };
-    let reader;
-    let file;
-    if (files && files.length > 0) {
-      file = files[0];
-      if (URL) {
-        done(URL.createObjectURL(file));
-      } else if (FileReader) {
-        reader = new FileReader();
-        reader.onload = function (event) {
-          done(reader.result);
+        addProductForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        validateProduct();
+        });
+
+        const setLoginError = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+        
+
+        errorDisplay.innerText = message;
+        element.classList.add('error');
+        errorDisplay.classList.add('error');
+        element.classList.remove('success');
+        errorDisplay.classList.remove('success');
+
+        }; 
+
+        const setLoginSuccess = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
+
         };
-        reader.readAsDataURL(file);
-      }
-    }
-  });
 
-  document.getElementById('cropButton').addEventListener('click', function () {
-    const canvas = cropper.getCroppedCanvas();
-    const croppedImage = document.getElementById('croppedImage');
-    croppedImage.src = canvas.toDataURL();
-  });
-</script> -->
+        const isValidName = categoryValue => {
+            let regex = /^[a-zA-Z0-9\s\-_]+$/;
+            return regex.test(categoryValue);
+        }
+
+        const isValidImageFile = (file) => {
+          const validTypes = ['image/jpeg', 'image/png'];
+          const maxSize = 3 * 1024 * 1024;
+          return validTypes.includes(file.type) && file.size <= maxSize;
+        };
+
+
+        async function validateProduct () {
+
+          const productNameValue = productName.value.trim();
+          const modelValue = model.value.trim();
+          const descriptionValue = description.value.trim();
+          const typeValue = type.value.trim();
+          const strapTypeValue = strapType.value.trim();
+          const colorValue = color.value.trim();
+          const categoryValue = category.value.trim();
+          const brandValue = brand.value.trim();
+          const stockValue = stock.value.trim();
+          const priceValue = price.value.trim();
+
+          const image1Value = image1.files[0];
+          const image2Value = image2.files[0];
+          const image3Value = image3.files[0];
+
+          let isValid = true;
+
+        if(!productNameValue) {
+            setLoginError(productName, "*Please enter the product name");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(productName, "Product Name");
+        }
+
+        if(!modelValue) {
+            setLoginError(model, "*Please enter the Model");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(model, "Model");
+        }
+
+        if(!descriptionValue) {
+            setLoginError(description, "*Please enter the description");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(description, "Description");
+        }
+
+        if(!typeValue) {
+            setLoginError(type, "*Please select the type");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(type, "Type");
+        }
+
+        if(!strapTypeValue) {
+            setLoginError(strapType, "*Please enter the strap type");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(strapType, "Strap Type");
+        }
+
+        if(!colorValue) {
+            setLoginError(color, "*Please enter the color");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(color, "Color");
+        }
+
+        if(!categoryValue) {
+            setLoginError(category, "*Please select the category");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(category, "Category");
+        }
+
+        if(!brandValue) {
+            setLoginError(brand, "*Please select the brand");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(brand, "Brand");
+        }
+
+        if(!stockValue) {
+            setLoginError(stock, "*Please enter the stock");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(stock, "Stock");
+        }
+
+        if(!priceValue) {
+            setLoginError(price, "*Please enter the price");
+            isValid = false;
+        }
+        else {
+            setLoginSuccess(price, "Price");
+        }
+
+        if(!image1Value) {
+            setLoginError(image1, "*Please select an image");
+            isValid = false;
+        }
+        else if (!isValidImageFile(image1Value)) {
+          setLoginError(image1, "*Please select a valid image (jpeg/png) under 3 mb");
+          isValid = false;
+        }
+        else {
+            setLoginSuccess(image1, "Image 1");
+        }
+
+        if(!image2Value) {
+            setLoginError(image2, "*Please select an image");
+            isValid = false;
+        }
+        else if (!isValidImageFile(image2Value)) {
+          setLoginError(image2, "*Please select a valid image (jpeg/png) under 3 mb");
+          isValid = false;
+        }
+        else {
+            setLoginSuccess(image2, "Image 2");
+        }
+
+
+        if(!image3Value) {
+            setLoginError(image3, "*Please select an image");
+            isValid = false;
+        }
+        else if (!isValidImageFile(image3Value)) {
+          setLoginError(image3, "*Please select a valid image (jpeg/png) under 3 mb");
+          isValid = false;
+        }
+        else {
+            setLoginSuccess(image3, "Image 3");
+        }
+
+        if(!isValid) {
+          return;
+        }
+
+        const formData = new FormData();
+          formData.append('productName', productNameValue);
+          formData.append('model', modelValue);
+          formData.append('description', descriptionValue);
+          formData.append('type', typeValue);
+          formData.append('strapType', strapTypeValue);
+          formData.append('color', colorValue);
+          formData.append('category', categoryValue);
+          formData.append('brand', brandValue);
+          formData.append('stock', stockValue);
+          formData.append('price', priceValue);
+          formData.append('image1', image1.files[0]);
+          formData.append('image2', image2.files[0]);
+          formData.append('image3', image3.files[0]);
+
+        const response = await fetch('/admin/addProduct', {
+                method: "POST",
+                body: formData
+            });
+
+            const productData = await response.json();
+
+            if(productData.success) {
+                    window.location.href = "/admin/productManagement?message=Product added successfully...";
+            }
+            else if(response.ok) {
+                const errorDisplay = document.querySelector('.main-error');
+                const productName = document.getElementById('productName');
+
+                errorDisplay.innerText = productData.message;
+                productName.classList.add('error');
+                productName.classList.remove('success');
+            }
+        }
+    </script>
 
 <!-- ///////////////////////// -->
 

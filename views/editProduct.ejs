@@ -43,7 +43,7 @@
     <!-- cropping JS -->
     <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet">
     <!-- adminStyle -->
-     <link rel="stylesheet" href="/assets2/css/adminStyle.css">
+     <link rel="stylesheet" href="/assets2/css/adminValidationStyle.css">
   </head>
   <body>
     
@@ -292,33 +292,36 @@
 
 <div class="row justify-content-center my-5">
     <div class="col-md-8">
-      <form id="addProduct" class="form-horizontal" action="/admin/editProduct/<%= locals.product ? product._id: '' %>" method="post" enctype="multipart/form-data">
+      <form id="editProductForm" class="form-horizontal" enctype="multipart/form-data">
         <fieldset>
+
+          <p class="text-danger main-error"></p>
+
           <div class="row">
             <!-- Left column -->
             <div class="col-md-6">
               <!-- Text input for Product Name -->
               <div class="form-group">
-                <label class="control-label" for="productName">Product Name</label>
-                <input id="productName" name="productName" class="form-control" type="text" value="<%= locals.product ? product.name : '' %>" required>
+                <label class="control-label errorMsg" for="productName">Product Name</label>
+                <input id="productName" name="productName" class="form-control" type="text" value="<%= locals.product ? product.name : '' %>">
               </div>
   
               <!-- Text input for Model -->
               <div class="form-group">
-                <label class="control-label" for="model">Model</label>
-                <input id="model" name="model" class="form-control" type="text" value="<%= locals.product ? product.model : '' %>" required>
+                <label class="control-label errorMsg" for="model">Model</label>
+                <input id="model" name="model" class="form-control" type="text" value="<%= locals.product ? product.model : '' %>">
               </div>
   
               <!-- Textarea for Description -->
               <div class="form-group">
-                <label class="control-label" for="description">Description</label>
-                <textarea id="description" name="description" class="form-control" rows="3" required><%= locals.product ? product.description : '' %></textarea>
+                <label class="control-label errorMsg" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3"><%= locals.product ? product.description : '' %></textarea>
               </div>
   
               <!-- Dropdown for Type -->
               <div class="form-group">
-                <label class="control-label" for="type">Type</label>
-                <select id="type" name="type" class="form-control" required>
+                <label class="control-label errorMsg" for="type">Type</label>
+                <select id="type" name="type" class="form-control">
                   <option value="" disabled>-Select-</option>
                   <option value="Digital" <%= locals.product && product.type === "Digital" ? "selected" : "" %>>Digital</option>
                   <option value="Analog" <%= locals.product && product.type === "Analog" ? "selected" : "" %>>Analog</option>
@@ -328,8 +331,8 @@
   
               <!-- Text input for Strap Type -->
               <div class="form-group">
-                <label class="control-label" for="strapType">Strap Type</label>
-                <input id="strapType" name="strapType" class="form-control" type="text" value="<%= locals.product ? product.strapType : '' %>" required>
+                <label class="control-label errorMsg" for="strapType">Strap Type</label>
+                <input id="strapType" name="strapType" class="form-control" type="text" value="<%= locals.product ? product.strapType : '' %>">
               </div>
             </div>
   
@@ -337,13 +340,13 @@
             <div class="col-md-6">
               <!-- Text input for Color -->
               <div class="form-group">
-                <label class="control-label" for="color">Color</label>
-                <input id="color" name="color" class="form-control" type="text" value="<%= locals.product ? product.color : '' %>" required>
+                <label class="control-label errorMsg" for="color">Color</label>
+                <input id="color" name="color" class="form-control" type="text" value="<%= locals.product ? product.color : '' %>">
               </div>
   
               <div class="form-group">
-                <label class="control-label" for="category">Category</label>
-                <select id="category" name="category" class="form-control" required>
+                <label class="control-label errorMsg" for="category">Category</label>
+                <select id="category" name="category" class="form-control">
                   <option value="" disabled>-Select-</option>
                   <% if (locals.categories && categories.length) { %>
                     <% categories.forEach((category) => { %>
@@ -357,8 +360,8 @@
   
               <!-- Dropdown for Brand -->
               <div class="form-group">
-                <label class="control-label" for="brand">Brand</label>
-                <select id="brand" name="brand" class="form-control" required>
+                <label class="control-label errorMsg" for="brand">Brand</label>
+                <select id="brand" name="brand" class="form-control">
                   <option value="" selected disabled>-Select-</option>
                   <% if (locals.brands && brands.length) { %>
                     <% brands.forEach((brand) => { %>
@@ -372,14 +375,14 @@
   
               <!-- Text input for Stock -->
               <div class="form-group">
-                <label class="control-label" for="stock">Stock</label>
-                <input id="stock" name="stock" class="form-control" type="number" value="<%= locals.product ? product.stock : '' %>" required>
+                <label class="control-label errorMsg" for="stock">Stock</label>
+                <input id="stock" name="stock" class="form-control" type="number" value="<%= locals.product ? product.stock : '' %>">
               </div>
 
           <!-- Text input for Price -->
           <div class="form-group">
-            <label class="control-label" for="price">Price</label>
-            <input id="price" name="price" class="form-control" type="number" value="<%= locals.product ? product.price : '' %>" required>
+            <label class="control-label errorMsg" for="price">Price</label>
+            <input id="price" name="price" class="form-control" type="number" value="<%= locals.product ? product.price : '' %>">
           </div>
         </div>
       </div>
@@ -390,28 +393,28 @@
           <div class="form-group mt-4">
             <div class="row">
               <div class="col-md-4">
-                <label class="control-label text-dark font-weight-bold" for="image1">Image 1</label>
+                <label class="control-label text-dark font-weight-bold errorMsg" for="image1">Image 1</label>
                 <input class="form-control bg-light text-dark" name="image1" type="file" id="image1" onchange="previewImage(event, 'previewImage1')">
                 <img id="previewImage1" class="previewImage" src="<%= locals.product && product.images && product.images[0] ? '/assets2/img/' + product.images[0] : '' %>" style="display: <%= locals.product && product.images && product.images[0] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 1"/>
-                <input type="hidden" name="existingImage1" value="<%= locals.product && product.images ? product.images[0] : '' %>">
+                <input type="hidden" name="existingImage1" id="existingImage1" value="<%= locals.product && product.images ? product.images[0] : '' %>">
                 <% if (locals.product && product.images && product.images[0]) { %>
                   <p>Current file: <%= product.images[0] %></p>
                 <% } %>
               </div>
               <div class="col-md-4">
-                <label class="control-label text-dark font-weight-bold" for="image2">Image 2</label>
+                <label class="control-label text-dark font-weight-bold errorMsg" for="image2">Image 2</label>
                 <input class="form-control bg-light text-dark" name="image2" type="file" id="image2" onchange="previewImage(event, 'previewImage2')">
                 <img id="previewImage2" class="previewImage" src="<%= locals.product && product.images && product.images[1] ? '/assets2/img/' + product.images[1] : '' %>" style="display: <%= locals.product && product.images && product.images[1] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 2"/>
-                <input type="hidden" name="existingImage2" value="<%= locals.product && product.images ? product.images[1] : '' %>">
+                <input type="hidden" name="existingImage2" id="existingImage2" value="<%= locals.product && product.images ? product.images[1] : '' %>">
                 <% if (locals.product && product.images && product.images[1]) { %>
                   <p>Current file: <%= product.images[1] %></p>
                 <% } %>
               </div>
               <div class="col-md-4">
-                <label class="control-label text-dark font-weight-bold" for="image3">Image 3</label>
+                <label class="control-label text-dark font-weight-bold errorMsg" for="image3">Image 3</label>
                 <input class="form-control bg-light text-dark" name="image3" type="file" id="image3" onchange="previewImage(event, 'previewImage3')">
                 <img id="previewImage3" class="previewImage" src="<%= locals.product && product.images && product.images[2] ? '/assets2/img/' + product.images[2] : '' %>" style="display: <%= locals.product && product.images && product.images[2] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 3"/>
-                <input type="hidden" name="existingImage3" value="<%= locals.product && product.images ? product.images[2] : '' %>">
+                <input type="hidden" name="existingImage3" id="existingImage3" value="<%= locals.product && product.images ? product.images[2] : '' %>">
                 <% if (locals.product && product.images && product.images[2]) { %>
                   <p>Current file: <%= product.images[2] %></p>
                 <% } %>
@@ -421,7 +424,8 @@
   
           <!-- Submit Button -->
           <div class="form-group mt-3 text-center">
-            <button type="submit" id="editProductBtn" name="editProductBtn" class="btn btn-primary text-white mt-2">Submit</button>
+            <button type="submit" id="editProductBtn" name="editProductBtn" class="btn btn-primary text-white mt-2" data-product-id="<%= productId %>">Submit</button>
+            <a href="/admin/productManagement"><button type="button" id="editProductCancel" name="editProductCancel" class="btn btn-primary text-light mt-2">Cancel</button></a>
           </div>
         </fieldset>
       </form>
@@ -463,6 +467,208 @@
         };
         reader.readAsDataURL(event.target.files[0]);
       }
+
+      const editProductForm = document.getElementById('editProductForm');
+        const productName = document.getElementById('productName');
+        const model = document.getElementById('model');
+        const description = document.getElementById('description');
+        const type = document.getElementById('type');
+        const strapType = document.getElementById('strapType');
+        const color = document.getElementById('color');
+        const category = document.getElementById('category');
+        const brand = document.getElementById('brand');
+        const stock = document.getElementById('stock');
+        const price = document.getElementById('price');
+        const image1 = document.getElementById('image1');
+        const image2 = document.getElementById('image2');
+        const image3 = document.getElementById('image3');
+        const existingImage1 = document.getElementById('existingImage1');
+        const existingImage2 = document.getElementById('existingImage2');
+        const existingImage3 = document.getElementById('existingImage3');
+
+        editProductForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        validateProduct();
+        });
+
+        const setEditProdError = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+        
+
+        errorDisplay.innerText = message;
+        element.classList.add('error');
+        errorDisplay.classList.add('error');
+        element.classList.remove('success');
+        errorDisplay.classList.remove('success');
+
+        };
+
+        const setEditProdSuccess = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
+
+        };
+
+        const isValidName = categoryValue => {
+            let regex = /^[a-zA-Z0-9\s\-_]+$/;
+            return regex.test(categoryValue);
+        }
+
+
+        async function validateProduct () {
+
+          const editProductBtn = document.getElementById('editProductBtn');
+          const productId = editProductBtn.dataset.productId;
+          const productNameValue = productName.value.trim();
+          const modelValue = model.value.trim();
+          const descriptionValue = description.value.trim();
+          const typeValue = type.value.trim();
+          const strapTypeValue = strapType.value.trim();
+          const colorValue = color.value.trim();
+          const categoryValue = category.value.trim();
+          const brandValue = brand.value.trim();
+          const stockValue = stock.value.trim();
+          const priceValue = price.value.trim();
+
+          const image1Value = image1.files[0];
+          const image2Value = image2.files[0];
+          const image3Value = image3.files[0];
+
+          const existingImage1Value = existingImage1.value;
+          const existingImage2Value = existingImage2.value;
+          const existingImage3Value = existingImage3.value;
+
+          let isValid = true;
+
+        if(!productNameValue) {
+            setEditProdError(productName, "*Please enter the product name");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(productName, "Product Name");
+        }
+
+        if(!modelValue) {
+            setEditProdError(model, "*Please enter the Model");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(model, "Model");
+        }
+
+        if(!descriptionValue) {
+            setEditProdError(description, "*Please enter the description");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(description, "Description");
+        }
+
+        if(!typeValue) {
+            setEditProdError(type, "*Please select the type");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(type, "Type");
+        }
+
+        if(!strapTypeValue) {
+            setEditProdError(strapType, "*Please enter the strap type");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(strapType, "Strap Type");
+        }
+
+        if(!colorValue) {
+            setEditProdError(color, "*Please enter the color");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(color, "Color");
+        }
+
+        if(!categoryValue) {
+            setEditProdError(category, "*Please select the category");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(category, "Category");
+        }
+
+        if(!brandValue) {
+            setEditProdError(brand, "*Please select the brand");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(brand, "Brand");
+        }
+
+        if(!stockValue) {
+            setEditProdError(stock, "*Please enter the stock");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(stock, "Stock");
+        }
+
+        if(!priceValue) {
+            setEditProdError(price, "*Please enter the price");
+            isValid = false;
+        }
+        else {
+            setEditProdSuccess(price, "Price");
+        }
+
+        if(!isValid) {
+          return;
+        }
+
+        const formData = new FormData();
+          formData.append('productName', productNameValue);
+          formData.append('model', modelValue);
+          formData.append('description', descriptionValue);
+          formData.append('type', typeValue);
+          formData.append('strapType', strapTypeValue);
+          formData.append('color', colorValue);
+          formData.append('category', categoryValue);
+          formData.append('brand', brandValue);
+          formData.append('stock', stockValue);
+          formData.append('price', priceValue);
+          formData.append('image1', image1.files[0]);
+          formData.append('image2', image2.files[0]);
+          formData.append('image3', image3.files[0]);
+          formData.append('existingImage1', existingImage1Value);
+          formData.append('existingImage2', existingImage2Value);
+          formData.append('existingImage3', existingImage3Value);
+
+        const response = await fetch(`/admin/editProduct/${productId}`, {
+                method: "POST",
+                body: formData
+            });
+
+            const productData = await response.json();
+
+            if(productData.success) {
+                    window.location.href = "/admin/productManagement?message=Product added successfully...";
+            }
+            else if(response.ok) {
+                const errorDisplay = document.querySelector('.main-error');
+                const productName = document.getElementById('productName');
+
+                errorDisplay.innerText = productData.message;
+                productName.classList.add('error');
+                productName.classList.remove('success');
+            }
+        }
     </script>
 
     <!-- block btn toggle -->

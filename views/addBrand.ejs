@@ -33,6 +33,7 @@
     <link rel="stylesheet" href="/assets2/css/plugins.min.css" />
     <link rel="stylesheet" href="/assets2/css/kaiadmin.min.css" />
     <link rel="stylesheet" href="/assets2/css/loginStyle.css" />
+    <link rel="stylesheet" href="/assets2/css/adminValidationStyle.css">
     <!-- Sweet Alert CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   </head>
@@ -289,19 +290,21 @@
 
 <div class="row justify-content-center my-5">
   <div class="col-md-6">
-    <form id="addBrand" class="form-vertical" action="/admin/addBrand" method="post">
+    <form id="addBrandForm" class="form-vertical">
       <fieldset>
+
+        <p class="text-danger main-error"></p>
 
         <!-- Text input-->
         <div class="form-group">
-          <label class="control-label" for="brandName">Brand Name</label>
-          <input id="categoryName" name="brandName" class="form-control input-md" type="text" required>
+          <label class="control-label errorMsg" for="brandName">Brand Name</label>
+          <input id="brandName" name="brandName" class="form-control input-md" type="text">
         </div>
 
         <!-- Text input-->
         <div class="form-group">
-          <label class="control-label" for="brandDesc">Description</label>
-          <textarea id="categoryDesc" name="brandDesc" class="form-control input-md" type="text" required></textarea>
+          <label class="control-label errorMsg" for="brandDesc">Description</label>
+          <textarea id="brandDesc" name="brandDesc" class="form-control input-md" type="text"></textarea>
         </div>
 
         <!-- File Button -->
@@ -313,6 +316,7 @@
         <!-- Button -->
         <div class="form-group mt-3">
           <button type="submit" id="addBrandBtn" name="addBrandBtn" class="btn btn-primary text-white mt-2">Submit</button>
+          <a href="/admin/brandList"><button type="button" id="addBrandCancel" name="addBrandCancel" class="btn btn-primary text-light mt-2">Cancel</button></a>
         </div>
 
       </fieldset>
@@ -350,6 +354,105 @@
         </footer>
       </div>
     </div>
+
+
+    <script>
+      const addBrandForm = document.getElementById('addBrandForm');
+      const brandName = document.getElementById('brandName');
+      const brandDesc = document.getElementById('brandDesc');
+
+      addBrandForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      validateBrand();
+      });
+
+      const setLoginError = (element, message) => {
+          const formGroup = element.parentElement;
+          const errorDisplay = formGroup.querySelector('.errorMsg');
+      
+
+      errorDisplay.innerText = message;
+      element.classList.add('error');
+      errorDisplay.classList.add('error');
+      element.classList.remove('success');
+      errorDisplay.classList.remove('success');
+
+      }; 
+
+      const setLoginSuccess = (element, message) => {
+          const formGroup = element.parentElement;
+          const errorDisplay = formGroup.querySelector('.errorMsg');
+
+      errorDisplay.innerText = message;
+      element.classList.add('success');
+      errorDisplay.classList.add('success');
+      element.classList.remove('error');
+      errorDisplay.classList.remove('error');
+
+      };
+
+      const isValidName = categoryValue => {
+          let regex = /^[a-zA-Z0-9\s\-_]+$/;
+          return regex.test(categoryValue);
+      }
+
+
+      async function validateBrand () {
+
+        const brandNameValue = brandName.value.trim();
+        const brandDescValue = brandDesc.value.trim();
+        let isValid = true;
+
+      if(!brandNameValue) {
+          setLoginError(brandName, "*Please enter the brand name");
+          isValid = false;
+      }
+      else if(!isValidName(brandNameValue)) {
+          setLoginError(brandName, "*Please enter a valid brand name");
+          isValid = false;
+      }
+      else {
+          setLoginSuccess(brandName, "Brand Name");
+      }
+
+
+      if(!brandDescValue) {
+          setLoginError(brandDesc, "*Please enter the brand description");
+          isValid = false;
+      }
+      else {
+          setLoginSuccess(brandDesc, "Description");
+      }
+
+      if(!isValid) {
+        return;
+      }
+
+      const response = await fetch('/admin/addBrand', {
+              method: "POST",
+              headers: {
+                  'content-type': 'application/json'
+              },
+              body: JSON.stringify({ brandName: brandNameValue, brandDesc: brandDescValue })
+          });
+
+          const brandData = await response.json();
+
+          if(brandData.success) {
+                  window.location.href = "/admin/brandList?message=Brand added successfully...";
+          }
+          else if(response.ok) {
+              const errorDisplay = document.querySelector('.main-error');
+              const brandName = document.getElementById('brandName');
+              const brandDesc = document.getElementById('brandDesc');
+
+              errorDisplay.innerText = brandData.message;
+              brandName.classList.add('error');
+              brandName.classList.remove('success');
+          }
+      }
+  </script>
 
     <!-- block btn toggle -->
     <script src="/assets2/js/adminScript.js"></script>

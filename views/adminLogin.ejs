@@ -7,7 +7,7 @@
 							<div class="card-3d-wrapper">
 								<div class="card-front">
 									<div class="center-wrap">
-										<form action="/admin/Login" method="POST">
+										<form id="adminLoginForm">
                       <div class="section text-center">
                         <h4 class="mb-4 pb-3">LOG IN</h4>
                           <% if(locals.errMsg) { %>
@@ -15,14 +15,16 @@
                           <% } else if(locals.logoutMsg) {%>
                           <p class="text-success"><%= logoutMsg %></p>
                           <% } else {%>
-                          <p><%= "" %></p>
+                          <p class="text-danger main-error"></p>
                           <% }%>
                         <div class="form-group">
-                          <input type="text" name="email" class="form-style" placeholder="Your Email" id="logemail" value="<%= locals.loginData? loginData: "" %>">
+                          <label for="loginEmail" class="errorMsg"></label>
+                          <input type="text" name="email" class="form-style" placeholder="Your Email" id="loginEmail" value="<%= locals.loginData? loginData: "" %>">
                           <i class="input-icon uil uil-at"></i>
                         </div>	
                         <div class="form-group mt-2">
-                          <input type="password" name="password" class="form-style" placeholder="Your Password" id="logpass">
+                          <label for="loginPass" class="errorMsg"></label>
+                          <input type="password" name="password" class="form-style" placeholder="Your Password" id="loginPassword">
                           <i class="input-icon uil uil-lock-alt"></i>
                         </div>
                         <button class="btn mt-4" type="submit">submit</button>
@@ -36,5 +38,90 @@
 	      	</div>
 	    </div>
 	</div>
+
+  <script>
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPass = document.getElementById('loginPassword');
+
+        adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const loginEmailValue = loginEmail.value.trim();
+        const loginPassValue = loginPass.value.trim();
+
+        await validateLogin(loginEmailValue, loginPassValue);
+        });
+
+        const setLoginError = (element, message) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+        
+
+        errorDisplay.innerText = message;
+        element.classList.add('error');
+        errorDisplay.classList.add('error');
+        element.classList.remove('success');
+        errorDisplay.classList.remove('success');
+
+        }; 
+
+        const setLoginSuccess = (element) => {
+            const formGroup = element.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = '';
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
+
+        };
+
+
+        async function validateLogin (email, password) {
+
+        if(!email) {
+            setLoginError(loginEmail, "*Please enter the email");
+        }
+        else {
+            setLoginSuccess(loginEmail);
+        }
+
+
+        if(!password) {
+            setLoginError(loginPass, "*Please enter the password");
+            return;
+        }
+        else {
+            setLoginSuccess(loginPass);
+        }
+
+        const response = await fetch('/admin/login', {
+                method: "POST",
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const loginData = await response.json();
+
+            if(loginData.success) {
+                    window.location.href = "/admin/dashboard";
+            }
+            else if(response.ok) {
+                const errorDisplay = document.querySelector('.main-error');
+                const loginEmail = document.getElementById('loginEmail');
+                const loginPass = document.getElementById('loginPassword');
+
+                errorDisplay.innerText = loginData.message;
+                loginEmail.classList.add('error');
+                loginEmail.classList.remove('success');
+                loginPass.classList.add('error');
+                loginPass.classList.remove('success');
+            }
+        }
+  </script>
 
 <%- include('./layout/adminFooter.ejs') %>

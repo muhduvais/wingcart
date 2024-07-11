@@ -7,6 +7,7 @@ const sharp = require('sharp');
 
 const multer = require('multer');
 const path = require('path');
+const { error } = require("console");
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -44,15 +45,12 @@ const verifyLogin = async (req, res) => {
         const {email, password} = req.body;
         const admin = await User.findOne({email})
 
-    if (!email || !password) {
-        res.render("adminLogin", {errMsg: "Please fill the fields!", loginData: email})
-    }
-    else if (!admin || (password !== admin.password)) {
-        res.render("adminLogin", {errMsg: "Invalid email or password!", loginData: email})
+    if (!admin || (password !== admin.password)) {
+        res.status(200).json({ message: "*Invalid email or password!"});
     }
     else {
         req.session.admin = admin;
-        res.redirect("/admin/dashboard");
+        res.status(200).json({success: true});
     }
     } catch (err) {
         console.log(err, "Error logging in!");
@@ -136,12 +134,27 @@ const toAddCategory = async (req, res) => {
 }
 
 const verifyAddCategory = async (req, res) => {
-    const category = new Category ({
-        name: req.body.categoryName,
-        description: req.body.categoryDesc,
-    });
-    await category.save();
-    res.redirect('/admin/categoryManagement?message=Category added successfully...');
+    try {
+        const {name, description} = req.body;
+        const regName = new RegExp(name, 'i');
+        const isPresentCategory = await Category.findOne({name: {$regex: regName}});
+        if (!isPresentCategory) {
+            const category = new Category ({
+                name: name,
+                description: description
+            });
+            await category.save();
+            console.log("Category saved");
+            res.status(200).json({success: true});
+        }
+        else {
+            res.status(200).json({message: "Category already exists!"});
+        }
+    }
+    catch (err) {
+        console.error("Error adding category", err);
+        res.status(500).send('Internal Server Error');
+    }
 }
 
 const categoryListToggle = async (req, res) => {
@@ -159,37 +172,30 @@ const categoryListToggle = async (req, res) => {
 const toEditCategory = async (req,res) => {
     const categoryId = req.params.category_id;
     const category = await Category.findOne({_id: categoryId});
-    res.render('editCategory', {category});
+    res.render('editCategory', {category, categoryId});
 }
 
 const verifyEditCategory = async (req, res) => {
-    const {categoryName, categoryDesc} = req.body;
-    await Category.updateOne({_id: req.params.category_id}, {name: categoryName, description: categoryDesc});
-    res.redirect('/admin/categoryManagement?message=Category edited successfully...');
-}
+    try {
+        const { name, description } = req.body;
+        const regName = new RegExp(name, 'i');
+        
+        const existingCategory = await Category.findOne({ name: { $regex: regName }, _id: { $ne: req.params.category_id }});
 
-// const verifyEditCategory = async (req, res) => {
-//     try {
-//         const { categoryName, categoryDesc } = req.body;
-//         const updates = {
-//           name: categoryName,
-//           description: categoryDesc
-//         };
-    
-//         if (req.file) {
-//           const buffer = await sharp(req.file.buffer)
-//             .resize({ width: 300, height: 300 }) // Resize image as needed
-//             .toBuffer();
-//           updates.image = buffer;
-//         }
-    
-//         await Category.findByIdAndUpdate(req.params.category_id, updates);
-//         res.redirect('/admin/categoryManagement');
-//       } catch (err) {
-//         console.error(err);
-//         res.status(500).send('Error editing category.');
-//       }
-// }
+        if (existingCategory) {
+            return res.status(200).json({ message: "Category name already exists!" });
+        }
+
+        await Category.updateOne({ _id: req.params.category_id }, { $set: { name, description } });
+
+        console.log("Category updated");
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.error("Error editing category!", err);
+        res.status(500).send('Internal Server Error');
+    }
+}
 
 const toProductMgmt = async (req, res) => {
     try {
@@ -245,25 +251,58 @@ const toAddBrand = async (req, res) => {
 }
 
 const verifyAddBrand = async (req, res) => {
-    const {brandName, brandDesc} = req.body;
-    const brand = new Brand({
-        name: brandName,
-        description: brandDesc
-    });
-    await brand.save();
-    res.redirect('/admin/brandList?message=Brand added successfully...');
+    try {
+        const {brandName, brandDesc} = req.body;
+        const regName = new RegExp(brandName, 'i');
+        console.log(regName);
+        const isPresentBrand = await Brand.findOne({name: {$regex: regName}});
+
+        if (!isPresentBrand) {
+            const brand = new Brand({
+                name: brandName,
+                description: brandDesc
+            });
+            
+            await brand.save();
+            console.log("Brand saved");
+            res.status(200).json({success: true});
+        }
+        else {
+            res.status(200).json({message: "Brand already exists!"});
+        }
+    }
+    catch (err) {
+        console.error("Error adding brand", err);
+        res.status(500).send("Internal server error");
+    }
 }
 
 const toEditBrand = async (req,res) => {
     const brandId = req.params.brand_id;
     const brand = await Brand.findOne({_id: brandId});
-    res.render('editBrand', {brand});
+    res.render('editBrand', {brand, brandId});
 }
 
 const verifyEditBrand = async (req, res) => {
-    const {brandName, brandDesc} = req.body;
-    await Brand.updateOne({_id: req.params.brand_id}, {name: brandName, description: brandDesc});
-    res.redirect('/admin/brandList?message=Brand edited successfully...');
+    try {
+        const {name, description} = req.body;
+        const regName = new RegExp(name, 'i');
+        console.log(req.params.brand_id);
+        const existingBrand = await Brand.findOne({ name: { $regex: regName }, _id: { $ne: req.params.brand_id }});
+
+        if (existingBrand) {
+            return res.status(200).json({ message: "Brand already exists!" });
+        }
+
+        await Brand.updateOne({ _id: req.params.brand_id }, { $set: { name, description } });
+
+        console.log("Brand updated");
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.error("Error editing brand!", err);
+        res.status(500).send('Internal Server Error');
+    }
 }
 
 const toAddProduct = async (req, res) => {
@@ -273,55 +312,59 @@ const toAddProduct = async (req, res) => {
 }
 
 const verifyAddProduct = async (req, res) => {
-    const categories = await Category.find({});
-    const brands = await Brand.find({});
-    const { productName, model, description, price, type, strapType, color, category, brand, stock } = req.body;
+    try {
+        const { productName, model, description, price, type, strapType, color, category, brand, stock } = req.body;
+        const regName = new RegExp(productName, 'i');
+        const isProductPresent = await Product.findOne({name: {$regex: regName}});
   
-  const images = [];
+        const images = [];
 
-  const width = 300;
-        const height = 300;
+                const width = 300;
+                const height = 300;
 
+                
+                if (req.files.image1) {
+                    const processedImage1 = await processImage(req.files.image1[0], width, height);
+                    images.push(processedImage1);
+                }
+                if (req.files.image2) {
+                    const processedImage2 = await processImage(req.files.image2[0], width, height);
+                    images.push(processedImage2);
+                }
+                if (req.files.image3) {
+                    const processedImage3 = await processImage(req.files.image3[0], width, height);
+                    images.push(processedImage3);
+                }
+
+            if (!isProductPresent) {
+                const newProduct = new Product({
+                    name: productName,
+                    model,
+                    description,
+                    price,
+                    type,
+                    strapType,
+                    color,
+                    category,
+                    brand,
+                    stock,
+                    images,
+                    addedDate: new Date(),
+                    isDeleted: false
+                });
         
-        if (req.files.image1) {
-            const processedImage1 = await processImage(req.files.image1[0], width, height);
-            images.push(processedImage1);
-        }
-        if (req.files.image2) {
-            const processedImage2 = await processImage(req.files.image2[0], width, height);
-            images.push(processedImage2);
-        }
-        if (req.files.image3) {
-            const processedImage3 = await processImage(req.files.image3[0], width, height);
-            images.push(processedImage3);
-        }
-
-//   if (req.files.image1) images.push(req.files.image1[0].filename);
-//   if (req.files.image2) images.push(req.files.image2[0].filename);
-//   if (req.files.image3) images.push(req.files.image3[0].filename);
-
-  const newProduct = new Product({
-    name: productName,
-    model: model,
-    description: description,
-    price: price,
-    type: type,
-    strapType: strapType,
-    color: color,
-    category: category,
-    brand: brand,
-    stock: stock,
-    images: images,
-    addedDate: new Date(),
-    isDeleted: false
-  });
-
-  newProduct.save()
-    .then(() => res.redirect('/admin/productManagement'))
-    .catch((err) => {
-        console.log("Error saving the product", err);
-        res.render('addProduct', {categories, brands, productName, model, description, price, type, strapType, color, category, brand, stock });
-    });
+                await newProduct.save()
+                console.log("Product saved");
+                res.status(200).json({success: true});
+                }
+            else {
+                res.status(200).json({message: "Product name already exists!"});
+            }
+    }
+    catch (err) {
+        console.error("Error adding the product", err);
+        res.status(500).send('Internal Server Error');
+    }
 }
 
 const processImage = async (file, width, height) => {
@@ -340,40 +383,69 @@ const toEditProduct = async (req,res) => {
     const brands = await Brand.find({});
     const productId = req.params.product_id;
     const product = await Product.findOne({_id: productId});
-    res.render('editProduct', {product, categories, brands});
+    res.render('editProduct', {product, categories, brands, productId});
 }
 
 const verifyEditProduct = async (req, res) => {
-    const categories = await Category.find({});
-    const brands = await Brand.find({});
-    const { productName, model, description, price, type, strapType, color, category, brand, stock , existingImage1, existingImage2, existingImage3} = req.body;
     
     try {
-  const images = [];
-    images.push(req.files['image1'] ? req.files['image1'][0].filename : existingImage1);
-    images.push(req.files['image2'] ? req.files['image2'][0].filename : existingImage2);
-    images.push(req.files['image3'] ? req.files['image3'][0].filename : existingImage3);
+        const { productName, model, description, price, type, strapType, color, category, brand, stock , existingImage1, existingImage2, existingImage3} = req.body;
+        const regName = new RegExp(productName, 'i');
+        const isProductPresent = await Product.findOne({ name: { $regex: regName }, _id: { $ne: req.params.product_id }});
 
-  await Product.updateOne({_id: req.params.product_id}, {
-    name: productName,
-    model: model,
-    description: description,
-    price: price,
-    type: type,
-    strapType: strapType,
-    color: color,
-    category: category,
-    brand: brand,
-    stock: stock,
-    images: images,
-    addedDate: new Date(),
-    isDeleted: false
-  });
+        const images = [];
 
-    res.redirect('/admin/productManagement');
+            const width = 300;
+            const height = 300;
+
+            if (req.files.image1) {
+                const processedImage1 = await processImage(req.files.image1[0], width, height);
+                images.push(processedImage1);
+                console.log("Pushing new image");
+            }
+            else {
+                console.log("Pushing existing image");
+                images.push(existingImage1); }
+
+            if (req.files.image2) {
+                const processedImage2 = await processImage(req.files.image2[0], width, height);
+                images.push(processedImage2);
+            }
+            else { images.push(existingImage2); }
+
+            if (req.files.image3) {
+                const processedImage3 = await processImage(req.files.image3[0], width, height);
+                images.push(processedImage3);
+            }
+            else { images.push(existingImage3); }
+
+        if (!isProductPresent) {
+            await Product.updateOne({_id: req.params.product_id}, {
+                name: productName,
+                model: model,
+                description: description,
+                price: price,
+                type: type,
+                strapType: strapType,
+                color: color,
+                category: category,
+                brand: brand,
+                stock: stock,
+                images: images,
+                addedDate: new Date(),
+                isDeleted: false
+            });
+
+            console.log("Product updated");
+            res.status(200).json({success: true});
+        }
+        else {
+            res.status(200).json({message: "Product name already exists!"});
+        }
 
     }catch(err) {
-        res.render('editProduct', {categories, brands, productName, model, description, price, type, strapType, color, category, brand, stock})
+        console.error("Error editing the product", err);
+        res.status(500).send('Internal Server Error');
     }
 }
 

@@ -5,3 +5,11 @@ input.error {
 label.error {
     color: #fa0b0b;
 }
+
+input.success {
+    border-color: #000;
+}
+
+label.success {
+    color: #000;
+}

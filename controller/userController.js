@@ -44,30 +44,24 @@ const userLogin = (req, res) => {
 
 const verifyLogin = async (req, res) => {
     
-    const {email, password} = req.body;
+    const { email, password} = req.body;
     
     try {
-        const user = await User.findOne({email});
+        const user = await User.findOne({email: email, isBlocked: false});
 
-        if(!email || !password) {
-            res.render("login", {errMessage: "Please fill the fields"});
-            return;
-        }
-        else if(!user) {
-            res.render("login", {errMessage: "Invalid username or password!", loginData: email});
-            return;
-        }
-
-        const comparePass = await bcrypt.compare(password, user.password);
-
-        if(!comparePass) {
-            res.render("login", {errMessage: "Invalid username or password!", loginData: email});
+        if(!user) {
+            console.log("user not found");
+            res.status(200).json({ message: "*Invalid email or password!"});
         }
         else {
+            const comparePass = await bcrypt.compare(password, user.password);
+            
+            if(!comparePass) {
+                res.status(200).json({ message: "*Invalid email or password!"});
+                return;
+            }
             req.session.user = user;
-            console.log(user);
-            res.redirect("/");
-            return;
+            res.status(200).json({success: true});
         }
     }
     catch(err) {
