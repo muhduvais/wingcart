@@ -1,0 +1,238 @@
+
+<!--Website: wwww.codingdung.com-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WingCart | <%= user.fname %></title>
+    <link rel="stylesheet" href="/static/css/profileStyle.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container light-style flex-grow-1 container-p-y">
+        <h4 class="font-weight-bold py-3 mb-4">
+            Account settings
+        </h4>
+        <div class="card overflow-hidden">
+            <div class="row no-gutters row-bordered row-border-light">
+                <div class="col-md-3 pt-0">
+                    <div class="list-group list-group-flush account-settings-links">
+                        <a class="list-group-item list-group-item-action active"
+                            href="/userProfile">General</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-change-password">Change password</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-info">Manage Addresses</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-social-links">Wishlist</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-connections">Order History</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-notifications">Wallet</a>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="tab-content">
+                        <div class="tab-pane fade active show" id="account-general">
+                            <!-- Profile pic - space -->
+                            <!-- <div class="card-body media align-items-center">
+                                <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt
+                                    class="d-block ui-w-80">
+                                <div class="media-body ml-4">
+                                    <label class="btn btn-outline-primary">
+                                        Upload new photo
+                                        <input type="file" class="account-settings-fileinput">
+                                    </label> &nbsp;
+                                    <button type="button" class="btn btn-default md-btn-flat">Reset</button>
+                                    <div class="text-light small mt-1">Allowed JPG, GIF or PNG. Max size of 800K</div>
+                                </div>
+                            </div> -->
+                            <hr class="border-light m-0">
+                            <form id="editProfileForm">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label class="form-label errorMsg">First Name</label>
+                                        <input type="text" class="form-control mb-1" id="fname" name="fname" value="<%= user.fname ? user.fname : 'Add your first name' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label errorMsg">Last Name</label>
+                                        <input type="text" class="form-control" id="lname" name="lname" value="<%= user.fname ? user.lname : 'Add your last name' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label errorMsg">Age</label>
+                                        <input type="text" class="form-control mb-1" id="age" name="age" value="<%= user.age ? user.age : 'Add your age' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label errorMsg">Phone</label>
+                                        <input type="text" class="form-control" id="phone" name="phone" value="<%= user.phone ? user.phone : 'Add your phone' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label errorMsg">Email</label>
+                                        <input type="text" class="form-control" id="email" name="email" value="<%= user.email ? user.email : 'Add your email' %>">
+                                    </div>
+                                    <div class="text-right mt-3">
+                                        <p class="profileMsg"></p>
+                                        <button type="submit" class="btn btn-primary" id="editProfileBtn">Save changes</button>&nbsp;
+                                        <a href="/userProfile"><button type="button" class="btn btn-primary">Cancel</button></a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('editProfileForm');
+        const fname = document.getElementById('fname');
+        const lname = document.getElementById('lname');
+        const age = document.getElementById('age');
+        const phone = document.getElementById('phone');
+        const email = document.getElementById('email');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            validatePfrofile();
+        });
+
+        const setError = (element, message) => {
+        const formGroup = element.parentElement;
+        const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('error');
+        errorDisplay.classList.add('error');
+        element.classList.remove('success');
+        errorDisplay.classList.remove('success');
+
+}; 
+
+        const setSuccess = (element, message) => {
+        const formGroup = element.parentElement;
+        const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
+
+};
+
+const isValidEmail = email => {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+};
+
+const isValidName = name => {
+    var regex = /^[a-zA-Z ]{1,30}$/;
+    return regex.test(name);
+};
+
+const isValidPhone = phone => {
+    const re = /^\d{10}$/;
+    return re.test(phone);
+}
+
+        const validatePfrofile = async () => {
+            
+            const fnameValue = fname.value.trim();
+            const lnameValue = lname.value.trim();
+            const ageValue = age.value.trim();
+            const phoneValue = phone.value.trim();
+            const emailValue = email.value.trim();
+
+            let isValid = true;
+
+            if(fnameValue && !isValidName(fnameValue)) {
+                setError(fname, 'Please enter a valid name');
+                isValid = false;
+            } else {
+                setSuccess(fname, "First Name");
+            }
+
+            if(lnameValue && !isValidName(lnameValue)) {
+                setError(lname, 'Please enter a valid name');
+                isValid = false;
+            } else {
+                setSuccess(lname, "Last Name");
+            }
+
+            if(ageValue && ageValue <= 0 || ageValue > 110) {
+                setError(age, 'Please enter a valid age');
+                isValid = false;
+            } else {
+                setSuccess(age, "Age");
+            }
+
+            if(phoneValue && !isValidPhone(phoneValue)) {
+                setError(phone, 'Please enter a valid phone number');
+                isValid = false;
+            } else {
+                setSuccess(phone, "Phone");
+            }
+
+            if(emailValue && !isValidEmail(emailValue)) {
+                setError(email, 'Please enter a valid email');
+                isValid = false;
+            } else {
+                setSuccess(email, "Email");
+            }
+
+            if (!isValid) {
+                return;
+            }
+
+            const response = await fetch('/editProfile', {
+                method: "PATCH",
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fname: fnameValue,
+                    lname: lnameValue,
+                    age: ageValue,
+                    phone: phoneValue,
+                    email: emailValue,
+                })
+            });
+
+            const profileData = await response.json();
+
+            if(profileData.success) {
+                window.location.href = '/userProfile';
+                alert('Profile saved!');
+                    // const profileMsg = document.querySelector('.profileMsg');
+                    // profileMsg.innerText = 'Profile updated successfully!';
+                    // profileMsg.classList.add('success');
+                    // profileMsg.classList.remove('error');
+            }
+            else if(response.ok) {
+                const profileMsg = document.querySelector('.profileMsg');
+                const loginEmail = document.getElementById('loginEmail');
+                const loginPass = document.getElementById('loginPassword');
+
+                profileMsg.innerText = profileData.message;
+                email.classList.add('error');
+                email.classList.remove('success');
+            }
+
+        }
+
+
+    </script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript"></script>
+</body>
+
+</html>

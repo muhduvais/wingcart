@@ -4,13 +4,12 @@ const session = require("express-session");
 const {v4:uuidv4} = require("uuid");
 const path = require("path");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv")
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const passport = require("./model/passport");
+require("dotenv").config();
 
 const app = express();
-dotenv.config();
 
 //body-parser
 app.use(bodyparser.json());
@@ -55,5 +54,5 @@ mongoose.connect("mongodb://localhost:27017/WingCart") //env
 .then(() => console.log("successfully connected to database"))
 .catch((err) => console.log("Error connecting to database"));
 
-const PORT = process.env.PORT;
-app.listen(3001, () => console.log("server started listening on http://localhost:3001"));
+const PORT = process.env.PORT || 3001;
+app.listen(3001, () => console.log(`server started listening on http://localhost:${PORT}`));

@@ -21,7 +21,6 @@ const userHome = async (req, res) => {
 
         const filteredProducts = products.filter(product => product.category && product.brand);
         if (!user) {
-            console.log("No user found!");
             res.render('home' , {products: filteredProducts})
         }
         else {
@@ -44,13 +43,11 @@ const userLogin = (req, res) => {
 
 const verifyLogin = async (req, res) => {
     
-    const { email, password} = req.body;
-    
     try {
+        const { email, password} = req.body;
         const user = await User.findOne({email: email, isBlocked: false});
 
         if(!user) {
-            console.log("user not found");
             res.status(200).json({ message: "*Invalid email or password!"});
         }
         else {
@@ -214,7 +211,6 @@ const toshop = async (req, res) => {
 
         const filteredProducts = products.filter(product => product.category && product.brand);
         if (!user) {
-            console.log("No user found!");
             res.render('shop' , {products: filteredProducts})
         }
         else {
@@ -235,6 +231,70 @@ const toProdDetails = async (req, res) => {
     }
 }
 
+const toUserProfile = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+        res.render('userProfile', {user, userId});
+    }
+    catch (err) {
+        console.error('Error fetching user profile:', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const toEditProfile = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+        res.render('userEditProfile', {user, userId});
+    }
+    catch (err) {
+        console.error('Error fetching user profile:', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const editProfile = async (req, res) => {
+    try {
+        const { fname, lname, age, phone, email } = req.body;
+        console.log(email)
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(200).json({ message: 'User not found' });
+        }
+        else if (fname === user.fname && lname === user.lname && age === user.age && phone === user.phone && email === user.email) {
+            res.status(200).json({ message: 'No changes to save' });
+        }
+
+        if (email) {
+            if (typeof email !== 'string' || !email.trim()) {
+                return res.status(400).json({ message: 'Invalid email format' });
+            }
+            const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+            if (existingUser) {
+                return res.status(409).json({ message: 'A user with this email already exists!' });
+            }
+        }
+
+        const updates = {};
+        if (fname && fname !== user.fname) updates.fname = fname;
+        if (lname && lname !== user.lname) updates.lname = lname;
+        if (age && age !== user.age) updates.age = age;
+        if (phone && phone !== user.phone) updates.phone = phone;
+        if (email && email !== user.email) updates.email = email;
+
+        await User.findByIdAndUpdate(userId, {$set: updates});
+        res.status(200).json({success: true});
+    }
+    catch (err) {
+        console.error('Error editing user profile:', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
 
 
 module.exports = {
@@ -249,4 +309,7 @@ module.exports = {
     userLogout,
     toshop,
     toProdDetails,
+    toUserProfile,
+    toEditProfile,
+    editProfile,
 }
