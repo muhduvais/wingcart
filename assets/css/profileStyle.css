@@ -136,6 +136,12 @@ label.success {
     margin-bottom: 20px;
 }
 
+h3.edit-profile-heading {
+    color: #727272;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
 .user-content p {
     font-size: 17px;
 }

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WingCart | <%= user.fname %></title>
+    <link rel="stylesheet" href="/static/css/profileStyle.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .address-container {
+        padding: 20px;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+    .address-actions {
+        margin-top: 10px;
+    }
+</style>
+</head>
+
+<body>
+    <div class="container light-style flex-grow-1 container-p-y">
+        <h4 class="font-weight-bold py-3 mb-4">
+            Account settings
+        </h4>
+        <div class="card overflow-hidden">
+            <div class="row no-gutters row-bordered row-border-light">
+                <div class="col-md-3 pt-0">
+                    <div class="list-group list-group-flush account-settings-links">
+                        <a class="list-group-item list-group-item-action active"
+                            href="/userProfile">General</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="/changePassword">Change password</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="/addressManagement">Manage Addresses</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-social-links">Wishlist</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-connections">Order History</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="#account-notifications">Wallet</a>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="tab-content">
+                        <div class="tab-pane fade active show" id="account-general">
+                            <hr class="border-light m-0">
+                            
+                            <!-- /////////////////////////////// -->
+
+                            <div class="container mt-5">
+                                <h3 class="edit-profile-heading">Add New Address</h3 class="edit-profile-heading">
+                                <form id="add-address" class="mb-4">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="fname" class="errorMsg">First Name</label>
+                                            <input type="text" class="form-control" id="fname" name="fname">
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="lname" class="errorMsg">Last Name</label>
+                                            <input type="text" class="form-control" id="lname" name="lname">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="country" class="errorMsg">Country</label>
+                                        <input type="text" class="form-control" id="country" name="country">
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-4">
+                                            <label for="city" class="errorMsg">City</label>
+                                            <input type="text" class="form-control" id="city" name="city">
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="state" class="errorMsg">State</label>
+                                            <input type="text" class="form-control" id="state" name="state">
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="zip" class="errorMsg">ZIP Code</label>
+                                            <input type="text" class="form-control" id="zip" name="zip">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="phone" class="errorMsg">Phone</label>
+                                        <input type="text" class="form-control" id="phone" name="phone">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Add Address</button>
+                                    <a href="/" class="btn btn-primary">Cancel</a>
+                                </form>
+                            </div>
+
+                            <!-- /////////////////////////////// -->
+
+                        </div>
+                        
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('add-address');
+        const fname = document.getElementById('fname');
+        const lname = document.getElementById('lname');
+        const country = document.getElementById('country');
+        const city = document.getElementById('city');
+        const state = document.getElementById('state');
+        const zip = document.getElementById('zip');
+        const phone = document.getElementById('phone');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            validateAddress();
+        });
+
+        const setError = (element, message) => {
+        const formGroup = element.parentElement;
+        const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('error');
+        errorDisplay.classList.add('error');
+        element.classList.remove('success');
+        errorDisplay.classList.remove('success');
+
+}; 
+
+        const setSuccess = (element, message) => {
+        const formGroup = element.parentElement;
+        const errorDisplay = formGroup.querySelector('.errorMsg');
+
+        errorDisplay.innerText = message;
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
+
+};
+
+const isValidName = name => {
+    var regex = /^[a-zA-Z ]{1,30}$/;
+    return regex.test(name);
+};
+
+const isValidPhone = phone => {
+    const re = /^\d{10}$/;
+    return re.test(phone);
+}
+
+        const validateAddress = async () => {
+            
+            const fnameValue = fname.value.trim();
+            const lnameValue = lname.value.trim();
+            const countryValue = country.value.trim();
+            const cityValue = city.value.trim();
+            const stateValue = state.value.trim();
+            const zipValue = zip.value.trim();
+            const phoneValue = phone.value.trim();
+
+            let isValid = true;
+
+            if (!fnameValue) {
+                setError(fname, 'Please enter your first name');
+                isValid = false;
+            } else if(fnameValue && !isValidName(fnameValue)) {
+                setError(fname, 'Please enter a valid name');
+                isValid = false;
+            } else {
+                setSuccess(fname, "First Name");
+            }
+
+            if (!lnameValue) {
+                setError(lname, 'Please enter your last name');
+                isValid = false;
+            } else if(lnameValue && !isValidName(lnameValue)) {
+                setError(lname, 'Please enter a valid name');
+                isValid = false;
+            } else {
+                setSuccess(lname, "Last Name");
+            }
+
+            if (!countryValue) {
+                setError(country, 'Please enter your country');
+                isValid = false;
+            } else {
+                setSuccess(country, "Country");
+            }
+
+            if (!cityValue) {
+                setError(city, 'Please enter your city');
+                isValid = false;
+            } else {
+                setSuccess(city, "Country");
+            }
+
+            if (!stateValue) {
+                setError(state, 'Please enter your state');
+                isValid = false;
+            } else {
+                setSuccess(state, "State");
+            }
+
+            if (!zipValue) {
+                setError(zip, 'Please enter your zip code');
+                isValid = false;
+            } else if (zipValue.length !== 6) {
+                setError(zip, 'Please enter enter a valid zip code');
+                isValid = false;
+            } else {
+                setSuccess(zip, "Zip Code");
+            }
+
+            if (!phoneValue) {
+                setError(phone, 'Please enter your phone number');
+                isValid = false;
+            } else if(phoneValue && !isValidPhone(phoneValue)) {
+                setError(phone, 'Please enter a valid phone number');
+                isValid = false;
+            } else {
+                setSuccess(phone, "Phone");
+            }
+
+            if (!isValid) {
+                return;
+            }
+
+            const response = await fetch('/addAddress', {
+                method: "post",
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fname: fnameValue,
+                    lname: lnameValue,
+                    country: countryValue,
+                    city: cityValue,
+                    state: stateValue,
+                    pincode: zipValue,
+                    phone: phoneValue
+
+                })
+            });
+
+            const addressData = await response.json();
+
+            if (addressData.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Address added'
+                    }).then(() => {
+                        window.location.href = '/addressManagement';
+                    });
+            } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to add the address.'
+                    });
+            }
+
+        }
+
+
+    </script>
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript"></script>
+</body>
+
+</html>

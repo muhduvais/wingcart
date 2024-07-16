@@ -2,6 +2,7 @@ const User = require("../model/usersModel");
 const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
 const Category = require("../model/categoriesModel");
+const Address = require("../model/addressesModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
 const generateOtp = require("../model/generateOtp");
@@ -295,6 +296,139 @@ const editProfile = async (req, res) => {
     }
 }
 
+const toChangePass = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+        res.render('userChangePassword', { user, userId });
+    }
+    catch (err) {
+        console.error('Error fetching userChangePassword', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const verifyChangePass = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const { password, newPassword } = req.body;
+        const user = await User.findOne({ _id: userId });
+        const comparePass = await bcrypt.compare(password, user.password);
+
+        if (!comparePass) {
+            res.status(200).json({ message: 'Invalid current password!'});
+            return;
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({success: true});
+        
+    }
+    catch (err) {
+        console.error('Error changing the password', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const toAddr = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+        const addresses = await Address.find({user: userId});
+        res.render('userAddresses', {user, userId, addresses});
+    }
+    catch (err) {
+        console.error('Error fetching addresses', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const toAddAddr = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+        res.render('userAddAddress', {user, userId});
+    }
+    catch (err) {
+        console.error('Error fetching add address', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const verifyAddAddr = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const { fname, lname, country, city, state, pincode, phone } = req.body;
+
+        const newAddress = new Address ({
+            fname,
+            lname,
+            country,
+            city,
+            state,
+            pincode,
+            phone,
+            user: userId
+        })
+
+        await newAddress.save();
+
+        res.status(200).json({success: true});
+        
+    }
+    catch (err) {
+        console.error('Error adding the address', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const deleteAddress = async (req, res) => {
+    try {
+        const addressId = req.params.address_id;
+        await Address.findByIdAndDelete(addressId);
+        res.status(200).json({success: true});
+    }
+    catch (err) {
+        console.error('Error deleting address', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const toEditAddress = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const addressId = req.params.address_id;
+        const address = await Address.findById(addressId);
+        const user = await User.findById(userId);
+        res.render('userEditAddress', {user, userId, address});
+    }
+    catch (err) {
+        console.error('Error fetching edit address', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const verifyEditAddress = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const addressId = req.params.address_id;
+        const { fname, lname, country, city, state, pincode, phone } = req.body;
+
+        await Address.findByIdAndUpdate(addressId, {fname, lname, country, city, state, pincode, phone, user: userId});
+
+        res.status(200).json({success: true});
+        
+    }
+    catch (err) {
+        console.error('Error editing the address', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
 
 
 module.exports = {
@@ -312,4 +446,12 @@ module.exports = {
     toUserProfile,
     toEditProfile,
     editProfile,
+    toChangePass,
+    verifyChangePass,
+    toAddr,
+    toAddAddr,
+    verifyAddAddr,
+    deleteAddress,
+    toEditAddress,
+    verifyEditAddress,
 }

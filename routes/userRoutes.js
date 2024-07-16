@@ -21,5 +21,13 @@ userRoutes.get('/prodDetails/:product_id', userController.toProdDetails);
 userRoutes.get('/userProfile', userAuth.isUserActive, userAuth.isUserBlocked, userController.toUserProfile);
 userRoutes.get('/editProfile', userAuth.isUserActive, userAuth.isUserBlocked, userController.toEditProfile);
 userRoutes.patch('/editProfile', userAuth.isUserActive, userAuth.isUserBlocked, userController.editProfile);
+userRoutes.get('/changePassword', userAuth.isUserActive, userAuth.isUserBlocked, userController.toChangePass);
+userRoutes.patch('/changePassword', userAuth.isUserActive, userAuth.isUserBlocked, userController.verifyChangePass);
+userRoutes.get('/addressManagement', userAuth.isUserActive, userAuth.isUserBlocked, userController.toAddr);
+userRoutes.get('/addAddress', userAuth.isUserActive, userAuth.isUserBlocked, userController.toAddAddr);
+userRoutes.post('/addAddress', userAuth.isUserActive, userAuth.isUserBlocked, userController.verifyAddAddr);
+userRoutes.delete('/deleteAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.deleteAddress);
+userRoutes.get('/editAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toEditAddress);
+userRoutes.put('/editAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.verifyEditAddress);
 
 module.exports = userRoutes;
