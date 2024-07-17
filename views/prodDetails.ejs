@@ -129,7 +129,7 @@
                         </div><!-- End .compare-dropdown -->
 
                         <div class="wishlist">
-                            <a href="#" title="cart">
+                            <a href="/cartManagement" title="cart">
                                 <div class="icon">
                                     <i class="icon-shopping-cart"></i>
                                     <span class="wishlist-count badge">0</span>
@@ -205,21 +205,31 @@
                   <div class="col-md-6">
                     <h2><%= product.name %></h2>
                     <p class="prod-details-desc"><%= product.description %></p>
-                    <p class="text-success prod-details-amount">₹<%= product.price %></p>
+                    <p class="card-text <% if (product.stock === 0) { %>text-danger<% } else { %>text-success<% } %> shop-prod-price">
+                        <% if (product.stock === 0) { %>
+                            Out of stock
+                        <% } else { %>
+                            ₹<%= product.price %>
+                        <% } %>
+                      </p>
 
-                    <div class="quantity-selector my-3">
-                        <button class="btn btn-outline-secondary btn-sm" onclick="decrementQuantity()">-</button>
-                        <input type="text" id="quantityInput" value="1" readonly class="quantity-input mx-2" style="width: 30px; text-align: center;">
-                        <button class="btn btn-outline-secondary btn-sm" onclick="incrementQuantity()">+</button>
+                      <div class="cart-product-quantity">
+                        <% if (product.stock !== 0) { %>
+                            <input type="number" name="quantityInput" id="quantityInput" class="form-control" value="1" min="1" max="<%= product.stock < 10 ? product.stock : 10 %>" step="1" data-decimals="0">
+                        <% } else { %>
+                        <% } %>
                     </div>
 
                     <div class="my-4">
                       <div class="row">
                         <div class="col-6">
-                          <button class="btn btn-primary btn-block">Add to Cart</button>
+                            <form class="add-to-cart">
+                                <input type="hidden" class="product-id" name="productId" value="<%= product._id %>">
+                                <button type="submit" class="btn btn-primary btn-block w-100" <% if (product.stock === 0) { %>disabled<% } else { %><% } %> >Add to Cart</button>
+                            </form>
                         </div>
                         <div class="col-6">
-                          <button class="btn btn-warning btn-block">Add to Wishlist</button>
+                          <button class="btn btn-warning btn-block" <% if (product.stock === 0) { %>disabled<% } else { %><% } %> >Add to Wishlist</button>
                         </div>
                       </div>
                     </div>
@@ -660,7 +670,67 @@
             }
     }
     </script>
-    
+
+    <script>
+        document.querySelectorAll('.add-to-cart').forEach(form => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const productId = form.querySelector('.product-id').value;
+            const quantity = document.getElementById('quantityInput').value;
+
+            try {
+                const response = await fetch('/addToCart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ productId, quantity })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const cartData = await response.json();
+                console.log('Cart Data:', cartData);
+
+                if (cartData.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Added to cart'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else if (cartData.message) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Info',
+                        text: cartData.message
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to add the product.'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An unexpected error occurred. Please try again later.'
+                });
+            }
+        });
+    });
+    </script>
+
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Plugins JS File -->
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.bundle.min.js"></script>

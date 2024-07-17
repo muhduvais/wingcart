@@ -313,8 +313,8 @@
                         <td><%= product.name ? product.name : "" %></td>
                         <!-- <td><%= product.images[0] ? product.images[0]: "" %></td> -->
                         <td><img class="productImg" src="/assets2/img/<%= product.images[0] %>" alt="Product image"></td>
-                        <td><%= product.stock ? product.stock: "" %></td>
-                        <td>₹<%= product.price ? product.price: "" %></td>
+                        <td><%= product.stock !== undefined && product.stock !== null ? product.stock : "" %></td>
+                        <td>₹<%= product.price ? product.price : "" %></td>
                         <td><%= product.addedDate ? new Date(product.addedDate).toISOString().split('T')[0]: "" %></td>
                         <!-- <td>
                           <% if (product.image) { %>

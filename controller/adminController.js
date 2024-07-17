@@ -2,6 +2,7 @@ const User = require("../model/usersModel");
 const Category = require("../model/categoriesModel");
 const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
+const Cart = require("../model/cartModel");
 const Admin = require("../model/adminModel");
 const sharp = require('sharp');
 
@@ -486,6 +487,19 @@ const verifyEditProduct = async (req, res) => {
 
             console.log("Product updated");
             res.status(200).json({success: true});
+
+            //////
+        const carts = await Cart.find({ 'products.product': req.params.product_id });
+
+        for (let cart of carts) {
+            cart.products.forEach(item => {
+                if (item.product.toString() === req.params.product_id && item.quantity > stock) {
+                    item.quantity = stock;
+                }
+            });
+            await cart.save();
+        }
+    //////
         }
         else {
             res.status(200).json({message: "Product name already exists!"});

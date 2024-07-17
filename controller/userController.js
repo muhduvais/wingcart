@@ -3,6 +3,7 @@ const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
 const Category = require("../model/categoriesModel");
 const Address = require("../model/addressesModel");
+const Cart = require("../model/cartModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
 const generateOtp = require("../model/generateOtp");
@@ -236,7 +237,7 @@ const toUserProfile = async (req, res) => {
     try {
         const userId = req.session.user._id;
         const user = await User.findById(userId);
-        res.render('userProfile', {user, userId});
+        res.render('userProfile', {user, userId, cart});
     }
     catch (err) {
         console.error('Error fetching user profile:', err);
@@ -429,6 +430,91 @@ const verifyEditAddress = async (req, res) => {
     }
 }
 
+const toCart = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+        const cart = await Cart.findOne({user: userId}).populate('products.product');
+        res.render('cart', {user, userId, cart});
+    }
+    catch (err) {
+        console.error('Error fetching cart', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const addToCart = async (req, res) => {
+    try {
+        console.log('Request received:', req.body);
+        const userId = req.session.user._id;
+        const { productId, quantity } = req.body;
+
+        let cart = await Cart.findOne({ user: userId });
+        if (!cart) {
+            cart = new Cart({ user: userId, products: [] });
+        }
+
+        const productIndex = cart.products.findIndex(p => p.product.toString() === productId);
+
+        if (productIndex > -1) {
+            return res.status(200).json({ message: 'Already added to cart!' });
+        } else {
+            cart.products.push({ product: productId, quantity: parseInt(quantity, 10) || 1 });
+            await cart.save();
+            return res.status(200).json({ success: true });
+        }
+    } catch (err) {
+        console.error('Error adding product to cart:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+const deleteCartItem = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const productId = req.params.product_id;
+        const cart = await Cart.findOne({user: userId});
+        
+        if (cart) {
+            cart.products = cart.products.filter(item => item.product.toString() !== productId);
+            await cart.save();
+            console.log('Product removed from cart:', cart);
+            return res.status(200).json({ success: true });
+        } else {
+            return res.status(404).json({ message: 'Cart not found' });
+        }
+    }
+    catch (err) {
+        console.error('Error deleting cart item', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const updateCart = async (req, res) => {
+    try {
+        const { productId, quantity } = req.body;
+        const userId = req.session.user._id;
+        
+        const cart = await Cart.findOne({ user: userId });
+
+        if (cart) {
+            const productIndex = cart.products.findIndex(item => item.product.toString() === productId);
+            if (productIndex > -1) {
+                cart.products[productIndex].quantity = quantity;
+                await cart.save();
+                return res.json({ success: true });
+            } else {
+                return res.status(404).json({ message: 'Product not found in cart' });
+            }
+        } else {
+            return res.status(404).json({ message: 'Cart not found' });
+        }
+    } catch (err) {
+        console.error('Error updating cart', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
 
 
 module.exports = {
@@ -454,4 +540,8 @@ module.exports = {
     deleteAddress,
     toEditAddress,
     verifyEditAddress,
+    toCart,
+    addToCart,
+    deleteCartItem,
+    updateCart,
 }

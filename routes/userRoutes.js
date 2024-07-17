@@ -29,5 +29,9 @@ userRoutes.post('/addAddress', userAuth.isUserActive, userAuth.isUserBlocked, us
 userRoutes.delete('/deleteAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.deleteAddress);
 userRoutes.get('/editAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toEditAddress);
 userRoutes.put('/editAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.verifyEditAddress);
+userRoutes.get('/cartManagement', userAuth.isUserActive, userAuth.isUserBlocked, userController.toCart);
+userRoutes.post('/addToCart', userController.addToCart);
+userRoutes.delete('/deleteCartItem/:product_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.deleteCartItem);
+userRoutes.patch('/updateCart', userAuth.isUserActive, userAuth.isUserBlocked, userController.updateCart);
 
 module.exports = userRoutes;
