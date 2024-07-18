@@ -237,7 +237,7 @@ const toUserProfile = async (req, res) => {
     try {
         const userId = req.session.user._id;
         const user = await User.findById(userId);
-        res.render('userProfile', {user, userId, cart});
+        res.render('userProfile', {user, userId});
     }
     catch (err) {
         console.error('Error fetching user profile:', err);
@@ -435,7 +435,16 @@ const toCart = async (req, res) => {
         const userId = req.session.user._id;
         const user = await User.findById(userId);
         const cart = await Cart.findOne({user: userId}).populate('products.product');
-        res.render('cart', {user, userId, cart});
+
+        if (cart) {
+            const subtotal = cart.products.reduce((sum, item) => {
+            return sum + (item.product.price * item.quantity);
+            }, 0);
+
+            res.render('cart', {user, userId, cart, subtotal});
+        } else {
+            res.render('cart', { user, userId, cart, subtotal: 0 });
+        }
     }
     catch (err) {
         console.error('Error fetching cart', err);

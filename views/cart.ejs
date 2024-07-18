@@ -200,7 +200,15 @@
                                                             <% } %>
                                                         </div>
                                                     </td>
-                                                    <td class="total-col">₹<span class="total-price"><%= item.product.stock !== 0 ? item.product.price * item.quantity : '' %></span></td>
+                                                    <td class="total-col"><span class="total-price <%= item.product.stock === 0 ? 'd-none' : '' %>">
+                                                        <% if(item.product.stock !== 0 && item.quantity !== 0) { %>
+                                                            ₹ <%= item.product.price * item.quantity %>
+                                                        <% } else if (item.product.stock !== 0 && item.quantity === 0) { %>
+                                                            ₹ <%= item.product.price %>
+                                                        <% } else { %>
+                                                            0
+                                                        <% } %>
+                                                    </span></td>
                                                     <td class="remove-col">
                                                         <form class="removeBtn" data-product-id="<%= item.product._id %>">
                                                             <button type="submit" class="btn-remove"><i class="icon-close"></i></button>
@@ -217,16 +225,8 @@
 								</table><!-- End .table table-wishlist -->
 
 	                			<div class="cart-bottom">
-			            			<div class="cart-discount">
-			            				<form action="#">
-			            					<div class="input-group">
-				        						<input type="text" class="form-control" required placeholder="coupon code">
-				        						<div class="input-group-append">
-													<button class="btn btn-outline-primary-2" type="submit"><i class="icon-long-arrow-right"></i></button>
-												</div><!-- .End .input-group-append -->
-			        						</div><!-- End .input-group -->
-			            				</form>
-			            			</div><!-- End .cart-discount -->
+                                    <!-- ////////Coupon-part///// -->
+                                    <!-- ////////Coupon-part///// -->
 
 			            			<button class="btn btn-outline-dark-2" onclick="reloadCart()"><span>UPDATE CART</span><i class="icon-refresh"></i></button>
 		            			</div><!-- End .cart-bottom -->
@@ -239,7 +239,7 @@
                                         <tbody>
                                             <tr class="summary-subtotal">
                                                 <td>Subtotal:</td>
-                                                <td class="summary-subtotal-value">₹0.00</td>
+                                                <td class="summary-subtotal-value">₹<%= subtotal.toFixed(2) %></td>
                                             </tr>
                                             <tr class="summary-shipping">
                                                 <td>Shipping:</td>
@@ -256,7 +256,7 @@
                                             </tr>
                                             <tr class="summary-total">
                                                 <td>Total:</td>
-                                                <td class="summary-total-value">₹0.00</td>
+                                                <td class="summary-total-value">₹<%= (subtotal + 0).toFixed(2) %></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -264,7 +264,7 @@
 	                				<a href="checkout.html" class="btn btn-outline-primary-2 btn-order btn-block">PROCEED TO CHECKOUT</a>
 	                			</div><!-- End .summary -->
 
-		            			<a href="category.html" class="btn btn-outline-dark-2 btn-block mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
+		            			<a href="/shop" class="btn btn-outline-dark-2 btn-block mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
 	                		</aside><!-- End .col-lg-3 -->
 	                	</div><!-- End .row -->
 	                </div><!-- End .container -->
@@ -657,7 +657,7 @@
 
     <script>
         document.querySelectorAll('.quantity-input').forEach(input => {
-    input.addEventListener('input', function() {
+        input.addEventListener('input', function() {
         const quantity = parseInt(this.value, 10);
         const productRow = this.closest('tr');
         const productId = productRow.getAttribute('data-product-id');
@@ -694,7 +694,65 @@
 
     <script>
     //////sub-total-summary-table///////////
-    
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('input', function() {
+            const quantity = parseInt(this.value, 10);
+            const productRow = this.closest('tr');
+            const price = parseFloat(productRow.querySelector('.price').textContent);
+            const totalPriceElement = productRow.querySelector('.total-price');
+
+            // Update total price for the item
+            const newTotal = price * quantity;
+            totalPriceElement.textContent = `₹${newTotal}`;
+
+            // Update subtotal and total
+            updateSummary();
+
+            // Send updated quantity to the server
+            const productId = productRow.getAttribute('data-product-id');
+            fetch(`/updateCart`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Cart updated successfully');
+                } else {
+                    console.error('Error updating cart:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+
+    function updateSummary() {
+        let subtotal = 0;
+        document.querySelectorAll('.total-price').forEach(element => {
+            subtotal += parseFloat(element.textContent.replace('₹', ''));
+        });
+
+        const shippingCost = parseFloat(document.querySelector('.shipping-cost[data-cost]').getAttribute('data-cost'));
+        const total = subtotal + shippingCost;
+
+        document.querySelector('.summary-subtotal-value').textContent = `₹${subtotal.toFixed(2)}`;
+        document.querySelector('.summary-total-value').textContent = `₹${total.toFixed(2)}`;
+    }
+
+    document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const shippingCost = parseFloat(this.closest('tr').querySelector('.shipping-cost').getAttribute('data-cost'));
+            updateSummary();
+        });
+    });
     </script>
 
     <!-- Sweet Alert -->

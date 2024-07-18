@@ -43,6 +43,7 @@ adminRouter.post('/productListed/:product_id', adminController.productListToggle
 adminRouter.get('/ddd', (req, res) => {
     res.render('ddddddddddddd');
 })
+// adminRouter.get('/offerCouponManagement', adminAuth, adminController.toOfferCoupon)
 
 
 module.exports = adminRouter;

@@ -496,10 +496,13 @@ const verifyEditProduct = async (req, res) => {
                 if (item.product.toString() === req.params.product_id && item.quantity > stock) {
                     item.quantity = stock;
                 }
+                else if (item.product.toString() === req.params.product_id && item.quantity === 0 && stock > 0) {
+                    item.quantity = 1;
+                }
             });
             await cart.save();
         }
-    //////
+        //////
         }
         else {
             res.status(200).json({message: "Product name already exists!"});
