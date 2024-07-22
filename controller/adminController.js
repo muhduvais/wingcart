@@ -3,6 +3,7 @@ const Category = require("../model/categoriesModel");
 const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
 const Cart = require("../model/cartModel");
+const Order = require("../model/ordersModel");
 const Admin = require("../model/adminModel");
 const sharp = require('sharp');
 
@@ -549,6 +550,18 @@ const brandListToggle = async (req, res) => {
     }
 }
 
+// const toOrderManagement = async (req, res) => {
+//     try {
+//         const orders = await Order.find({});
+
+//         res.render('adminOrderManagement', { orders });
+//     }
+//     catch (err) {
+//         console.error('Error fetching order Management', err);
+//         res.status(500).send('Internal server error'); 
+//     }
+// }
+
 
 module.exports = {
     toAdminDash,
@@ -576,5 +589,6 @@ module.exports = {
     verifyEditProduct,
     productListToggle,
     brandListToggle,
+    // toOrderManagement,
 
 }

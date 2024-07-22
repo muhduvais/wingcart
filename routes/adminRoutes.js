@@ -42,8 +42,12 @@ adminRouter.post('/productListed/:product_id', adminController.productListToggle
 
 adminRouter.get('/ddd', (req, res) => {
     res.render('ddddddddddddd');
-})
-// adminRouter.get('/offerCouponManagement', adminAuth, adminController.toOfferCoupon)
+});
+
+// adminRouter.get('/orderManagement', adminAuth, adminController.toOrderManagement);
+// adminRouter.get('/orderDetails/:order_id', adminAuth, adminController.toOrderManagement);
+// adminRouter.post('/updateOrderStatus/:orderId/:productId', adminController.updateOrderStatus);
+// adminRouter.post('/cancelProduct/:orderId/:productId', adminAuth, adminController.cancelProduct);
 
 
 module.exports = adminRouter;

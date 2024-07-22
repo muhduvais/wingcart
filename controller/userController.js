@@ -4,6 +4,8 @@ const Brand = require("../model/brandsModel");
 const Category = require("../model/categoriesModel");
 const Address = require("../model/addressesModel");
 const Cart = require("../model/cartModel");
+const Payment = require("../model/paymentModel");
+const Order = require("../model/ordersModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
 const generateOtp = require("../model/generateOtp");
@@ -227,7 +229,9 @@ const toProdDetails = async (req, res) => {
     try {
         const user = await User.find();
         const product = await Product.findOne({_id: req.params.product_id});
-        res.render('prodDetails', {user, product})
+        const category = product.category;
+        const recomProducts = await Product.find({category, _id: { $ne: req.params.product_id }});
+        res.render('prodDetails', {user, product, recomProducts})
     } catch (err) {
         console.error(err, "Error rendering product details");
     }
@@ -455,8 +459,14 @@ const toCart = async (req, res) => {
 const addToCart = async (req, res) => {
     try {
         console.log('Request received:', req.body);
-        const userId = req.session.user._id;
+        const user = req.session.user;
         const { productId, quantity } = req.body;
+
+        if (!user || user.isBlocked) {
+            return res.status(200).json({ user: false });
+        }
+
+        const userId = user._id;
 
         let cart = await Cart.findOne({ user: userId });
         if (!cart) {
@@ -466,11 +476,11 @@ const addToCart = async (req, res) => {
         const productIndex = cart.products.findIndex(p => p.product.toString() === productId);
 
         if (productIndex > -1) {
-            return res.status(200).json({ message: 'Already added to cart!' });
+            return res.status(200).json({ message: 'Already added to cart!', user: true });
         } else {
             cart.products.push({ product: productId, quantity: parseInt(quantity, 10) || 1 });
             await cart.save();
-            return res.status(200).json({ success: true });
+            return res.status(200).json({ success: true, user: true });
         }
     } catch (err) {
         console.error('Error adding product to cart:', err);
@@ -524,6 +534,239 @@ const updateCart = async (req, res) => {
     }
 }
 
+const toCheckout = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const user = await User.findById(userId);
+        const cart = await Cart.findOne({user: userId}).populate('products.product');
+        const address = await Address.find({user: userId});
+        let paymentMethod = await Payment.find({user: userId});
+
+        if (paymentMethod.length === 0) {
+            const newMethod = new Payment({
+                user: user._id,
+                type: 'Cash on delivery',
+                details: null
+            });
+
+            await newMethod.save();
+        }
+
+        paymentMethod = await Payment.find({user: userId});
+
+        if (cart) {
+            const subtotal = cart.products.reduce((sum, item) => {
+            return sum + (item.product.price * item.quantity);
+            }, 0);
+
+            res.render('checkout', {user, userId, cart, subtotal, address, paymentMethod});
+        } else {
+            res.render('checkout', { user, userId, cart, subtotal: 0, address, paymentMethod });
+        }
+    }
+    catch (err) {
+        console.error('Error fetching checkout', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const generateOrderId = () => {
+    const date = new Date();
+    const components = [
+        date.getFullYear(),
+        ('0' + (date.getMonth() + 1)).slice(-2),
+        ('0' + date.getDate()).slice(-2),
+        ('0' + date.getHours()).slice(-2),
+        ('0' + date.getMinutes()).slice(-2),
+        ('0' + date.getSeconds()).slice(-2),
+    ];
+
+    const dateString = components.join('');
+    const randomNumber = Math.floor(Math.random() * 10000);
+
+    return `ORD-${dateString}-${randomNumber}`;
+};
+
+const updateProductQuantities = async (orderId) => {
+    try {
+        const order = await Order.findById(orderId).populate('products.product');
+
+        if (!order) {
+            throw new Error('Order not found');
+        }
+
+        for (const item of order.products) {
+            const productId = item.product._id;
+            const orderedQuantity = item.quantity;
+
+            const product = await Product.findById(productId);
+
+            if (product) {
+                console.log(product.name);
+                console.log(product.stock);
+                product.stock -= orderedQuantity;
+                console.log(product.stock);
+                if (product.stock < 0) {
+                    product.stock = 0;
+                }
+
+                await product.save();
+            }
+        }
+
+        console.log('Product quantities updated successfully');
+    } catch (err) {
+        console.error('Error updating product quantities:', err);
+    }
+}
+
+const createOrder = async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const { addressId, paymentMethodId } = req.body;
+
+        const user = await User.findById(userId);
+        const cart = await Cart.findOne({ user: userId }).populate('products.product');
+        const orderId = generateOrderId();
+
+        if (!cart) {
+            return res.status(200).json({ message: 'Cart is empty' });
+        }
+
+        const orderProducts = cart.products.map(item => ({
+            product: item.product._id,
+            quantity: item.quantity,
+            price: item.product.price,
+            status: 'Pending',
+            cancellationDate: null,
+            cancellationReason: null,
+            returnDate: null,
+            returnReason: null,
+        }));
+
+        const totalAmount = orderProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        const newOrder = new Order({
+            orderId: orderId,
+            user: user._id,
+            address: addressId,
+            orderDate: new Date(),
+            coupon: null,
+            products: orderProducts,
+            payment: paymentMethodId,
+            offers: [],
+            totalAmount
+        });
+
+        await newOrder.save();
+
+        await Cart.deleteOne({ user: userId });
+
+        const createdOrder = await Order.findOne({orderId});
+        const order_id = createdOrder._id;
+        updateProductQuantities(order_id);
+
+        res.status(200).json({ success: 'Order placed successfully', orderId });
+    } catch (err) {
+        console.error('Error creating order', err);
+        res.status(500).send('Internal server error');
+    }
+};
+
+const toOrderConf = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const orderId = req.params.order_id;
+        const order = await Order.findOne({ orderId })
+            .populate('products.product')
+            .populate('address');
+        
+            const orderDate = new Date(order.orderDate);
+            const expectedDeliveryDate = new Date(orderDate);
+            expectedDeliveryDate.setDate(orderDate.getDate() + 3);
+    
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const deliveryDay = days[expectedDeliveryDate.getDay()];
+
+        res.render('orderConfirmation', { user, order, deliveryDay });
+    }
+    catch (err) {
+        console.error('Error fetching order confirmation', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const toOrderHistory = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const orders = await Order.find({ user: user._id });
+
+        res.render('orderHistory', { user, orders });
+    }
+    catch (err) {
+        console.error('Error fetching order History', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const toOrderDetails = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const orderId = req.params.order_id;
+        const order = await Order.findById(orderId).populate('products.product').populate('address');
+
+        if (!order || order.user.toString() !== user._id.toString()) {
+            return res.status(404).send('Order not found');
+        }
+
+        res.render('orderDetails', { user, order });
+    } catch (err) {
+        console.error('Error fetching order details', err);
+        res.status(500).send('Internal server error');
+    }
+};
+
+// const updateOrderStatus = async (req, res) => {
+//     try {
+//         const { orderId, productId } = req.params;
+//         const { status } = req.body;
+
+//         const order = await Order.findById(orderId);
+
+//         const product = order.products.find(item => item.product.toString() === productId);
+
+//         const statusOrder = ['Pendi', 'shipped', 'delivered', 'cancelled'];
+//         if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
+//             product.status = status;
+//             await order.save();
+//             return res.json({ success: true });
+//         }
+//         res.json({ success: false });
+//     } catch (err) {
+//         console.error('Error updating order status', err);
+//         res.status(500).json({ success: false });
+//     }
+// };
+
+const cancelProduct = async (req, res) => {
+    try {
+        const { orderId, productId } = req.params;
+
+        const order = await Order.findById(orderId);
+
+        const product = order.products.find(item => item.product.toString() === productId);
+
+        product.status = 'cancelled';
+        product.cancellationDate = new Date();
+        await order.save();
+
+        res.status(200).json({ success: true });
+    } catch (err) {
+        console.error('Error cancelling product', err);
+        res.status(500).json({ success: false });
+    }
+};
+
 
 
 module.exports = {
@@ -553,4 +796,10 @@ module.exports = {
     addToCart,
     deleteCartItem,
     updateCart,
+    toCheckout,
+    createOrder,
+    toOrderConf,
+    toOrderHistory,
+    toOrderDetails,
+    cancelProduct,
 }

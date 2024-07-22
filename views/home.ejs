@@ -667,7 +667,9 @@
                 const cartData = await response.json();
                 console.log('Cart Data:', cartData); // Log response
 
-                if (cartData.success) {
+                if (!cartData.user) {
+                    window.location.href = '/userLogin';
+                } else if (cartData.success) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Success',
