@@ -24,11 +24,51 @@ const userHome = async (req, res) => {
             });
 
         const filteredProducts = products.filter(product => product.category && product.brand);
+        const newArrivals = await Product.find().sort({ addedDate: -1 }).limit(10);
+        const mostPurchased = await Order.aggregate([
+            { $unwind: '$products' },
+            { $group: { _id: '$products.product', count: { $sum: '$products.quantity' } } },
+            { $sort: { count: -1 } },
+            { $limit: 5 }
+        ]);
+        const mostPurchasedProducts = await Product.find({ 
+            _id: { $in: mostPurchased.map(item => item._id) }
+        });
+
+        console.log(mostPurchasedProducts);
+
+        const menCategory = await Category.findOne({ name: 'Men' });
+        const womenCategory = await Category.findOne({ name: 'Women' });
+        const mostPurchasedMen = await Product.find({ 
+            _id: { $in: mostPurchased.map(item => item._id) },
+            category: menCategory._id
+        });
+        const mostPurchasedWomen = await Product.find({ 
+            _id: { $in: mostPurchased.map(item => item._id) },
+            category: womenCategory._id
+        });
+
         if (!user) {
-            res.render('home' , {products: filteredProducts})
+            res.render('home' , {
+                products: filteredProducts,
+                newArrivals,
+                mostPurchasedProducts,
+                mostPurchasedMen,
+                mostPurchasedWomen
+            });
         }
         else {
-            res.render('home', {user, products: filteredProducts});
+
+            const cart = await Cart.findOne({user: user._id}).populate('products.product');
+            let subtotal = 0;
+
+            if (cart) {
+                subtotal = cart.products.reduce((sum, item) => {
+                return sum + (item.product.price * item.quantity);
+                }, 0);
+            }
+            
+            res.render('home', {user, products: filteredProducts, cart, subtotal, newArrivals, mostPurchasedProducts});
         }
     } catch (err) {
         console.error(err, "Error rendering home");
