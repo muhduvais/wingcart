@@ -229,14 +229,12 @@ const toProductMgmt = async (req, res) => {
         const skip = (page - 1) * ITEMS_PER_PAGE;
 
         const products = await Product.find({}).skip(skip).limit(ITEMS_PER_PAGE);
-        const categories = await Category.find({});
         const totalProducts = await Product.countDocuments({});
 
         const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE);
 
         res.render('productManagement', {
             products: products,
-            categories: categories,
             pagination: {
                 currentPage: page,
                 pages: totalPages

@@ -8,22 +8,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>wingCart | Luxury Wathes</title>
-    <meta name="keywords" content="HTML5 Template">
-    <meta name="description" content="Molla - Bootstrap eCommerce Template">
+    <meta name="keywords" content="watches">
+    <meta name="description" content="Wingcart E-commerce website">
     <meta name="author" content="p-themes">
     <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/icons/favicon-16x16.png">
-    <link rel="manifest" href="/static/images/icons/site.html">
-    <link rel="mask-icon" href="/static/images/icons/safari-pinned-tab.svg" color="#666666">
-    <link rel="shortcut icon" href="/static/images/icons/favicon.ico">
-    <meta name="apple-mobile-web-app-title" content="Molla">
-    <meta name="application-name" content="Molla">
-    <meta name="msapplication-TileColor" content="#cc9966">
-    <meta name="msapplication-config" content="/static/images/icons/browserconfig.xml">
-    <meta name="theme-color" content="#ffffff">
-    <link rel="stylesheet" href="/static/vendor/line-awesome/line-awesome/line-awesome/css/line-awesome.min.css">
+    
     <!-- Plugins CSS File -->
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/plugins/owl-carousel/owl.carousel.css">
@@ -52,7 +41,6 @@
                     <div class="header-left">
                         <ul class="top-menu top-link-menu d-none d-md-block">
                             <li>
-                                <a href="#">Links</a>
                                 <ul>
                                     <li><a href="tel:#"><i class="icon-phone"></i>Call: +91 9746483041</a></li>
                                 </ul>
@@ -201,9 +189,11 @@
                             <div class="dropdown-menu">
                                 <nav class="side-nav">
                                     <ul class="menu-vertical sf-arrows">
-                                        <li class="item-lead"><a href="#">Men</a></li>
-                                        <li class="item-lead"><a href="#">Women</a></li>
-                                        <li class="item-lead"><a href="#">Kids</a></li>
+                                        <% if (categories && categories.length > 0) { %>
+                                            <% categories.forEach((category => { %>
+                                                <li class="item-lead"><a href="/shop"><%= category.name %></a></li>
+                                            <% })) %>
+                                        <% } %>
                                     </ul><!-- End .menu-vertical -->
                                 </nav><!-- End .side-nav -->
                             </div><!-- End .dropdown-menu -->
@@ -214,16 +204,16 @@
                         <nav class="main-nav">
                             <ul class="menu sf-arrows">
                                 <li class="megamenu-container active">
-                                    <a href="index.html" class="sf-with-ul">Home</a>
+                                    <a href="/" class="sf-with-ul">Home</a>
                                 </li>
                                 <li>
-                                    <a href="category.html" class="sf-with-ul">Shop</a>
+                                    <a href="/shop" class="sf-with-ul">Shop</a>
                                 </li>
                                 <li>
-                                    <a href="about.html" class="sf-with-ul">About</a>
+                                    <a href="/about" class="sf-with-ul">About</a>
                                 </li>
                                 <li>
-                                    <a href="contact.html" class="sf-with-ul">Contact</a>
+                                    <a href="/contact" class="sf-with-ul">Contact</a>
                                 </li>
                             </ul><!-- End .menu -->
                         </nav><!-- End .main-nav -->
@@ -634,7 +624,7 @@
                     <div class="tab-pane p-0 fade" id="top-fur-tab" role="tabpanel" aria-labelledby="top-fur-link">
                         <div class="products">
                             <div class="row justify-content-center">
-                                <% if (locals.mostPurchasedProducts) { %>
+                                <% if (locals.mostPurchasedMen) { %>
                                     <% mostPurchasedMen.forEach(product => { %>
                                         <div class="col-6 col-md-4 col-lg-3 col-xl-5col">
                                             <div class="product product-11 text-center">
@@ -681,7 +671,7 @@
                     <div class="tab-pane p-0 fade" id="top-decor-tab" role="tabpanel" aria-labelledby="top-decor-link">
                         <div class="products">
                             <div class="row justify-content-center">
-                                <% if (locals.mostPurchasedProducts) { %>
+                                <% if (locals.mostPurchasedWomen) { %>
                                     <% mostPurchasedWomen.forEach(product => { %>
                                         <div class="col-6 col-md-4 col-lg-3 col-xl-5col">
                                             <div class="product product-11 text-center">

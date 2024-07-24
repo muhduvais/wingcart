@@ -35,8 +35,7 @@ const userHome = async (req, res) => {
             _id: { $in: mostPurchased.map(item => item._id) }
         });
 
-        console.log(mostPurchasedProducts);
-
+        const categories = await Category.find({});
         const menCategory = await Category.findOne({ name: 'Men' });
         const womenCategory = await Category.findOne({ name: 'Women' });
         const mostPurchasedMen = await Product.find({ 
@@ -54,7 +53,8 @@ const userHome = async (req, res) => {
                 newArrivals,
                 mostPurchasedProducts,
                 mostPurchasedMen,
-                mostPurchasedWomen
+                mostPurchasedWomen,
+                categories
             });
         }
         else {
@@ -68,7 +68,17 @@ const userHome = async (req, res) => {
                 }, 0);
             }
             
-            res.render('home', {user, products: filteredProducts, cart, subtotal, newArrivals, mostPurchasedProducts});
+            res.render('home', {
+                user,
+                products: filteredProducts,
+                cart,
+                subtotal,
+                newArrivals,
+                mostPurchasedProducts,
+                mostPurchasedMen,
+                mostPurchasedWomen,
+                categories
+            });
         }
     } catch (err) {
         console.error(err, "Error rendering home");
@@ -240,25 +250,208 @@ const userLogout = (req, res) => {
     res.redirect("/");
 }
 
+const isNewProduct = (addedDate) => {
+    const currentDate = new Date();
+    const twoDaysAgo = new Date(currentDate);
+    twoDaysAgo.setDate(currentDate.getDate() - 2);
+    return addedDate >= twoDaysAgo;
+};
+
 const toshop = async (req, res) => {
     try {
+        const sortBy = req.query.sortby || 'featured';
+        const searchVal = req.query.searchVal || '';
         const user = req.session.user;
-        const products = await Product.find({ isListed: true })
-            .populate({
-                path: 'category',
-                match: { isListed: true }
-            })
-            .populate({
-                path: 'brand',
-                match: { isListed: true }
-            });
 
-        const filteredProducts = products.filter(product => product.category && product.brand);
+        const listedCategories = await Category.find({ isListed: true }).select('_id');
+        const listedBrands = await Brand.find({ isListed: true }).select('_id');
+        const filterCategories = req.query.filterCategories ? [].concat(req.query.filterCategories) : [];
+        const filterBrands = req.query.filterBrands ? [].concat(req.query.filterBrands) : [];
+        const filter = { isListed: true };
+
+        const categoryFilter = filterCategories.length > 0
+        ? { $in: filterCategories.filter(cat => listedCategories.map(lc => lc._id.toString()).includes(cat)) }
+        : { $in: listedCategories.map(cat => cat._id) };
+
+        // Add listedBrands to filterBrands
+        const brandFilter = filterBrands.length > 0
+            ? { $in: filterBrands.filter(brand => listedBrands.map(lb => lb._id.toString()).includes(brand)) }
+            : { $in: listedBrands.map(brand => brand._id) };
+
+        // Update filter object
+        if (categoryFilter.$in.length > 0) {
+            filter.category = categoryFilter;
+        }
+
+        if (brandFilter.$in.length > 0) {
+            filter.brand = brandFilter;
+        }
+
+        if (searchVal) {
+            filter.description = { $regex: searchVal, $options: 'i' };
+        }
+        
+        console.log(filter);
+
+        const brands = await Brand.find({ isListed: true });
+        const categories = await Category.find({});
+
+        //Pagination
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = 9;
+
+        const totalProductsCount = await Product.countDocuments({
+            ...filter,
+        });
+
+        const totalPages = Math.ceil(totalProductsCount / limit);
+
+        const skip = (page - 1) * limit;
+
+        //Sorted by new arrivals
+        const newSorted = await Product.find({
+            ...filter,
+        })
+        .sort({ addedDate: -1 })
+        .populate('category')
+        .populate('brand')
+        .skip(skip)
+        .limit(limit);
+
+        //Sorted by featured
+        const popular = await Order.aggregate([
+            { $unwind: '$products' },
+            { $group: { _id: '$products.product', count: { $sum: '$products.quantity' } } },
+            { $sort: { count: -1 } }
+        ]);
+
+        const popularProductIds = popular.map(item => item._id);
+
+        // const skipPopular = skip < popularProductIds.length ? skip : popularProductIds.length;
+        // const popularLimit = Math.min(limit, popularProductIds.length);
+
+        const popularProducts = await Product.find({ 
+            ...filter,
+            _id: { $in: popularProductIds },
+            // isListed: true,
+        })
+        .populate('category')
+        .populate('brand')
+        .limit(limit);
+
+        // const remainingSkip = Math.max(0, skip - popularProductIds.length);
+        // const remainingLimit = limit - popularProducts.length;
+
+        const otherProducts = await Product.find({ 
+            ...filter,
+            _id: { $nin: popularProductIds },
+            // isListed: true,
+        })
+        .populate('category')
+        .populate('brand')
+        .limit(limit);
+
+        const combinedProducts = [...popularProducts, ...otherProducts].slice(0, limit);
+
+        const collation = { locale: 'en', strength: 2 };
+
+        //Sorted price H2L
+        const priceHighToLow = await Product.find({
+            ...filter,
+        })
+        .sort({ price: -1 })
+        .populate('category')
+        .populate('brand')
+        .skip(skip)
+        .limit(limit);
+
+        //Sorted price L2H
+        const priceLowToHigh = await Product.find({
+            ...filter,
+        })
+        .sort({ price: 1 })
+        .populate('category')
+        .populate('brand')
+        .skip(skip)
+        .limit(limit);
+
+        //Sorted in ascending order
+        const descendingSorted = await Product.find({
+            ...filter,
+        })
+        .collation(collation)
+        .sort({ name: -1 })
+        .populate('category')
+        .populate('brand')
+        .skip(skip)
+        .limit(limit);
+
+        //Sorted in descending order
+        const ascendingSorted = await Product.find({
+            ...filter,
+        })
+        .collation(collation)
+        .sort({ name: 1 })
+        .populate('category')
+        .populate('brand')
+        .skip(skip)
+        .limit(limit);
+
+        let products;
+        if (sortBy === 'newArrivals') {
+            products = newSorted;
+        }else if (sortBy === 'highToLow') {
+            products = priceHighToLow;
+        }else if (sortBy === 'lowToHigh') {
+            products = priceLowToHigh;
+        } else if (sortBy === 'ascending') {
+            products = ascendingSorted;
+        } else if (sortBy === 'descending') {
+            products = descendingSorted;
+        } else {
+            products = combinedProducts;
+        }
+
         if (!user) {
-            res.render('shop' , {products: filteredProducts})
+            res.render('shop' , {
+                products,
+                categories,
+                sortBy,
+                currentPage: page,
+                totalPages,
+                totalProductsCount,
+                brands,
+                isNewProduct,
+                filterCategories,
+                filterBrands,
+                searchVal
+            });
         }
         else {
-            res.render('shop', {user, products: filteredProducts});
+            const cart = await Cart.findOne({user: user._id}).populate('products.product');
+            let subtotal = 0;
+
+            if (cart) {
+                subtotal = cart.products.reduce((sum, item) => {
+                return sum + (item.product.price * item.quantity);
+                }, 0);
+            }
+            res.render('shop', {
+                user,
+                products,
+                cart,
+                subtotal,
+                categories,
+                sortBy,
+                currentPage: page,
+                totalPages,
+                totalProductsCount,
+                brands,
+                isNewProduct,
+                filterCategories,
+                filterBrands,
+                searchVal
+            });
         }
     } catch (err) {
         console.error(err, "Error rendering shop");
