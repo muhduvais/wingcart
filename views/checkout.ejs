@@ -339,7 +339,6 @@
                                                 <% let totalAmount = 0; %>
                                                 <% if (cart && cart.products.length > 0) { %>
                                                     <% cart.products.forEach(item => { %>
-                                                        <% totalAmount += item.product.price * item.quantity; %>
                                                         <tr>
                                                             <td><a href="/prodDetails/<%= item.product._id %>"><%= item.quantity + ' x ' + item.product.name %></a></td>
                                                             <td>₹<%= item.product.price * item.quantity %></td>
@@ -351,8 +350,16 @@
                                                     </tr>
                                                 <% } %>
                                                 <tr>
+                                                    <td><b>Gst(18%):</b></td>
+                                                    <td>₹<%= locals.gst ? gst.toFixed(2) : '' %></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Shipping:</b></td>
+                                                    <td>₹<%= locals.shipping ? shipping : '0.00' %></td>
+                                                </tr>
+                                                <tr>
                                                     <td><b>Total Amount:</b></td>
-                                                    <td><b>₹<%= totalAmount %></b></td>
+                                                    <td><b>₹<%= locals.total ? total : '' %></b></td>
                                                 </tr>
                                                 <input type="hidden" id="totalAmount" name="totalAmount" value="<%= totalAmount %>">
                                             </tbody>

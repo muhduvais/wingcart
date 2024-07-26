@@ -128,7 +128,22 @@
                             <!-- ///////order-details////////// -->
                             <div class="container-order-details m-3">
                                 <div class="top-div d-md-flex align-items-center justify-content-between py-4">
-                                    <h3 class="text-muted">Order Details<br>Order ID: <%= order.orderId %></h3>
+                                    <div class="order-details-header">
+                                        <h3 class="text-muted">Order Details</h3>
+                                        <div class="address-div p-3">
+                                            <h5>Address:</h5>
+                                            <p class="text-muted"><%= order.address.fname + ' ' + order.address.lname %> <br>
+                                                <%= order.address.city + ', ' + order.address.state + ', ' + order.address.country %> <br>
+                                                <%= order.address.pincode %></p>
+                                        </div>
+                                    </div>
+                                    <div class="price-breakup">
+                                        <p>Subtotal: &nbsp; &nbsp;₹<%= locals.subtotal ? subtotal.toFixed(2) : '' %><br>
+                                            Gst (18%): &nbsp; &nbsp;₹<%= locals.gst ? gst : '' %><br>
+                                            Shipping: &nbsp; &nbsp;₹<%= locals.shipping ? shipping : '0.00' %><br>
+                                            <b>Total: &nbsp; &nbsp;₹<%= locals.totalAmount ? totalAmount : '' %></b></p>
+                                    </div>
+                                    <h5>Order ID: <%= order.orderId %></h5>
                                 </div>
                                 <div class="row" id="products-row">
                                     <% order.products.forEach((item, index) => { %>
@@ -142,14 +157,40 @@
                                                         <p class="card-text">Total: ₹<%= (item.price * item.quantity).toFixed(2) %></p>
                                                         <p class="card-text">Status: <%= item.status %></p>
                                                     </div>
-                                                    <div class="card-center">
+                                                    <div class="card-center p-2">
                                                         <img src="/assets2/img/<%= item.product.images[0] %>" style="width: 100px;" alt="image">
                                                     </div>
-                                                    <div class="card-right">
-                                                        <select class="form-select mb-2 border p-2 mx-2" >
-                                                            <option value="<%= item.status %>"><%= item.status %></option>
-                                                        </select>
-                                                        <button class="btn btn-danger" onclick="cancelProduct('<%= order._id %>', '<%= item.product._id %>')" <%= item.status === 'cancelled' ? 'disabled' : '' %>>Cancel Product</button>
+                                                    <div class="card-right d-md-flex align-items-center">
+                                                        <span class="badge badge-primary fs-5 m-3 p-3"><%= item.status %></span>
+                                                        <button class="btn btn-danger" data-toggle="modal" data-target="#cancelModal<%= index %>" <%= item.status === 'cancelled' ? 'disabled' : '' %>>
+                                                            <%= item.status === 'delivered' ? 'Return' : 'Cancel' %>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    
+                                        <!-- Cancel Modal -->
+                                        <div class="modal fade" id="cancelModal<%= index %>" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content p-5">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="cancelModalLabel">Cancel Product</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <form id="cancelForm<%= index %>">
+                                                            <div class="form-group">
+                                                                <input type="hidden" id="orderId<%= index %>" value="<%= order._id %>">
+                                                                <input type="hidden" id="productId<%= index %>" value="<%= item.product._id %>">
+                                                                <label for="reason" class="errorMsg">Reason for Cancellation:</label>
+                                                                <textarea class="form-control" id="reason<%= index %>"></textarea>
+                                                            </div>
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-primary">Submit</button>
+                                                        </form>
                                                     </div>
                                                 </div>
                                             </div>
@@ -188,22 +229,64 @@
         //     }
         // }
     
-        async function cancelProduct(orderId, productId) {
-            const response = await fetch(`/cancelProduct/${orderId}/${productId}`, {
-                method: 'POST'
+        //Cancel product
+        document.querySelectorAll('[id^=cancelForm]').forEach(form => {
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const index = this.id.replace('cancelForm', '');
+                const orderId = document.getElementById(`orderId${index}`).value;
+                const productId = document.getElementById(`productId${index}`).value;
+                const reason = document.getElementById(`reason${index}`).value;
+                const errorMsg = document.querySelector('.errorMsg');
+
+                if (reason.trim() === '') {
+                    errorMsg.innerText = 'Please enter the cancellation reason';
+                    errorMsg.classList.add('text-danger');
+                    return;
+                }
+
+                fetch( `/cancelProduct/${orderId}/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ reason }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Order Cancelled'
+                    }).then(() => {
+                        window.location.reload();
+                        location.reload();
+                    });
+                    } else {
+                        Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+
+                    Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error Cancelling Order'
+                    });
+                });
             });
-
-            const cancelData = response.json();
-
-            if (response.ok) {
-                alert('Product Cancelled!');
-                window.location.reload();
-            } else if (!cancelData.success) {
-                alert(cancelData.message);
-            }
-
-        }
+        });
     </script>
+
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

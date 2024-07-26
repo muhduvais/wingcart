@@ -156,61 +156,72 @@
 
             <div class="page-content">
                 <!-- ////////////////////////// -->
-                 <div class="container">
+                <div class="container">
                     <h4 class="py-3">Thank you for your order!</h4>
                     <div class="top-info">
                         <p>Your order ID: <strong><%= order._id %></strong>.</p>
                         <p>Order date: <strong><%= new Date(order.orderDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></strong>.</p>
                         <p class="py-md-2 fs-2">Expected delivery: <strong><%= deliveryDay %></strong>.</p>
                     </div>
-    
-                <div class="details-table p-5">
-                    <h3>Order Details</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th></th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% order.products.forEach(item => { %>
-                            <tr>
-                                <td><%= item.product.name %></td>
-                                <td class="image-col"><img src="/assets2/img/<%= item.product.images[0] %>" style="width: 100px;" alt="image"></td>
-                                <td><%= item.quantity %></td>
-                                <td>₹<%= item.price.toFixed(2) %></td>
-                                <td>₹<%= (item.price * item.quantity).toFixed(2) %></td>
-                            </tr>
-                        <% }); %>
-                        <tr>
-                            <td colspan="3"><strong>Grand Total:</strong></td>
-                            <td><strong>₹<%= order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2) %></strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-                </div>
                 
-                <div class="bottom-details p-2 d-md-flex">
-                    <div class="delivery-address">
-                        <h3>Shipping Address</h3>
-                    <p>
-                        <%= order.address.fname %> <%= order.address.lname %><br>
-                        <%= order.address.city %>, <%= order.address.state %>, <%= order.address.country %><br>
-                        ZIP: <%= order.address.pincode %><br>
-                        Phone: <%= order.address.phone %>
-                    </p>
+                    <div class="details-table p-5">
+                        <h3>Order Details</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th></th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% order.products.forEach(item => { %>
+                                    <tr>
+                                        <td><%= item.product.name %></td>
+                                        <td class="image-col"><img src="/assets2/img/<%= item.product.images[0] %>" style="width: 100px;" alt="image"></td>
+                                        <td><%= item.quantity %></td>
+                                        <td>₹<%= item.price.toFixed(2) %></td>
+                                        <td>₹<%= (item.price * item.quantity).toFixed(2) %></td>
+                                    </tr>
+                                <% }); %>
+                                <tr>
+                                    <td colspan="3"><strong>Subtotal:</strong></td>
+                                    <td>₹<%= subtotal.toFixed(2) %></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><strong>GST (18%):</strong></td>
+                                    <td>₹<%= gst.toFixed(2) %></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><strong>Shipping Charge:</strong></td>
+                                    <td>₹<%= shippingCharge.toFixed(2) %></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><strong>Grand Total:</strong></td>
+                                    <td><strong>₹<%= totalAmount.toFixed(2) %></strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="bottom-buttons  mx-5">
-                        <a href="/orderHistory" class="btn btn-secondary mx-3 mb-3"><span>VIEW ORDERS</span><i class="icon-refresh"></i></a>
-                        <a href="/shop" class="btn btn-secondary mx-3 mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
+                    
+                    <div class="bottom-details p-2 d-md-flex">
+                        <div class="delivery-address">
+                            <h3>Shipping Address</h3>
+                            <p>
+                                <%= order.address.fname %> <%= order.address.lname %><br>
+                                <%= order.address.city %>, <%= order.address.state %>, <%= order.address.country %><br>
+                                ZIP: <%= order.address.pincode %><br>
+                                Phone: <%= order.address.phone %>
+                            </p>
+                        </div>
+                        <div class="bottom-buttons mx-5">
+                            <a href="/orderHistory" class="btn btn-secondary mx-3 mb-3"><span>VIEW ORDERS</span><i class="icon-refresh"></i></a>
+                            <a href="/shop" class="btn btn-secondary mx-3 mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
+                        </div>
                     </div>
-
                 </div>
-                 </div>
                 <!-- ////////////////////////// -->
             </div><!-- End .page-content -->
         </main><!-- End .main -->

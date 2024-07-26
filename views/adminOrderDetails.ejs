@@ -7,11 +7,6 @@
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
       name="viewport"
     />
-    <link
-      rel="icon"
-      href="/assets2/img/kaiadmin/  .ico"
-      type="image/x-icon"
-    />
 
     <!-- Fonts and icons -->
     <script src="/assets2/js/plugin/webfont/webfont.min.js"></script>
@@ -166,24 +161,20 @@
                 class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
               >
 
-              <!-- Search Form -->
-              <form method="GET" action="/admin/orderManagement">
+              <!-- Search -->
                 <div class="input-group">
-                    <div class="input-group-prepend">
-                        <button type="submit" class="btn btn-search pe-1">
-                            <i class="fa fa-search search-icon"></i>
-                        </button>
-                    </div>
-                    <input
-                        type="text"
-                        name="search"
-                        placeholder="Search ..."
-                        class="form-control"
-                        value="<%= search %>"
-                    />
-                    <input type="hidden" name="page" value="<%= pagination.currentPage %>" /> <!-- Ensure current page is maintained -->
+                  <div class="input-group-prepend">
+                    <button type="submit" class="btn btn-search pe-1">
+                      <i class="fa fa-search search-icon"></i>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search ..."
+                    class="form-control"
+                  />
                 </div>
-              </form>
+              </nav>
 
               <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
                 <li
@@ -279,68 +270,116 @@
                   <i class="icon-arrow-right"></i>
                 </li>
                 <li class="nav-item">
-                  <p>Order Management</p>
+                  <a href="/admin/orderManagement"><p>Order Management</p></a>
+                </li>
+                <li class="separator">
+                  <i class="icon-arrow-right"></i>
+                </li>
+                <li class="nav-item">
+                  <p>Order Details</p>
                 </li>
               </ul>
             </div>
 
 
-            <!-- ///Table///// -->
-            <div class="table-responsive">
-                <table
-                  id="add-row"
-                  class="display table table-striped table-hover"
-                >
-                  <thead>
-                    <tr>
-                      <th>Order Id</th>
-                      <th>Date</th>
-                      <th>Total</th>
-                      <th></th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id="category-table-body">
-                      <% if (locals.orders && orders !== null) { %>
-                        <% orders.forEach((order, index) => { %>
-                            <tr>
-                              <td><%= order.orderId %></td>
-                              <td><%= order.orderDate.toDateString() %></td>
-                              <td>₹<%= order.totalAmount.toFixed(2) %></td>
-                              <td><th><a href="/admin/orderDetails/<%= order._id %>"><button class="btn btn-primary">View Details</button></a></th></td>
-                            </tr>
-                          <% }) %>
-                        <% } %>
-                  </tbody>
-                </table>
+            <!-- ///////order-details////////// -->
+            <div class="container-order-details mx-3 mt-3">
+              <div class="top-div d-md-flex align-items-start justify-content-between py-4">
+                  <div class="order-details-header">
+                      <div class="address-div p-3">
+                          <h5>Address:</h5>
+                          <p class="text-muted"><%= order.address.fname + ' ' + order.address.lname %> <br>
+                              <%= order.address.city + ', ' + order.address.state + ', ' + order.address.country %> <br>
+                              <%= order.address.pincode %></p>
+                      </div>
+                  </div>
+                  <div class="price-breakup">
+                    <p>Subtotal: &nbsp; &nbsp;₹<%= locals.subtotal ? subtotal.toFixed(2) : '' %><br>
+                        Gst (18%): &nbsp; &nbsp;₹<%= locals.gst ? gst : '' %><br>
+                        Shipping: &nbsp; &nbsp;₹<%= locals.shipping ? shipping : '0.00' %><br>
+                        <b>Total: &nbsp; &nbsp;₹<%= locals.totalAmount ? totalAmount : '' %></b></p>
+                </div>
+                  <div class="date-div">
+                    <h5>Order Date:</h5>
+                    <p class="text-muted"><%= order.orderDate.toDateString() %></p>
+                  </div>
+                  <h5>Order ID: <%= order.orderId %></h5>
               </div>
-              <!-- //////////// -->
+          </div>
+          <!-- ///////////////////// -->
 
-              <!-- Pagination -->
-              <% if (pagination.pages > 1) { %>
-                <nav>
-                    <ul class="pagination justify-content-center">
-                        <% if (pagination.currentPage > 1) { %>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>">Previous</a>
-                            </li>
-                        <% } %>
+          <!-- ///Table///// -->
+          <div class="table-responsive">
+            <table
+              id="add-row"
+              class="display table table-striped table-hover"
+            >
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Total Price</th>
+                  <th>Payment Method</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="category-table-body">
+                  <% if (order && order !== null) { %>
+                    <% order.products.forEach((item, index) => { %>
+                        <tr>
+                          <td><%= item.product.name %></td>
+                          <td><%= item.quantity %></td>
+                          <td>₹<%= item.price * item.quantity %></td>
+                          <td><%= order.payment.type %></td>
+                          <td><%= item.status %></td>
+                          <td>
+                            <select class="form-select mx-2 <%= item.status === 'cancelled' ? 'd-none' : '' %>" 
+                                    onchange="updateStatus('<%= order._id %>', '<%= item.product._id %>', this.value)" 
+                                    <%= item.status === 'delivered' || item.status === 'cancelled' ? 'disabled' : '' %>>
+                                    <option value="" selected disabled>Status</option>
+                                <% if (item.status === 'pending') { %>
+                                    <option value="dispatched">Dispatched</option>
+                                    <option value="delivered">Delivered</option>
+                                <% } else if (item.status === 'dispatched') { %>
+                                    <option value="delivered">Delivered</option>
+                                <% } %>
+                            </select>
+                          <button type="button" class="btn btn-primary <%= item.status !== 'cancelled' ? 'd-none' : '' %>" data-toggle="modal" data-target="#reDetails<%= index %>">
+                            Details
+                          </button>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    <% } %>
+              </tbody>
+            </table>
+          </div>
+          <!-- //////////// -->
 
-                        <% for (let i = 1; i <= pagination.pages; i++) { %>
-                            <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
-                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
-                            </li>
-                        <% } %>
-
-                        <% if (pagination.currentPage < pagination.pages) { %>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>">Next</a>
-                            </li>
-                        <% } %>
-                    </ul>
-                </nav>
-              <% } %>
-            <!-- End Pagination -->
+          <% if (order && order !== null) { %>
+            <% order.products.forEach((item, index) => { %>
+              <!-- Modal -->
+                <div class="modal fade" id="#reDetails<%= index %>" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Cancel Details</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <%= item.cancellationReason %>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            <% }) %>
+          <% } %>
 
 
           </div>
@@ -367,6 +406,39 @@
       </div>
     </div>
 
+    <script>
+
+      //Update order status
+        async function updateStatus(orderId, productId, status) {
+          await fetch(`/admin/updateOrderStatus/${orderId}/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+            }).then(response => response.json())
+              .then(data => {
+                if (!data.success) {
+                  Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: 'Error changing status'
+                });
+                } else if (data.success) {
+                  Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Order status updated'
+                }).then(() => {
+                  location.reload();
+                });
+                }
+            });
+        }
+    </script>
+
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!--   Core JS Files   -->
     <script src="/assets2/js/core/jquery-3.7.1.min.js"></script>
     <script src="/assets2/js/core/popper.min.js"></script>

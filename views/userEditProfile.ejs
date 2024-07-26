@@ -146,7 +146,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label errorMsg">Email</label>
-                                        <input type="text" class="form-control" id="email" name="email" value="<%= user.email ? user.email : 'Add your email' %>">
+                                        <input type="text" class="form-control" id="email" name="email" value="<%= user.email ? user.email : 'Add your email' %>" readonly>
                                     </div>
                                     <div class="text-right mt-3">
                                         <p class="profileMsg"></p>
@@ -170,7 +170,6 @@
         const lname = document.getElementById('lname');
         const age = document.getElementById('age');
         const phone = document.getElementById('phone');
-        const email = document.getElementById('email');
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -202,11 +201,6 @@
 
 };
 
-const isValidEmail = email => {
-    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(email).toLowerCase());
-};
-
 const isValidName = name => {
     var regex = /^[a-zA-Z ]{1,30}$/;
     return regex.test(name);
@@ -227,39 +221,44 @@ const isValidPhone = phone => {
 
             let isValid = true;
 
-            if(fnameValue && !isValidName(fnameValue)) {
+            if (fnameValue === '') {
+                setError(fname, 'Please enter your first name');
+                isValid = false;
+            } else if(!isValidName(fnameValue)) {
                 setError(fname, 'Please enter a valid name');
                 isValid = false;
             } else {
                 setSuccess(fname, "First Name");
             }
 
-            if(lnameValue && !isValidName(lnameValue)) {
+            if (lnameValue === '') {
+                setError(lname, 'Please enter your last name');
+                isValid = false;
+            } else if(lnameValue && !isValidName(lnameValue)) {
                 setError(lname, 'Please enter a valid name');
                 isValid = false;
             } else {
                 setSuccess(lname, "Last Name");
             }
 
-            if(ageValue && ageValue <= 0 || ageValue > 110) {
+            if (ageValue === '') {
+                setError(age, 'Please enter your age');
+                isValid = false;
+            } else if(ageValue && ageValue <= 0 || ageValue > 110) {
                 setError(age, 'Please enter a valid age');
                 isValid = false;
             } else {
                 setSuccess(age, "Age");
             }
 
-            if(phoneValue && !isValidPhone(phoneValue)) {
+            if (phoneValue === '') {
+                setError(phone, 'Please enter your phone');
+                isValid = false;
+            } else if(phoneValue && !isValidPhone(phoneValue)) {
                 setError(phone, 'Please enter a valid phone number');
                 isValid = false;
             } else {
                 setSuccess(phone, "Phone");
-            }
-
-            if(emailValue && !isValidEmail(emailValue)) {
-                setError(email, 'Please enter a valid email');
-                isValid = false;
-            } else {
-                setSuccess(email, "Email");
             }
 
             if (!isValid) {
@@ -283,12 +282,13 @@ const isValidPhone = phone => {
             const profileData = await response.json();
 
             if(profileData.success) {
-                window.location.href = '/userProfile';
-                alert('Profile saved!');
-                    // const profileMsg = document.querySelector('.profileMsg');
-                    // profileMsg.innerText = 'Profile updated successfully!';
-                    // profileMsg.classList.add('success');
-                    // profileMsg.classList.remove('error');
+                Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Profile updated'
+                    }).then(() => {
+                        window.location.href = '/userProfile';
+                    });
             }
             else if(response.ok) {
                 const profileMsg = document.querySelector('.profileMsg');
@@ -304,6 +304,10 @@ const isValidPhone = phone => {
 
 
     </script>
+
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>

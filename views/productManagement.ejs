@@ -98,7 +98,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="#tables">
+                <a href="/admin/orderManagement">
                     <i class="fas fa-shopping-cart"></i>
                   <p>Order Management</p>
 
@@ -166,20 +166,24 @@
                 class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
               >
 
-              <!-- Search -->
+              <!-- Search Form -->
+              <form method="GET" action="/admin/productManagement">
                 <div class="input-group">
-                  <div class="input-group-prepend">
-                    <button type="submit" class="btn btn-search pe-1">
-                      <i class="fa fa-search search-icon"></i>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search ..."
-                    class="form-control"
-                  />
+                    <div class="input-group-prepend">
+                        <button type="submit" class="btn btn-search pe-1">
+                            <i class="fa fa-search search-icon"></i>
+                        </button>
+                    </div>
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Search ..."
+                        class="form-control"
+                        value="<%= search %>"
+                    />
+                    <input type="hidden" name="page" value="<%= pagination.currentPage %>" /> <!-- Ensure current page is maintained -->
                 </div>
-              </nav>
+              </form>
 
               <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
                 <li
@@ -363,7 +367,7 @@
                   <% } %>
               </ul>
           </nav>
-      <% } %>
+        <% } %>
       <!-- End Pagination -->
       </div>
     </div>

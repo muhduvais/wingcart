@@ -76,27 +76,38 @@ const ITEMS_PER_PAGE = 5;
 
 const toUserMgmt = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1; // Current page, default to 1 if not provided
-        const skip = (page - 1) * ITEMS_PER_PAGE; // Calculate how many users to skip
+        const page = parseInt(req.query.page) || 1;
+        const search = req.query.search || '';
+        const skip = (page - 1) * ITEMS_PER_PAGE;
+        
+        const query = {
+            email: { $ne: "uadmin@gmail.com" },
+            $or: [
+                { fname: { $regex: search, $options: 'i' } },
+                { lname: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ]
+        };
 
-        const users = await User.find({email: {$ne: "uadmin@gmail.com"}}).skip(skip).limit(ITEMS_PER_PAGE); // Fetch users for the current page
+        const users = await User.find(query).skip(skip).limit(ITEMS_PER_PAGE);
 
-        const totalUsers = await User.countDocuments({}) - 1; // Count total users for pagination
+        const totalUsers = await User.countDocuments(query);
 
-        const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE); // Calculate total pages
+        const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE);
 
         res.render('userManagement', {
             users: users,
             pagination: {
                 currentPage: page,
                 pages: totalPages
-            }
+            },
+            search: search
         });
     } catch (err) {
         console.error('Error fetching users:', err);
         res.status(500).send('Internal Server Error');
     }
-}
+};
 
 
 //////////////////////////////////
@@ -122,11 +133,19 @@ const userBlockToggle = async (req, res) => {
 const toCategoryMgmt = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
+        const search = req.query.search || '';
         const skip = (page - 1) * ITEMS_PER_PAGE;
 
-        const categories = await Category.find({}).skip(skip).limit(ITEMS_PER_PAGE);
+        const query = {
+            $or: [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ]
+        };
 
-        const totalCategories = await User.countDocuments({});
+        const categories = await Category.find(query).skip(skip).limit(ITEMS_PER_PAGE);
+
+        const totalCategories = await User.countDocuments(query);
 
         const totalPages = Math.ceil(totalCategories / ITEMS_PER_PAGE);
 
@@ -135,7 +154,8 @@ const toCategoryMgmt = async (req, res) => {
             pagination: {
                 currentPage: page,
                 pages: totalPages
-            }
+            },
+            search: search
         });
     } catch (err) {
         console.error('Error fetching categories:', err);
@@ -223,13 +243,24 @@ const verifyEditCategory = async (req, res) => {
     }
 }
 
+
+
+
 const toProductMgmt = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
+        const search = req.query.search || '';
         const skip = (page - 1) * ITEMS_PER_PAGE;
 
-        const products = await Product.find({}).skip(skip).limit(ITEMS_PER_PAGE);
-        const totalProducts = await Product.countDocuments({});
+        const query = {
+            $or: [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ]
+        };
+
+        const products = await Product.find(query).skip(skip).limit(ITEMS_PER_PAGE);
+        const totalProducts = await Product.countDocuments(query);
 
         const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE);
 
@@ -238,7 +269,8 @@ const toProductMgmt = async (req, res) => {
             pagination: {
                 currentPage: page,
                 pages: totalPages
-            }
+            },
+            search: search
         });
     } catch (err) {
         console.error('Error fetching products:', err);
@@ -548,17 +580,89 @@ const brandListToggle = async (req, res) => {
     }
 }
 
-// const toOrderManagement = async (req, res) => {
-//     try {
-//         const orders = await Order.find({});
+const toOrderManagement = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const search = req.query.search || '';
+        const skip = (page - 1) * ITEMS_PER_PAGE;
 
-//         res.render('adminOrderManagement', { orders });
-//     }
-//     catch (err) {
-//         console.error('Error fetching order Management', err);
-//         res.status(500).send('Internal server error'); 
-//     }
-// }
+        const query = {
+            $or: [
+                { orderId: { $regex: search } },
+            ]
+        };
+
+        const orders = await Order.find(query).sort({ orderDate: -1 }).skip(skip).limit(ITEMS_PER_PAGE);
+
+        const totalOrders = await User.countDocuments(query) - 1;
+
+        const totalPages = Math.ceil(totalOrders / ITEMS_PER_PAGE);
+
+        res.render('adminOrderManagement', { 
+            orders,
+            pagination: {
+                currentPage: page,
+                pages: totalPages
+            },
+            search: search
+         });
+    }
+    catch (err) {
+        console.error('Error fetching order Management', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const toOrderDetails = async (req, res) => {
+    try {
+        const orderId = req.params.order_id;
+
+        const order = await Order.findById(orderId)
+        .populate('products.product')
+        .populate('address')
+        .populate('payment')
+
+        const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const gst = subtotal * 0.18;
+        const shipping = subtotal < 500 ? 40 : 0;
+        const totalAmount = subtotal + gst + shipping;
+
+        res.render('adminOrderDetails', { 
+            order,
+            subtotal,
+            gst,
+            shipping,
+            totalAmount
+         });
+    } catch (err) {
+        console.error('Error fetching order details', err);
+        res.status(500).send('Internal server error');
+    }
+};
+
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { orderId, productId } = req.params;
+        const { status } = req.body;
+
+        const order = await Order.findById(orderId);
+
+        const product = order.products.find(item => item.product.toString() === productId);
+
+        const statusOrder = ['pending', 'dispatched', 'delivered'];
+        if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
+            product.status = status;
+            await order.save();
+            return res.json({ success: true });
+        }
+        res.json({ success: false });
+    } catch (err) {
+        console.error('Error updating order status', err);
+        res.status(500).json({ success: false });
+    }
+};
+
+
 
 
 module.exports = {
@@ -587,6 +691,8 @@ module.exports = {
     verifyEditProduct,
     productListToggle,
     brandListToggle,
-    // toOrderManagement,
+    toOrderManagement,
+    toOrderDetails,
+    updateOrderStatus,
 
 }

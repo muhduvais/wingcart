@@ -8,6 +8,7 @@ const Payment = require("../model/paymentModel");
 const Order = require("../model/ordersModel");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../model/sendEmail");
+const sendForgotEmail = require("../model/sendForgotEmail");
 const generateOtp = require("../model/generateOtp");
 
 const userHome = async (req, res) => {
@@ -269,6 +270,7 @@ const toshop = async (req, res) => {
         const filterBrands = req.query.filterBrands ? [].concat(req.query.filterBrands) : [];
         const filter = { isListed: true };
 
+        // Add listedCategories to filterCategories
         const categoryFilter = filterCategories.length > 0
         ? { $in: filterCategories.filter(cat => listedCategories.map(lc => lc._id.toString()).includes(cat)) }
         : { $in: listedCategories.map(cat => cat._id) };
@@ -397,9 +399,21 @@ const toshop = async (req, res) => {
         .skip(skip)
         .limit(limit);
 
+        //Featured products
+        const featuredProducts = await Product.find({
+            ...filter,
+        })
+        .collation(collation)
+        .populate('category')
+        .populate('brand')
+        .skip(skip)
+        .limit(limit);
+
         let products;
         if (sortBy === 'newArrivals') {
             products = newSorted;
+        }else if (sortBy === 'popularity') {
+            products = combinedProducts;
         }else if (sortBy === 'highToLow') {
             products = priceHighToLow;
         }else if (sortBy === 'lowToHigh') {
@@ -409,7 +423,7 @@ const toshop = async (req, res) => {
         } else if (sortBy === 'descending') {
             products = descendingSorted;
         } else {
-            products = combinedProducts;
+            products = featuredProducts;
         }
 
         if (!user) {
@@ -460,11 +474,42 @@ const toshop = async (req, res) => {
 
 const toProdDetails = async (req, res) => {
     try {
-        const user = await User.find();
-        const product = await Product.findOne({_id: req.params.product_id});
+        const user = req.session.user;
+        const product = await Product.findOne({_id: req.params.product_id}).populate('category');
         const category = product.category;
         const recomProducts = await Product.find({category, _id: { $ne: req.params.product_id }});
-        res.render('prodDetails', {user, product, recomProducts})
+
+        let subtotal = 0;
+
+        if (!user) {
+            res.render('prodDetails', { 
+                user : false,
+                product, 
+                recomProducts,
+                subtotal,
+                isNewProduct,
+            });
+            return;
+        }
+
+        const cart = await Cart.findOne({user: user._id}).populate('products.product');
+
+        if (cart) {
+            subtotal = cart.products.reduce((sum, item) => {
+            return sum + (item.product.price * item.quantity);
+            }, 0);
+        }
+
+        console.log(cart);
+
+        res.render('prodDetails', { 
+            user,
+            cart,
+            product, 
+            recomProducts,
+            subtotal,
+            isNewProduct,
+        })
     } catch (err) {
         console.error(err, "Error rendering product details");
     }
@@ -671,21 +716,32 @@ const toCart = async (req, res) => {
     try {
         const userId = req.session.user._id;
         const user = await User.findById(userId);
-        const cart = await Cart.findOne({user: userId}).populate('products.product');
+        const cart = await Cart.findOne({ user: userId }).populate('products.product');
 
         if (cart) {
             const subtotal = cart.products.reduce((sum, item) => {
-            return sum + (item.product.price * item.quantity);
+                return sum + (item.product.price * item.quantity);
             }, 0);
 
-            res.render('cart', {user, userId, cart, subtotal});
+            const gst = subtotal * 0.18;
+            const shipping = subtotal < 500 ? 40 : 0;
+            const total = subtotal + gst + shipping;
+
+            res.render('cart', {
+                user,
+                userId,
+                cart,
+                subtotal,
+                gst,
+                shipping,
+                total
+            });
         } else {
-            res.render('cart', { user, userId, cart, subtotal: 0 });
+            res.render('cart', { user, userId, cart, subtotal: 0, gst: 0, shipping: 0, total: 0 });
         }
-    }
-    catch (err) {
+    } catch (err) {
         console.error('Error fetching cart', err);
-        res.status(500).send('Internal server error'); 
+        res.status(500).send('Internal server error');
     }
 }
 
@@ -742,6 +798,7 @@ const deleteCartItem = async (req, res) => {
     }
 }
 
+
 const updateCart = async (req, res) => {
     try {
         const { productId, quantity } = req.body;
@@ -792,7 +849,11 @@ const toCheckout = async (req, res) => {
             return sum + (item.product.price * item.quantity);
             }, 0);
 
-            res.render('checkout', {user, userId, cart, subtotal, address, paymentMethod});
+            const gst = subtotal * 0.18;
+            const shipping = subtotal < 500 ? 40 : 0;
+            const total = subtotal + gst + shipping;
+
+            res.render('checkout', {user, userId, cart, total, gst, shipping, address, paymentMethod});
         } else {
             res.render('checkout', { user, userId, cart, subtotal: 0, address, paymentMethod });
         }
@@ -870,14 +931,17 @@ const createOrder = async (req, res) => {
             product: item.product._id,
             quantity: item.quantity,
             price: item.product.price,
-            status: 'Pending',
+            status: 'pending',
             cancellationDate: null,
             cancellationReason: null,
             returnDate: null,
             returnReason: null,
         }));
 
-        const totalAmount = orderProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const subtotal = orderProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const gst = subtotal * 0.18;
+        const shipping = subtotal < 500 ? 40 : 0;
+        const totalAmount = subtotal + gst + shipping;
 
         const newOrder = new Order({
             orderId: orderId,
@@ -888,7 +952,9 @@ const createOrder = async (req, res) => {
             products: orderProducts,
             payment: paymentMethodId,
             offers: [],
-            totalAmount
+            totalAmount,
+            gst,
+            shipping
         });
 
         await newOrder.save();
@@ -913,26 +979,30 @@ const toOrderConf = async (req, res) => {
         const order = await Order.findOne({ orderId })
             .populate('products.product')
             .populate('address');
-        
-            const orderDate = new Date(order.orderDate);
-            const expectedDeliveryDate = new Date(orderDate);
-            expectedDeliveryDate.setDate(orderDate.getDate() + 3);
-    
-            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const deliveryDay = days[expectedDeliveryDate.getDay()];
 
-        res.render('orderConfirmation', { user, order, deliveryDay });
-    }
-    catch (err) {
+        const orderDate = new Date(order.orderDate);
+        const expectedDeliveryDate = new Date(orderDate);
+        expectedDeliveryDate.setDate(orderDate.getDate() + 3);
+
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const deliveryDay = days[expectedDeliveryDate.getDay()];
+
+        const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const gst = subtotal * 0.18;
+        const shippingCharge = subtotal < 500 ? 40 : 0;
+        const totalAmount = subtotal + gst + shippingCharge;
+
+        res.render('orderConfirmation', { user, order, deliveryDay, subtotal, gst, shippingCharge, totalAmount });
+    } catch (err) {
         console.error('Error fetching order confirmation', err);
         res.status(500).send('Internal server error'); 
     }
-}
+};
 
 const toOrderHistory = async (req, res) => {
     try {
         const user = req.session.user;
-        const orders = await Order.find({ user: user._id });
+        const orders = await Order.find({ user: user._id }).sort({ orderDate: -1 });
 
         res.render('orderHistory', { user, orders });
     }
@@ -952,53 +1022,128 @@ const toOrderDetails = async (req, res) => {
             return res.status(404).send('Order not found');
         }
 
-        res.render('orderDetails', { user, order });
+        const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const gst = subtotal * 0.18;
+        const shipping = subtotal < 500 ? 40 : 0;
+        const totalAmount = subtotal + gst + shipping;
+
+        res.render('orderDetails', { user, order, subtotal, gst, shipping, totalAmount });
     } catch (err) {
         console.error('Error fetching order details', err);
         res.status(500).send('Internal server error');
     }
 };
 
-// const updateOrderStatus = async (req, res) => {
-//     try {
-//         const { orderId, productId } = req.params;
-//         const { status } = req.body;
-
-//         const order = await Order.findById(orderId);
-
-//         const product = order.products.find(item => item.product.toString() === productId);
-
-//         const statusOrder = ['Pendi', 'shipped', 'delivered', 'cancelled'];
-//         if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
-//             product.status = status;
-//             await order.save();
-//             return res.json({ success: true });
-//         }
-//         res.json({ success: false });
-//     } catch (err) {
-//         console.error('Error updating order status', err);
-//         res.status(500).json({ success: false });
-//     }
-// };
-
 const cancelProduct = async (req, res) => {
-    try {
-        const { orderId, productId } = req.params;
 
+        const { orderId, productId } = req.params;
+        const reason = req.body.reason;
+
+    try {
         const order = await Order.findById(orderId);
+        console.log(order.address);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
 
         const product = order.products.find(item => item.product.toString() === productId);
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found in order' });
+        }
 
         product.status = 'cancelled';
-        product.cancellationDate = new Date();
-        await order.save();
+        product.cancellationDate = Date.now();
+        product.cancellationReason = reason;
 
-        res.status(200).json({ success: true });
-    } catch (err) {
-        console.error('Error cancelling product', err);
-        res.status(500).json({ success: false });
+        const updateProduct = await Product.findOne({ _id: productId });
+
+        updateProduct.stock += product.quantity;
+
+        await updateProduct.save();
+        await order.save();
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
+
+const forgotPass = async (req, res) => {
+    try {
+        const message = req.query.message;
+        res.render('forgotPass', { message });
+    } catch (err) {
+        console.error('Error fetching forgot passwword: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const verifyForgotPass = async (req, res) => {
+    try {
+        const email = req.body.email;
+        const user = await User.findOne({ email: email })
+
+        if (!user) {
+            res.json({ success: false });
+            console.log('Email is not registered!');
+            return;
+        }
+
+        sendForgotEmail(email);
+        console.log('Successfully sent!');
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error('Error sending link to the mail: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const resetForgotPass = async (req, res) => {
+    try {
+        const email = req.query.email;
+        const user = await User.findOne({ email: email })
+
+        if (!user) {
+            res.json({ success: false });
+            return;
+        }
+
+        res.render('resetForgotPass', { email });
+
+
+
+    } catch (err) {
+        console.error('Error sending link to the mail: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const verifyResetPass = async (req, res) => {
+    try {
+        const { pass, email} = req.body;
+        const user = await User.findOne({ email: email })
+
+        if (!user) {
+            res.json({ success: false });
+            console.log('Reset Email is not registered!');
+            return;
+        }
+
+        const hashedPass = await bcrypt.hash(pass, 10);
+
+        user.password = hashedPass;
+        await user.save();
+
+        console.log('Password successfully updated!');
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error('Error reseting the password: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
 
 
 
@@ -1035,4 +1180,8 @@ module.exports = {
     toOrderHistory,
     toOrderDetails,
     cancelProduct,
+    forgotPass,
+    verifyForgotPass,
+    resetForgotPass,
+    verifyResetPass,
 }

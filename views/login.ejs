@@ -135,25 +135,33 @@
 							    <div class="" id="register-2">
 
 							    	<form id="userLoginForm">
-
-							    		<div class="form-group">
-							    			<label for="loginEmail" id="emailLabel" class="errorMsg">Email *</label>
-							    			<input type="text" class="form-control" id="loginEmail" name="email" value="<%= locals.loginData ? loginData : "" %>">
-							    		</div><!-- End .form-group -->
-
-							    		<div class="form-group">
-							    			<label for="loginPassword" id="passLabel" class="errorMsg">Password *</label>
-							    			<input type="password" class="form-control" id="loginPassword" name="password">
-							    		</div><!-- End .form-group -->
-
-							    		<div class="form-footer justify-content-between">
-							    			<button type="submit" class="btn btn-outline-primary-2">
-			                					<span>Login</span>
-			            						<i class="icon-long-arrow-right"></i>
-			                				</button>
+                                        <div class="form-group">
+                                            <label for="loginEmail" id="emailLabel" class="errorMsg">Email *</label>
+                                            <input type="text" class="form-control" id="loginEmail" name="email" value="<%= locals.loginData ? loginData : "" %>">
+                                        </div><!-- End .form-group -->
+                                    
+                                        <div class="form-group">
+                                            <label for="loginPassword" id="passLabel" class="errorMsg">Password *</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="loginPassword" name="password">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
+                                                        <i class="fas fa-eye"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div><!-- End .form-group -->
+                                    
+                                        <div class="form-footer justify-content-between">
+                                            <button type="submit" class="btn btn-outline-primary-2">
+                                                <span>Login</span>
+                                                <i class="icon-long-arrow-right"></i>
+                                            </button>
                                             <p>don't have an account? <a class="fw-5" href="/signup">Signup</a></p>
-							    		</div><!-- End .form-footer -->
-							    	</form>
+                                            <p class="pt-2"><a href="/forgotPass">Forgot Password?</a></p>
+                                        </div><!-- End .form-footer -->
+                                    </form>
+                                    
 							    	<div class="form-choice">
 								    	<p class="text-center">or login with</p>
 								    	<div class="row">
@@ -543,59 +551,51 @@
         const loginPass = document.getElementById('loginPassword');
 
         userLoginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+            e.preventDefault();
 
-        const loginEmailValue = loginEmail.value.trim();
-        const loginPassValue = loginPass.value.trim();
+            const loginEmailValue = loginEmail.value.trim();
+            const loginPassValue = loginPass.value.trim();
 
-        validateLogin(loginEmailValue, loginPassValue);
+            validateLogin(loginEmailValue, loginPassValue);
         });
 
         const setLoginError = (element, message) => {
-            const formGroup = element.parentElement;
-            const errorDisplay = formGroup.querySelector('.errorMsg');
-        
-
-        errorDisplay.innerText = message;
-        element.classList.add('error');
-        errorDisplay.classList.add('error');
-        element.classList.remove('success');
-        errorDisplay.classList.remove('success');
-
-        }; 
-
-        const setLoginSuccess = (element, message) => {
-            const formGroup = element.parentElement;
+            const formGroup = element.closest('.form-group');
             const errorDisplay = formGroup.querySelector('.errorMsg');
 
-        errorDisplay.innerText = message;
-        element.classList.add('success');
-        errorDisplay.classList.add('success');
-        element.classList.remove('error');
-        errorDisplay.classList.remove('error');
-
+            errorDisplay.innerText = message;
+            element.classList.add('error');
+            errorDisplay.classList.add('error');
+            element.classList.remove('success');
+            errorDisplay.classList.remove('success');
         };
 
+        const setLoginSuccess = (element, message) => {
+            const formGroup = element.closest('.form-group');
+            const errorDisplay = formGroup.querySelector('.errorMsg');
 
-        async function validateLogin (email, password) {
+            errorDisplay.innerText = message;
+            element.classList.add('success');
+            errorDisplay.classList.add('success');
+            element.classList.remove('error');
+            errorDisplay.classList.remove('error');
+        };
 
-        if(!email) {
-            setLoginError(loginEmail, "*Please enter the email");
-        }
-        else {
-            setLoginSuccess(loginEmail, "Email");
-        }
+        async function validateLogin(email, password) {
+            if (!email) {
+                setLoginError(loginEmail, "*Please enter the email");
+            } else {
+                setLoginSuccess(loginEmail, "Email");
+            }
 
+            if (!password) {
+                setLoginError(loginPass, "*Please enter the password");
+                return;
+            } else {
+                setLoginSuccess(loginPass, "Password");
+            }
 
-        if(!password) {
-            setLoginError(loginPass, "*Please enter the password");
-            return;
-        }
-        else {
-            setLoginSuccess(loginPass, "Password");
-        }
-
-        const response = await fetch('/userLogin', {
+            const response = await fetch('/userLogin', {
                 method: "POST",
                 headers: {
                     'content-type': 'application/json'
@@ -605,14 +605,10 @@
 
             const loginData = await response.json();
 
-            if(loginData.success) {
-                    window.location.href = "/";
-            }
-            else if(response.ok) {
+            if (loginData.success) {
+                window.location.href = "/";
+            } else if (response.ok) {
                 const errorDisplay = document.querySelector('.main-error');
-                const loginEmail = document.getElementById('loginEmail');
-                const loginPass = document.getElementById('loginPassword');
-
                 errorDisplay.innerText = loginData.message;
                 loginEmail.classList.add('error');
                 loginEmail.classList.remove('success');
@@ -620,6 +616,19 @@
                 loginPass.classList.remove('success');
             }
         }
+    </script>
+
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordInput = document.querySelector('#loginPassword');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
     </script>
 
 <%- include('./layout/footer.ejs') %>

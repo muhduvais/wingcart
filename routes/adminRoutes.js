@@ -44,10 +44,9 @@ adminRouter.get('/ddd', (req, res) => {
     res.render('ddddddddddddd');
 });
 
-// adminRouter.get('/orderManagement', adminAuth, adminController.toOrderManagement);
-// adminRouter.get('/orderDetails/:order_id', adminAuth, adminController.toOrderManagement);
-// adminRouter.post('/updateOrderStatus/:orderId/:productId', adminController.updateOrderStatus);
-// adminRouter.post('/cancelProduct/:orderId/:productId', adminAuth, adminController.cancelProduct);
+adminRouter.get('/orderManagement', adminAuth, adminController.toOrderManagement);
+adminRouter.get('/orderDetails/:order_id', adminAuth, adminController.toOrderDetails);
+adminRouter.post('/updateOrderStatus/:orderId/:productId', adminController.updateOrderStatus);
 
 
 module.exports = adminRouter;
