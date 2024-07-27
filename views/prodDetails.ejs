@@ -282,6 +282,13 @@
                                             <input type="number" id="qty" class="form-control" value="1" min="1" max="<%= product.stock < 10 ? product.stock : 10 %>" step="1" data-decimals="0" required>
                                         </div><!-- End .product-details-quantity -->
                                     </div><!-- End .details-filter-row -->
+
+                                    <% if (product.stock < 4 && product.stock > 0 ) { %>
+                                        <div class="stock-left pb-2">
+                                            <p class="text-danger">Only <%= product.stock %> <%= product.stock === 1 ? 'stock' : 'stocks' %> left</p>
+                                        </div>
+                                    <% } else { %>
+                                    <% } %>
                             
                                     <div class="product-details-action">
                                         <form class="add-to-cart-main">
