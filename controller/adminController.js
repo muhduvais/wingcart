@@ -4,6 +4,7 @@ const Product = require("../model/productsModel");
 const Brand = require("../model/brandsModel");
 const Cart = require("../model/cartModel");
 const Order = require("../model/ordersModel");
+const Coupon = require("../model/couponsModel");
 const Admin = require("../model/adminModel");
 const sharp = require('sharp');
 
@@ -439,10 +440,6 @@ const processImage = async (file, width, height) => {
     try {
         const outputPath = path.join(__dirname, '../assets2/img', `cropped-${file.filename}`);
         await sharp(file.path)
-        .resize(width, height, {
-            fit: sharp.fit.cover,
-            position: sharp.strategy.entropy
-        })
         .toFile(outputPath);
         return `cropped-${file.filename}`;
     }
@@ -592,7 +589,10 @@ const toOrderManagement = async (req, res) => {
             ]
         };
 
-        const orders = await Order.find(query).sort({ orderDate: -1 }).skip(skip).limit(ITEMS_PER_PAGE);
+        const orders = await Order.find(query).sort({ orderDate: -1 })
+        .populate('user')
+        .skip(skip)
+        .limit(ITEMS_PER_PAGE);
 
         const totalOrders = await User.countDocuments(query) - 1;
 
@@ -619,7 +619,6 @@ const toOrderDetails = async (req, res) => {
 
         const order = await Order.findById(orderId)
         .populate('products.product')
-        .populate('address')
         .populate('payment')
 
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -662,6 +661,84 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
+const toOffersAndCoupons = async (req, res) => {
+    try {
+        const coupons = await Coupon.find({});
+
+         if (!coupons) {
+            return res.render('offersAndCoupons');
+         }
+
+        res.render('offersAndCoupons', { coupons });
+    } catch (error) {
+        console.error('Error fetching offers and coupons', error);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const toCreateCoupon = async (req, res) => {
+    try {
+        res.render('addCoupon');
+    } catch (error) {
+        console.error('Error fetching add coupon', error);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const verifyCreateCoupon = async (req, res) => {
+    try {
+        const { couponCode, description, discount, minPurchase, maxAmount, validity } = req.body;
+        const coupon = new Coupon({
+            code: couponCode,
+            description,
+            discount,
+            minPurchase,
+            maxAmount,
+            validity
+        });
+
+        await coupon.save();
+        res.status(200).json({ success: true });
+
+    } catch (error) {
+        console.error('Error creating coupon', error);
+        res.status(500).json({ success: false });
+    }
+}
+
+const verifyEditCoupon = async (req, res) => {
+    try {
+        const { couponCode, description, discount, minPurchase, maxAmount, validity } = req.body;
+        const couponId = req.params.coupon_id;
+        await Coupon.findByIdAndUpdate(couponId, {
+            code: couponCode,
+            description: description,
+            discount: discount,
+            minPurchase: minPurchase,
+            maxAmount: maxAmount,
+            validity: validity
+        });
+
+        res.status(200).json({ success: true });
+
+    } catch (error) {
+        console.error('Error editing coupon', error);
+        res.status(500).json({ success: false });
+    }
+}
+
+const deleteCoupon = async (req, res) => {
+    try {
+        const couponId = req.params.coupon_id;
+        await Coupon.findByIdAndDelete(couponId);
+        res.status(200).json({ success: true });
+
+    } catch (error) {
+        console.error('Error deleting coupon', error);
+        res.status(500).json({ success: false });
+    }
+}
+
 
 
 
@@ -694,5 +771,10 @@ module.exports = {
     toOrderManagement,
     toOrderDetails,
     updateOrderStatus,
+    toOffersAndCoupons,
+    toCreateCoupon,
+    verifyCreateCoupon,
+    verifyEditCoupon,
+    deleteCoupon,
 
 }

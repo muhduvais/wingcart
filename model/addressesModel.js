@@ -26,7 +26,11 @@ const addressSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
         required: true
-    }
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
 });
 
 const Address = mongoose.model('addresses', addressSchema);

@@ -136,7 +136,7 @@
                                             <div class="card p-5" style="background-color: #f9f9f9;">
                                                 <div class="card-body d-md-flex align-items-center justify-content-between">
                                                     <div class="card-left">
-                                                        <p class="card-title pb-2">Order <%= index + 1 %></p>
+                                                        <p class="card-title pb-2">Order <%= orders.length - index %></p>
                                                         <h5 class="">Order Id: <%= order.orderId %></h5>
                                                         <p class="card-text">
                                                             Total Amount: <strong>₹<%= order.totalAmount.toFixed(2) %></strong><br>

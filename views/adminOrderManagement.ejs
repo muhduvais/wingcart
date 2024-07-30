@@ -112,7 +112,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="#charts">
+                <a href="/admin/offersAndCoupons">
                   <i class="fas fa-tags"></i>
                   <p>Offers & Coupons</p>
 
@@ -294,6 +294,7 @@
                   <thead>
                     <tr>
                       <th>Order Id</th>
+                      <th>User</th>
                       <th>Date</th>
                       <th>Total</th>
                       <th></th>
@@ -305,6 +306,7 @@
                         <% orders.forEach((order, index) => { %>
                             <tr>
                               <td><%= order.orderId %></td>
+                              <td><%= order.user.fname + ' ' + order.user.lname %></td>
                               <td><%= order.orderDate.toDateString() %></td>
                               <td>₹<%= order.totalAmount.toFixed(2) %></td>
                               <td><th><a href="/admin/orderDetails/<%= order._id %>"><button class="btn btn-primary">View Details</button></a></th></td>

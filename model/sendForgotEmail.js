@@ -1,5 +1,10 @@
 const dotenv = require("dotenv");
 const nodemailer = require("nodemailer");
+const jwt = require('jsonwebtoken');
+
+const generateResetToken = (email) => {
+  return jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
 
 dotenv.config();
 
@@ -15,11 +20,12 @@ let transporter = nodemailer.createTransport({
 
   const sendForgotEmail = async (email) => {
     try {
+      const token = generateResetToken(email);
         const mailOptions = {
             from: process.env.SMTP_MAIL,
             to: email,
             subject: 'Password Reset',
-            text: `http://localhost:3001/resetForgotPass?email=${email}`
+            text: `http://localhost:3001/resetForgotPass?token=${token}`
         };
 
         await transporter.sendMail(mailOptions);

@@ -10,8 +10,9 @@ const isUserActive = (req, res, next) => {
     }
 }
 
-const isUserBlocked = (req, res, next) => {
-    if(req.session.user.isBlocked) {
+const isUserBlocked = async (req, res, next) => {
+    const user = await User.findOne({ _id: req.session.user._id });
+    if(user.isBlocked) {
         delete req.session.user;
         res.redirect('/userLogin');
     }

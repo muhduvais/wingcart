@@ -141,27 +141,29 @@
                             <!-- ///////address-container////////// -->
                             <div class="container-addr m-3">
                                 <div class="top-div d-md-flex align-items-center justify-content-between py-4">
-                                    <h3 class="text-muted">Addresses</h3>
-                                    <a href="/addAddress"><button class="btn btn-primary mr-4 my-2 ml-md-2">Add Address</button></a>
+                                    <h3 class="text-muted px-3">Addresses</h3>
+                                    <a href="/addAddress"><button class="btn btn-primary mr-4 my-2 ml-md-2 px-3">Add Address</button></a>
                                 </div>
-                                <div class="row" id="address-row">
-                                    <% addresses.forEach((address, index) => { %>
-                                        <div class="col-12">
-                                            <div class="address-container mr-4">
-                                                <h5 class="text-muted pb-2">Address <%= index + 1 %></h5>
-                                                <p class="pb-2"><%= address.fname + ' ' + address.lname %>
-                                                <%= address.street %><br>
-                                                <%= address.city %>, <%= address.state %> - <%= address.pincode %><br>
-                                                <%= address.country %><br>
-                                                <%= address.phone %></p>
-                                                <div class="address-actions">
-                                                    <a href="/editAddress/<%= address._id %>"><button class="btn btn-secondary btn-sm my-1">Edit</button></a>
-                                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<%= address._id %>">Delete</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <% }); %>
+    
+                                <!-- Address Card -->
+                                <% addresses.forEach((address, index) => { %>
+                                <div class="card p-3 px-3 my-4 shadow-sm" style="background-color: #f0f0f0; border-radius: 15px;">
+                                    <div class="card-body d-md-flex align-items-center justify-content-between p-3">
+                                      <div class="addr">
+                                        <h5 class="text-muted p-2 m-0">Address <%= index + 1 %></h5>
+                                        <p class="p-2"><%= address.fname + ' ' + address.lname %>
+                                        <%= address.street %><br>
+                                        <%= address.city %>, <%= address.state %> - <%= address.pincode %><br>
+                                        <%= address.country %><br>
+                                        <%= address.phone %></p>
+                                      </div>
+                                      <div class="buttons d-flex">
+                                        <a class="px-3" href="/editAddress/<%= address._id %>"><i class="fa-solid fa-pen-to-square" style="font-size: 25px; color: #0055cb;"></i></a>
+                                        <button class="px-3" data-toggle="modal" data-target="#deleteModal<%= address._id %>" style="padding: 0; border: none; padding: 0 10px;"><i class="fa-solid fa-trash" style="font-size: 23px; color: #b40000;"></i></button>
+                                      </div>
+                                    </div>
                                 </div>
+                                <% }); %>
                             </div>
 
                             <!-- delete confirmation -->

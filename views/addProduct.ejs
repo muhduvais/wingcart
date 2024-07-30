@@ -41,7 +41,43 @@
     <!-- Sweet Alert CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- cropper JS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet"> -->
+    <!-- <link href="https://unpkg.com/cropperjs/dist/cropper.css" rel="stylesheet"/>
+    <script src="https://unpkg.com/cropperjs"></script> -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+      .modal { 
+        display: none; 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 700px; 
+        height: 700px; 
+        background-color: rgba(0,0,0,0.7); 
+        justify-content: center; 
+        align-items: center; 
+      }
+      .modal-content { 
+        background-color: white; 
+        padding: 20px; 
+        border-radius: 8px; 
+        max-width: 90%; 
+        max-height: 90%; 
+        overflow: auto; 
+      }
+      .cropper-container {
+        max-width: 100%;
+        max-height: 70vh;
+      }
+      .button-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+    </style>
+  
+
     <!-- Admin script -->
      <link rel="stylesheet" href="/assets2/css/adminValidationStyle.css">
   </head>
@@ -390,7 +426,7 @@
 
   
           <!-- File inputs for Images, aligned in a row -->
-          <div class="form-group mt-4">
+          <!-- <div class="form-group mt-4">
             <div class="row">
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold errorMsg" for="image1">Image 1</label>
@@ -410,6 +446,24 @@
                 <img id="previewImage3" class="previewImage" src="<%= locals.product && product.images && product.images[2] ? '/assets2/img/' + product.images[2] : '' %>" style="display: <%= locals.product && product.images && product.images[2] ? 'block' : 'none' %>; max-width: 100%;" alt="Image 3"/>
               </div>
             </div>
+          </div> -->
+
+          <div class="row mb-3">
+            <div class="col-md-4 d-flex flex-column align-items-start">
+              <label for="imageInput1" class="form-label errorMsg">Image 1</label>
+              <img id="imagePreview1" class="image-preview" src="/admin/img/Add Image.png" style="max-width: 100%; margin-top: 10px;" alt="product image" />
+              <input class="form-control my-2" type="file" id="imageInput1" name="image1" onchange="openCropper(event, 'imagePreview1')">
+            </div>
+            <div class="col-md-4 d-flex flex-column align-items-start">
+              <label for="imageInput2" class="form-label errorMsg">Image 2</label>
+              <img id="imagePreview2" class="image-preview" src="/admin/img/Add Image.png" style="max-width: 100%; margin-top: 10px;" alt="product image" />
+              <input class="form-control my-2" type="file" id="imageInput2" name="image2" onchange="openCropper(event, 'imagePreview2')">
+            </div>
+            <div class="col-md-4 d-flex flex-column align-items-start">
+              <label for="imageInput3" class="form-label errorMsg">Image 3</label>
+              <img id="imagePreview3" class="image-preview" src="/admin/img/Add Image.png" style="max-width: 100%; margin-top: 10px;" alt="product image" />
+              <input class="form-control my-2" type="file" id="imageInput3" name="image3" onchange="openCropper(event, 'imagePreview3')">
+            </div>
           </div>
   
           <!-- Submit Button -->
@@ -422,6 +476,25 @@
     </div>
   </div>
 
+  <!-- Image Upload -->
+  <!-- <div class="row mb-3">
+    <div class="col-md-4">
+        <label for="image1" class="form-label">Image 1</label>
+        <img  class="image-preview" src="/admin/img/Add Image.png" style="max-width: 100%; margin-top: 10px;" alt="product image" />
+        <input class="form-control" type="file" id="image1" name="image1" onchange="previewImage(event)" >
+    </div>
+    <div class="col-md-4">
+        <label for="image2" class="form-label">Image 2</label>
+        <img  class="image-preview" src="/admin/img/Add Image.png" style="max-width: 100%; margin-top: 10px;" alt="product image" />
+        <input class="form-control" type="file" id="image2" name="image2"  onchange="previewImage(event)">
+    </div>
+    <div class="col-md-4">
+        <label for="image3" class="form-label">Image 3</label>
+        <img  class="image-preview" src="/admin/img/Add Image.png" style="max-width: 100%; margin-top: 10px;" alt="product image" />
+        <input class="form-control" type="file" id="image3" name="image3" onchange="previewImage(event)">
+    </div>
+  </div> -->
+
 
 
 
@@ -429,6 +502,25 @@
 
 <!-- //////////////////////////////////////// -->
 
+          </div>
+        </div>
+
+        <!-- Modal for cropping -->
+        <!-- <div id="cropperModal" class="modal">
+          <div class="modal-content">
+              <div class="cropper-container">
+                  <img id="cropperImage" src="" alt="Image for cropping" />
+              </div>
+              <button onclick="cropImage()">Crop</button>
+              <button onclick="closeModal()">Cancel</button>
+           </div>
+        </div> -->
+
+        <div id="cropperModal" class="modal">
+          <div class="modal-content">
+            <img id="cropperImage" src="" alt="Image for cropping" style="max-width: 100%;"/>
+            <button onclick="cropImage()">Crop</button>
+            <button onclick="closeModal()">Cancel</button>
           </div>
         </div>
 
@@ -446,17 +538,116 @@
       </div>
     </div> -->
 
-    <!-- Image preview -->
-    <script>
-      function previewImage(event, previewId) {
-        const reader = new FileReader();
-        reader.onload = function() {
-          const output = document.getElementById(previewId);
-          output.src = reader.result;
-          output.style.display = 'block';
-        };
-        reader.readAsDataURL(event.target.files[0]);
+    <!-- <script>
+      let cropper;
+      let currentInput;
+      let croppedFiles = new Map(); // To store the cropped files
+    
+      function previewImage(event) {
+          const input = event.target;
+          const file = input.files[0];
+          currentInput = input; // Save the reference to the current input
+          if (file) {
+              const reader = new FileReader();
+              reader.onload = function(e) {
+                  const cropperImage = document.getElementById('cropperImage');
+                  cropperImage.src = e.target.result;
+                  document.getElementById('cropperModal').style.display = 'block';
+                  if (cropper) {
+                      cropper.destroy();
+                  }
+                  cropper = new Cropper(cropperImage, {
+                      aspectRatio: 1200 / 1485, // Portrait aspect ratio
+                      viewMode: 1,
+                  });
+              };
+              reader.readAsDataURL(file);
+          }
       }
+    
+      function cropImage() {
+          if (cropper) {
+              cropper.getCroppedCanvas({
+                  width: 300, // desired width
+                  height: 400, // desired height
+              }).toBlob(function(blob) {
+                  const croppedImageSrc = URL.createObjectURL(blob);
+                  const imagePreview = currentInput.previousElementSibling;
+                  if (imagePreview && imagePreview.tagName === 'IMG') {
+                      imagePreview.src = croppedImageSrc;
+                  }
+                  // Replace the file input with the cropped image blob
+                  const dataTransfer = new DataTransfer();
+                  const file = new File([blob], croppedImage${Date.now()}.jpg, { type: "image/jpeg" });
+                  dataTransfer.items.add(file);
+                  currentInput.files = dataTransfer.files;
+                  // Store the cropped file in the Map
+                  croppedFiles.set(currentInput.name, file);
+                  closeModal();
+              }, 'image/jpeg', 1);
+          }
+      }
+    
+      function closeModal() {
+          document.getElementById('cropperModal').style.display = 'none';
+          if (cropper) {
+              cropper.destroy();
+              cropper = null;
+          }
+        }
+    </script> -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+      let cropper;
+      let currentImagePreviewId;
+    
+      function openCropper(event, previewId) {
+        currentImagePreviewId = previewId;
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const cropperImage = document.getElementById('cropperImage');
+            cropperImage.src = e.target.result;
+            cropperImage.onload = () => {
+              if (cropper) cropper.destroy();
+              cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 1
+              });
+              document.getElementById('cropperModal').style.display = 'flex';
+            };
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    
+      function cropImage() {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({
+          width: 800,
+          height: 800
+        });
+        canvas.toBlob(blob => {
+          const fileInput = document.querySelector(`input[id="${currentImagePreviewId.replace('Preview', 'Input')}"]`);
+          const fileInputData = new DataTransfer();
+          const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+          fileInputData.items.add(file);
+          fileInput.files = fileInputData.files;
+          document.getElementById(currentImagePreviewId).src = canvas.toDataURL('image/jpeg', 0.9); // Set quality
+          closeModal();
+        }, 'image/jpeg', 1);
+      }
+    
+      function closeModal() {
+        document.getElementById('cropperModal').style.display = 'none';
+        if (cropper) cropper.destroy();
+      }
+    </script>
+
+
+    <script>
 
 
       const addProductForm = document.getElementById('addProductForm');
@@ -470,9 +661,9 @@
         const brand = document.getElementById('brand');
         const stock = document.getElementById('stock');
         const price = document.getElementById('price');
-        const image1 = document.getElementById('image1');
-        const image2 = document.getElementById('image2');
-        const image3 = document.getElementById('image3');
+        const imageInput1 = document.getElementById('imageInput1');
+        const imageInput2 = document.getElementById('imageInput2');
+        const imageInput3 = document.getElementById('imageInput3');
 
         addProductForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -512,7 +703,7 @@
 
         const isValidImageFile = (file) => {
           const validTypes = ['image/jpeg', 'image/png'];
-          const maxSize = 3 * 1024 * 1024;
+          const maxSize = 5 * 1024 * 1024;
           return validTypes.includes(file.type) && file.size <= maxSize;
         };
 
@@ -530,9 +721,9 @@
           const stockValue = stock.value.trim();
           const priceValue = price.value.trim();
 
-          const image1Value = image1.files[0];
-          const image2Value = image2.files[0];
-          const image3Value = image3.files[0];
+          const image1Value = imageInput1.files[0];
+          const image2Value = imageInput2.files[0];
+          const image3Value = imageInput3.files[0];
 
           let isValid = true;
 
@@ -616,41 +807,44 @@
             setLoginSuccess(price, "Price");
         }
 
+        console.log('File type:', image1Value.type);
+console.log('File size:', image1Value.size);
+
         if(!image1Value) {
-            setLoginError(image1, "*Please select an image");
+            setLoginError(imageInput1, "*Please select an image");
             isValid = false;
         }
         else if (!isValidImageFile(image1Value)) {
-          setLoginError(image1, "*Please select a valid image (jpeg/png) under 3 mb");
+          setLoginError(imageInput1, "*Please select a valid image (jpeg/png) under 5 mb");
           isValid = false;
         }
         else {
-            setLoginSuccess(image1, "Image 1");
+            setLoginSuccess(imageInput1, "Image 1");
         }
 
         if(!image2Value) {
-            setLoginError(image2, "*Please select an image");
+            setLoginError(imageInput2, "*Please select an image");
             isValid = false;
         }
         else if (!isValidImageFile(image2Value)) {
-          setLoginError(image2, "*Please select a valid image (jpeg/png) under 3 mb");
+          setLoginError(imageInput2, "*Please select a valid image (jpeg/png) under 5 mb");
           isValid = false;
         }
         else {
-            setLoginSuccess(image2, "Image 2");
+            setLoginSuccess(imageInput2, "Image 2");
         }
 
 
         if(!image3Value) {
-            setLoginError(image3, "*Please select an image");
+            setLoginError(imageInput3, "*Please select an image");
             isValid = false;
         }
         else if (!isValidImageFile(image3Value)) {
-          setLoginError(image3, "*Please select a valid image (jpeg/png) under 3 mb");
+          setLoginError(imageInput3, "*Please select a valid image (jpeg/png) under 5 mb");
           isValid = false;
         }
         else {
-            setLoginSuccess(image3, "Image 3");
+            setLoginSuccess(imageInput3, "Image 3");
         }
 
         if(!isValid) {
@@ -668,10 +862,9 @@
           formData.append('brand', brandValue);
           formData.append('stock', stockValue);
           formData.append('price', priceValue);
-          formData.append('image1', image1.files[0]);
-          formData.append('image2', image2.files[0]);
-          formData.append('image3', image3.files[0]);
-
+          formData.append('image1', imageInput1.files[0]);
+          formData.append('image2', imageInput2.files[0]);
+          formData.append('image3', imageInput3.files[0]);
         const response = await fetch('/admin/addProduct', {
                 method: "POST",
                 body: formData
@@ -724,7 +917,7 @@
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- cropper JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script> -->
 
     
   </body>

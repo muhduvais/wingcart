@@ -44,6 +44,37 @@
     <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet">
     <!-- adminStyle -->
      <link rel="stylesheet" href="/assets2/css/adminValidationStyle.css">
+
+     <style>
+      .modal { 
+        display: none; 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 700px; 
+        height: 700px; 
+        background-color: rgba(0,0,0,0.7); 
+        justify-content: center; 
+        align-items: center; 
+      }
+      .modal-content { 
+        background-color: white; 
+        padding: 20px; 
+        border-radius: 8px; 
+        max-width: 90%; 
+        max-height: 90%; 
+        overflow: auto; 
+      }
+      .cropper-container {
+        max-width: 100%;
+        max-height: 80vh;
+      }
+      .button-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+    </style>
   </head>
   <body>
     
@@ -390,7 +421,7 @@
   </div>
   
           <!-- File inputs for Images, aligned in a row -->
-          <div class="form-group mt-4">
+          <!-- <div class="form-group mt-4">
             <div class="row">
               <div class="col-md-4">
                 <label class="control-label text-dark font-weight-bold errorMsg" for="image1">Image 1</label>
@@ -419,6 +450,36 @@
                   <p>Current file: <%= product.images[2] %></p>
                 <% } %>
               </div>
+            </div>
+          </div> -->
+
+          <div class="row mb-3">
+            <div class="col-md-4 d-flex flex-column align-items-start">
+              <label for="imageInput1" class="form-label errorMsg">Image 1</label>
+              <img id="imagePreview1" class="image-preview" src="<%= locals.product && product.images && product.images[0] ? '/assets2/img/' + product.images[0] : '' %>" style="display: <%= locals.product && product.images && product.images[0] ? 'block' : 'none' %>; max-width: 100%; margin-top: 10px;" alt="Image 1" />
+              <input class="form-control my-2" type="file" id="imageInput1" name="image1" onchange="openCropper(event, 'imagePreview1')">
+              <input type="hidden" name="existingImage1" id="existingImage1" value="<%= locals.product && product.images ? product.images[0] : '' %>">
+              <% if (locals.product && product.images && product.images[0]) { %>
+                <p>Current file: <%= product.images[0] %></p>
+              <% } %>
+            </div>
+            <div class="col-md-4 d-flex flex-column align-items-start">
+              <label for="imageInput2" class="form-label errorMsg">Image 2</label>
+              <img id="imagePreview2" class="image-preview" src="<%= locals.product && product.images && product.images[1] ? '/assets2/img/' + product.images[1] : '' %>" style="display: <%= locals.product && product.images && product.images[1] ? 'block' : 'none' %>; max-width: 100%; margin-top: 10px;" alt="Image 2" />
+              <input class="form-control my-2" type="file" id="imageInput2" name="image2" onchange="openCropper(event, 'imagePreview2')">
+              <input type="hidden" name="existingImage2" id="existingImage2" value="<%= locals.product && product.images ? product.images[1] : '' %>">
+              <% if (locals.product && product.images && product.images[1]) { %>
+                <p>Current file: <%= product.images[1] %></p>
+              <% } %>
+            </div>
+            <div class="col-md-4 d-flex flex-column align-items-start">
+              <label for="imageInput3" class="form-label errorMsg">Image 3</label>
+              <img id="imagePreview3" class="image-preview" src="<%= locals.product && product.images && product.images[2] ? '/assets2/img/' + product.images[2] : '' %>" style="display: <%= locals.product && product.images && product.images[2] ? 'block' : 'none' %>; max-width: 100%; margin-top: 10px;" alt="Image 3" />
+              <input class="form-control my-2" type="file" id="imageInput3" name="image3" onchange="openCropper(event, 'imagePreview3')">
+              <input type="hidden" name="existingImage3" id="existingImage3" value="<%= locals.product && product.images ? product.images[2] : '' %>">
+              <% if (locals.product && product.images && product.images[2]) { %>
+                <p>Current file: <%= product.images[2] %></p>
+              <% } %>
             </div>
           </div>
   
@@ -456,17 +517,65 @@
       </div>
     </div> -->
 
+    <div id="cropperModal" class="modal">
+      <div class="modal-content">
+        <img id="cropperImage" src="" alt="Image for cropping" style="max-width: 100%;"/>
+        <button onclick="cropImage()">Crop</button>
+        <button onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+      let cropper;
+      let currentImagePreviewId;
+    
+      function openCropper(event, previewId) {
+        currentImagePreviewId = previewId;
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const cropperImage = document.getElementById('cropperImage');
+            cropperImage.src = e.target.result;
+            cropperImage.onload = () => {
+              if (cropper) cropper.destroy();
+              cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 1
+              });
+              document.getElementById('cropperModal').style.display = 'flex';
+            };
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    
+      function cropImage() {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({
+          width: 800,
+          height: 800
+        });
+        canvas.toBlob(blob => {
+          const fileInput = document.querySelector(`input[id="${currentImagePreviewId.replace('Preview', 'Input')}"]`);
+          const fileInputData = new DataTransfer();
+          const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+          fileInputData.items.add(file);
+          fileInput.files = fileInputData.files;
+          document.getElementById(currentImagePreviewId).src = canvas.toDataURL('image/jpeg', 0.9); // Set quality
+          closeModal();
+        }, 'image/jpeg', 1);
+      }
+    
+      function closeModal() {
+        document.getElementById('cropperModal').style.display = 'none';
+        if (cropper) cropper.destroy();
+      }
+    </script>
+
     <!-- Image preview -->
     <script>
-      function previewImage(event, previewId) {
-        const reader = new FileReader();
-        reader.onload = function() {
-          const output = document.getElementById(previewId);
-          output.src = reader.result;
-          output.style.display = 'block';
-        };
-        reader.readAsDataURL(event.target.files[0]);
-      }
 
       const editProductForm = document.getElementById('editProductForm');
         const productName = document.getElementById('productName');
@@ -479,9 +588,9 @@
         const brand = document.getElementById('brand');
         const stock = document.getElementById('stock');
         const price = document.getElementById('price');
-        const image1 = document.getElementById('image1');
-        const image2 = document.getElementById('image2');
-        const image3 = document.getElementById('image3');
+        const image1 = document.getElementById('imageInput1');
+        const image2 = document.getElementById('imageInput2');
+        const image3 = document.getElementById('imageInput3');
         const existingImage1 = document.getElementById('existingImage1');
         const existingImage2 = document.getElementById('existingImage2');
         const existingImage3 = document.getElementById('existingImage3');

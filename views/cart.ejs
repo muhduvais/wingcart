@@ -125,7 +125,7 @@
                             <a href="/cartManagement" title="cart">
                                 <div class="icon">
                                     <i class="icon-shopping-cart"></i>
-                                    <span class="wishlist-count badge"><%= locals.cart && cart !== null ? cart.products.length : '' %></span>
+                                    <span class="wishlist-count badge"><%= locals.cart && cart !== null ? cart.products.length : '0' %></span>
                                 </div>
                                 <p>Cart</p>
                             </a>
@@ -194,10 +194,11 @@
                                                     </td>
                                                     <td class="quantity-col">
                                                         <div class="cart-product-quantity">
-                                                            <% if (item.product.stock !== 0) { %>
-                                                                <input type="number" class="form-control quantity-input" value="<%= item.quantity %>" min="1" max="<%= item.product.stock < 10 ? item.product.stock : 10 %>" step="1" data-decimals="0">
-                                                            <% } %>
+                                                          <% if (item.product.stock !== 0) { %>
+                                                            <input type="number" class="form-control quantity-input" value="<%= item.quantity %>" min="1" max="<%= item.product.stock < 10 ? item.product.stock : 10 %>" step="1" data-decimals="0">
+                                                          <% } %>
                                                         </div>
+                                                        <span class="stock-message py-3" style="color: red; display: none;"></span>
                                                     </td>
                                                     <td class="total-col"><span class="total-price <%= item.product.stock === 0 ? 'd-none' : '' %>">
                                                         <% if(item.product.stock !== 0 && item.quantity !== 0) { %>
@@ -226,8 +227,6 @@
 	                			<div class="cart-bottom">
                                     <!-- ////////Coupon-part///// -->
                                     <!-- ////////Coupon-part///// -->
-
-			            			<button class="btn btn-outline-dark-2" onclick="reloadCart()"><span>UPDATE CART</span><i class="icon-refresh"></i></button>
 		            			</div><!-- End .cart-bottom -->
 
 	                		</div><!-- End .col-lg-9 -->
@@ -652,40 +651,56 @@
         document.querySelectorAll('.quantity-input').forEach(input => {
         input.addEventListener('input', function() {
             const quantity = parseInt(this.value, 10);
+            const maxStock = parseInt(this.max, 10);
             const productRow = this.closest('tr');
             const price = parseFloat(productRow.querySelector('.price').textContent);
             const totalPriceElement = productRow.querySelector('.total-price');
+            const stockMessage = productRow.querySelector('.stock-message');
+
+            // Check if quantity exceeds maxStock
+            if (quantity === maxStock) {
+                console.log(`Max value ${quantity}`);
+            this.value = maxStock;
+            if (maxStock === 1) {
+                stockMessage.textContent = `Only ${maxStock} stock left`;
+            } else if (maxStock !== 1) {
+                stockMessage.textContent = `Only ${maxStock} stocks left`;
+            }
+            stockMessage.style.display = 'block';
+            } else {
+            stockMessage.style.display = 'none';
+            }
 
             // Update total price for the item
             const newTotal = price * quantity;
-            totalPriceElement.textContent = `₹${newTotal}`;
+            totalPriceElement.textContent = `₹ ${newTotal}`;
 
             // Send updated quantity to the server
             const productId = productRow.getAttribute('data-product-id');
             fetch(`/updateCart`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productId: productId,
-                    quantity: quantity
-                })
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: productId,
+                quantity: quantity
+            })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    console.log('Cart updated successfully');
-                    updateSummary();
-                } else {
-                    console.error('Error updating cart:', data.message);
-                }
+            if (data.success) {
+                console.log('Cart updated successfully');
+                updateSummary();
+            } else {
+                console.error('Error updating cart:', data.message);
+            }
             })
             .catch(error => {
-                console.error('Error:', error);
+            console.error('Error:', error);
             });
         });
-    });
+        });
     </script>
 
     <script>

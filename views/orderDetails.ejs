@@ -115,7 +115,7 @@
                         <a class="list-group-item list-group-item-action"
                             href="#account-social-links">Wishlist</a>
                         <a class="list-group-item list-group-item-action"
-                            href="#account-connections">Order History</a>
+                            href="/orderHistory">Order History</a>
                         <a class="list-group-item list-group-item-action"
                             href="#account-notifications">Wallet</a>
                     </div>
@@ -139,7 +139,7 @@
                                     </div>
                                     <div class="price-breakup">
                                         <p>Subtotal: &nbsp; &nbsp;₹<%= locals.subtotal ? subtotal.toFixed(2) : '' %><br>
-                                            Gst (18%): &nbsp; &nbsp;₹<%= locals.gst ? gst : '' %><br>
+                                            Gst (18%): &nbsp; &nbsp;₹<%= locals.gst ? gst.toFixed(2) : '' %><br>
                                             Shipping: &nbsp; &nbsp;₹<%= locals.shipping ? shipping : '0.00' %><br>
                                             <b>Total: &nbsp; &nbsp;₹<%= locals.totalAmount ? totalAmount : '' %></b></p>
                                     </div>
@@ -148,7 +148,7 @@
                                 <div class="row" id="products-row">
                                     <% order.products.forEach((item, index) => { %>
                                         <div class="col-12 mb-3">
-                                            <div class="card p-3" style="background-color: #f9f9f9;">
+                                            <div class="card p-3 shadow-sm" style="background-color: #f9f9f9; border-radius: 20px;">
                                                 <div class="card-body d-md-flex align-items-center justify-content-between">
                                                     <div class="card-left">
                                                         <h5 class="card-title"><%= item.product.name %></h5>

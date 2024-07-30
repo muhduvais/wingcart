@@ -7,9 +7,11 @@ const Cart = require("../model/cartModel");
 const Payment = require("../model/paymentModel");
 const Order = require("../model/ordersModel");
 const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 const sendEmail = require("../model/sendEmail");
 const sendForgotEmail = require("../model/sendForgotEmail");
 const generateOtp = require("../model/generateOtp");
+require('dotenv').config();
 
 const userHome = async (req, res) => {
     try {
@@ -622,6 +624,7 @@ const toAddr = async (req, res) => {
         const userId = req.session.user._id;
         const user = await User.findById(userId);
         const addresses = await Address.find({user: userId});
+        console.log(addresses);
         res.render('userAddresses', {user, userId, addresses});
     }
     catch (err) {
@@ -677,7 +680,7 @@ const deleteAddress = async (req, res) => {
     }
     catch (err) {
         console.error('Error deleting address', err);
-        res.status(500).send('Internal server error'); 
+        res.status(500).send('Internal server error');
     }
 }
 
@@ -829,7 +832,7 @@ const toCheckout = async (req, res) => {
         const userId = req.session.user._id;
         const user = await User.findById(userId);
         const cart = await Cart.findOne({user: userId}).populate('products.product');
-        const address = await Address.find({user: userId});
+        const addresses = await Address.find({user: userId});
         let paymentMethod = await Payment.find({user: userId});
 
         if (paymentMethod.length === 0) {
@@ -853,9 +856,9 @@ const toCheckout = async (req, res) => {
             const shipping = subtotal < 500 ? 40 : 0;
             const total = subtotal + gst + shipping;
 
-            res.render('checkout', {user, userId, cart, total, gst, shipping, address, paymentMethod});
+            res.render('checkout', {user, userId, cart, total, gst, shipping, addresses, paymentMethod});
         } else {
-            res.render('checkout', { user, userId, cart, subtotal: 0, address, paymentMethod });
+            res.render('checkout', { user, userId, cart, subtotal: 0, addresses, paymentMethod });
         }
     }
     catch (err) {
@@ -919,9 +922,12 @@ const createOrder = async (req, res) => {
         const userId = req.session.user._id;
         const { addressId, paymentMethodId } = req.body;
 
+        console.log(addressId);
+
         const user = await User.findById(userId);
         const cart = await Cart.findOne({ user: userId }).populate('products.product');
         const orderId = generateOrderId();
+        const address = await Address.findOne({_id: addressId});
 
         if (!cart) {
             return res.status(200).json({ message: 'Cart is empty' });
@@ -946,7 +952,15 @@ const createOrder = async (req, res) => {
         const newOrder = new Order({
             orderId: orderId,
             user: user._id,
-            address: addressId,
+            address: {
+                fname: address.fname,
+                lname: address.lname,
+                city: address.city,
+                state: address.state,
+                country: address.country,
+                pincode: address.pincode,
+                phone: address.phone
+            },
             orderDate: new Date(),
             coupon: null,
             products: orderProducts,
@@ -977,8 +991,7 @@ const toOrderConf = async (req, res) => {
         const user = req.session.user;
         const orderId = req.params.order_id;
         const order = await Order.findOne({ orderId })
-            .populate('products.product')
-            .populate('address');
+            .populate('products.product');
 
         const orderDate = new Date(order.orderDate);
         const expectedDeliveryDate = new Date(orderDate);
@@ -1016,7 +1029,7 @@ const toOrderDetails = async (req, res) => {
     try {
         const user = req.session.user;
         const orderId = req.params.order_id;
-        const order = await Order.findById(orderId).populate('products.product').populate('address');
+        const order = await Order.findById(orderId).populate('products.product');
 
         if (!order || order.user.toString() !== user._id.toString()) {
             return res.status(404).send('Order not found');
@@ -1102,7 +1115,9 @@ const verifyForgotPass = async (req, res) => {
 
 const resetForgotPass = async (req, res) => {
     try {
-        const email = req.query.email;
+        const token = req.query.token;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const email = decoded.email;
         const user = await User.findOne({ email: email })
 
         if (!user) {
@@ -1122,7 +1137,7 @@ const resetForgotPass = async (req, res) => {
 
 const verifyResetPass = async (req, res) => {
     try {
-        const { pass, email} = req.body;
+        const { pass, email } = req.body;
         const user = await User.findOne({ email: email })
 
         if (!user) {

@@ -168,11 +168,38 @@
 		                		<div class="col-lg-9">
                                     <h2 class="checkout-title">Billing Details</h2>
                                     <label class="text-dark">Select address</label>
-                                    <select id="addressSelect" class="form-control border border-secondary">
-                                        <% address.forEach((addr, index) => { %>
-                                            <option value="<%= index %>"><%= index + 1 %>. <%= addr.fname %> <%= addr.lname %></option>
+                                    <select id="addressSelect" class="form-control" style="background-color: #f0f0f0; border-radius: 5px;">
+                                        <% addresses.forEach((addr, index) => { %>
+                                            <option value="<%= index %>">
+                                                <span>
+                                                    <%= index + 1 + '. ' + addr.fname + ' ' + addr.lname + ' ' + addr.city + ', '
+                                                     + addr.state+ ', ' + addr.country + '-' + addr.pincode
+                                                    + ', ' + 'Ph:' + addr.phone %>
+                                                </span>
+                                            </option>
                                         <% }); %>
                                     </select>
+
+                                    <!-- Address Card -->
+                                    <div class="card p-3 my-3" style="background-color: #f0f0f0; border-radius: 15px;">
+                                        <div class="card-body d-md-flex align-items-center justify-content-between">
+                                          <div class="addr">
+                                            <p id="addr-name"></p>
+                                            <p id="addr-place"></p>
+                                            <p id="addr-pincode"></p>
+                                            <p id="addr-phone"></p>
+                                          </div>
+                                          <div class="buttons d-flex">
+                                            <form id="editAddressForm">
+                                                <button style="padding: 0; border: none; padding: 0 10px;" type="submit"><i class="fa-solid fa-pen-to-square text-muted" style="font-size: 25px;"></i></button>
+                                            </form>
+                                            <form id="addAddrForm">
+                                                <button style="padding: 0; border: none; padding: 0 10px;" type="submit"><i class="fa-solid fa-circle-plus text-muted" style="font-size: 25px;"></i></button>
+                                            </form>
+                                          </div>
+                                        </div>
+                                    </div>
+
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <label>First Name</label>
@@ -208,14 +235,6 @@
                                             <input type="tel" id="phone" class="form-control" readonly>
                                             <input type="hidden" id="addrId" class="form-control">
                                         </div>
-                                    </div>
-                                    <div class="addrBtn mt-2 d-md-flex">
-                                        <form id="editAddressForm">
-                                            <button type="submit" class="btn btn-primary my-1 mx-1">Edit address</button>
-                                        </form>
-                                        <form id="addAddrForm">
-                                            <button type="submit" class="btn btn-primary my-1 mx-1">Add new address</button>
-                                        </form>
                                     </div>
                                 </div>
 
@@ -737,7 +756,7 @@
     </div><!-- End .modal -->
 
     <script>
-        const addresses = JSON.parse('<%- JSON.stringify(address) %>');
+        const addresses = JSON.parse('<%- JSON.stringify(addresses) %>');
     
         const updateAddressDetails = (index) => {
             const selectedAddress = addresses[index];
@@ -749,6 +768,10 @@
             document.getElementById('pincode').value = selectedAddress.pincode;
             document.getElementById('phone').value = selectedAddress.phone;
             document.getElementById('addrId').value = selectedAddress._id;
+            document.getElementById('addr-name').innerText = selectedAddress.fname + ' ' + selectedAddress.lname;
+            document.getElementById('addr-place').innerText = selectedAddress.city + ', ' + selectedAddress.state + ', ' + selectedAddress.country;
+            document.getElementById('addr-pincode').innerText = selectedAddress.pincode;
+            document.getElementById('addr-phone').innerText = selectedAddress.phone;
         };
     
         document.getElementById('addressSelect').addEventListener('change', (event) => {
@@ -985,64 +1008,64 @@
             let isValid = true;
 
             if (!fnameValue) {
-                setError(addFname, 'Please enter your first name');
+                setAddError(addFname, 'Please enter your first name');
                 isValid = false;
-            } else if(fnameValue && !isValidName(fnameValue)) {
-                setError(addFname, 'Please enter a valid name');
+            } else if(fnameValue && !isValidAddName(fnameValue)) {
+                setAddError(addFname, 'Please enter a valid name');
                 isValid = false;
             } else {
-                setSuccess(addFname, "First Name");
+                setAddSuccess(addFname, "First Name");
             }
 
             if (!lnameValue) {
-                setError(addLname, 'Please enter your last name');
+                setAddError(addLname, 'Please enter your last name');
                 isValid = false;
-            } else if(lnameValue && !isValidName(lnameValue)) {
-                setError(addLname, 'Please enter a valid name');
+            } else if(lnameValue && !isValidAddName(lnameValue)) {
+                setAddError(addLname, 'Please enter a valid name');
                 isValid = false;
             } else {
-                setSuccess(addLname, "Last Name");
+                setAddSuccess(addLname, "Last Name");
             }
 
             if (!countryValue) {
-                setError(addCountry, 'Please enter your country');
+                setAddError(addCountry, 'Please enter your country');
                 isValid = false;
             } else {
-                setSuccess(addCountry, "Country");
+                setAddSuccess(addCountry, "Country");
             }
 
             if (!cityValue) {
-                setError(addCity, 'Please enter your city');
+                setAddError(addCity, 'Please enter your city');
                 isValid = false;
             } else {
-                setSuccess(addCity, "Country");
+                setAddSuccess(addCity, "Country");
             }
 
             if (!stateValue) {
-                setError(addState, 'Please enter your state');
+                setAddError(addState, 'Please enter your state');
                 isValid = false;
             } else {
-                setSuccess(addState, "State");
+                setAddSuccess(addState, "State");
             }
 
             if (!zipValue) {
-                setError(addZip, 'Please enter your zip code');
+                setAddError(addZip, 'Please enter your zip code');
                 isValid = false;
             } else if (zipValue.length !== 6) {
-                setError(addZip, 'Please enter enter a valid zip code');
+                setAddError(addZip, 'Please enter enter a valid zip code');
                 isValid = false;
             } else {
-                setSuccess(addZip, "Zip Code");
+                setAddSuccess(addZip, "Zip Code");
             }
 
             if (!phoneValue) {
-                setError(addPhone, 'Please enter your phone number');
+                setAddError(addPhone, 'Please enter your phone number');
                 isValid = false;
-            } else if(phoneValue && !isValidPhone(phoneValue)) {
-                setError(addPhone, 'Please enter a valid phone number');
+            } else if(phoneValue && !isValidAddPhone(phoneValue)) {
+                setAddError(addPhone, 'Please enter a valid phone number');
                 isValid = false;
             } else {
-                setSuccess(addPhone, "Phone");
+                setAddSuccess(addPhone, "Phone");
             }
 
             if (!isValid) {

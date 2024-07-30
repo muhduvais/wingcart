@@ -5,9 +5,14 @@ const orderSchema = new mongoose.Schema({
         type: String,
     },
     address: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'addresses',
-      },
+      fname: String,
+      lname: String,
+      city: String,
+      state: String,
+      country: String,
+      pincode: String,
+      phone: String
+    },
       orderDate: {
         type: Date,
         default: Date.now
@@ -17,8 +22,11 @@ const orderSchema = new mongoose.Schema({
         ref: 'users',
       },
       coupon: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'coupons'
+        code: String,
+        description: String,
+        discount: Number,
+        minPurchase: Number,
+        maxAmount: Number
       },
       products: [{
         product: {
