@@ -30,6 +30,28 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    /* Offer */
+    .original-price {
+        text-decoration: line-through;
+        color: #999;
+        margin-right: 5px;
+    }
+
+    .offer-price {
+        color: #e74c3c;
+    }
+
+    .product-label.label-offer {
+            position: absolute;
+            top: 65px;
+            left: 220px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -255,7 +277,7 @@
                             
                             <div class="col-md-6">
                                 <div class="product-details">
-                                    <h1 class="product-title"><%= locals.product ? product.name : 'Product' %></h1><!-- End .product-title -->
+                                    <h1 class="product-title"><%= product.name %></h1><!-- End .product-title -->
                             
                                     <div class="ratings-container">
                                         <div class="ratings">
@@ -268,12 +290,19 @@
                                         <% if (product.stock === 0) { %>
                                             Out of stock
                                         <% } else { %>
-                                            ₹<%= product.price %>
+                                            <% if (product.bestOffer) { %>
+                                                <!-- Display original price crossed out and offer price -->
+                                                <span class="original-price">₹<%= product.price %></span>
+                                                <span class="offer-price">₹<%= (product.price * (1 - (product.bestOffer.discount / 100))).toFixed(2) %></span>
+                                                <span class="product-label label-offer">Offer: <%= product.bestOffer.discount %>% Off</span>
+                                            <% } else { %>
+                                                ₹<%= product.price %>
+                                            <% } %>
                                         <% } %>
                                     </div><!-- End .product-price -->
                             
                                     <div class="product-content">
-                                        <p><%= locals.product ? product.description : 'description' %></p>
+                                        <p><%= product.description %></p>
                                     </div><!-- End .product-content -->
                             
                                     <div class="details-filter-row details-row-size">
@@ -282,19 +311,18 @@
                                             <input type="number" id="qty" class="form-control" value="1" min="1" max="<%= product.stock < 10 ? product.stock : 10 %>" step="1" data-decimals="0" required>
                                         </div><!-- End .product-details-quantity -->
                                     </div><!-- End .details-filter-row -->
-
+                            
                                     <% if (product.stock < 4 && product.stock > 0 ) { %>
                                         <div class="stock-left pb-2">
                                             <p class="text-danger">Only <%= product.stock %> <%= product.stock === 1 ? 'stock' : 'stocks' %> left</p>
                                         </div>
-                                    <% } else { %>
                                     <% } %>
                             
                                     <div class="product-details-action">
                                         <form class="add-to-cart-main">
                                             <input type="hidden" class="product-id-main" name="productId" value="<%= product._id %>">
                                             <button type="submit" class="btn btn-primary btn-block w-100" 
-                                            <% if (product.stock === 0) { %>disabled<% } else { %><% } %> >Add to Cart</button>
+                                            <% if (product.stock === 0) { %>disabled<% } %>>Add to Cart</button>
                                         </form>
                             
                                         <div class="details-action-wrapper">
@@ -305,7 +333,7 @@
                                     <div class="product-details-footer">
                                         <div class="product-cat">
                                             <span>Category:</span>
-                                            <a><%= locals.product ? product.category.name : '' %></a>
+                                            <a><%= product.category ? product.category.name : '' %></a>
                                         </div><!-- End .product-cat -->
                             
                                         <div class="social-icons social-icons-sm">
@@ -318,6 +346,7 @@
                                     </div><!-- End .product-details-footer -->
                                 </div><!-- End .product-details -->
                             </div><!-- End .col-md-6 -->
+
                         </div><!-- End .row -->
                     </div><!-- End .product-details-top -->
 

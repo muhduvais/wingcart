@@ -198,6 +198,12 @@
                                     <td colspan="3"><strong>Shipping Charge:</strong></td>
                                     <td>₹<%= shippingCharge.toFixed(2) %></td>
                                 </tr>
+                                <% if (order.coupon) { %>
+                                <tr>
+                                    <td colspan="3"><strong>Coupon (<%= order.coupon.description %>):</strong></td>
+                                    <td>- ₹<%= couponDiscount.toFixed(2) %></td>
+                                </tr>
+                                <% } %>
                                 <tr>
                                     <td colspan="3"><strong>Grand Total:</strong></td>
                                     <td><strong>₹<%= totalAmount.toFixed(2) %></strong></td>

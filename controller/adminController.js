@@ -5,6 +5,7 @@ const Brand = require("../model/brandsModel");
 const Cart = require("../model/cartModel");
 const Order = require("../model/ordersModel");
 const Coupon = require("../model/couponsModel");
+const Offer = require("../model/offersModel");
 const Admin = require("../model/adminModel");
 const sharp = require('sharp');
 
@@ -625,13 +626,15 @@ const toOrderDetails = async (req, res) => {
         const gst = subtotal * 0.18;
         const shipping = subtotal < 500 ? 40 : 0;
         const totalAmount = subtotal + gst + shipping;
+        const couponDiscount = subtotal * order.coupon.discount / 100;
 
         res.render('adminOrderDetails', { 
             order,
             subtotal,
             gst,
             shipping,
-            totalAmount
+            totalAmount,
+            couponDiscount
          });
     } catch (err) {
         console.error('Error fetching order details', err);
@@ -664,12 +667,21 @@ const updateOrderStatus = async (req, res) => {
 const toOffersAndCoupons = async (req, res) => {
     try {
         const coupons = await Coupon.find({});
+        const offers = await Offer.find({}).populate('item');
 
-         if (!coupons) {
+         if (!coupons && !offers) {
             return res.render('offersAndCoupons');
          }
 
-        res.render('offersAndCoupons', { coupons });
+         if (!coupons) {
+            return res.render('offersAndCoupons', { offers });
+         }
+
+         if (!offers) {
+            return res.render('offersAndCoupons', { coupons });
+         }
+
+        res.render('offersAndCoupons', { coupons, offers });
     } catch (error) {
         console.error('Error fetching offers and coupons', error);
         res.status(500).send('Internal server error');
@@ -739,6 +751,71 @@ const deleteCoupon = async (req, res) => {
     }
 }
 
+const toCreateOffer = async (req, res) => {
+    try {
+        const products = await Product.find().select('_id name');
+        const categories = await Category.find().select('_id name');
+        res.render('createOffer', { products, categories });
+    } catch (error) {
+        console.error('Error fetching create offer', error);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const verifyCreateOffer = async (req, res) => {
+    try {
+        const { name, discount, type, item } = req.body;
+
+        const offer = new Offer({
+            name,
+            discount,
+            type,
+            item,
+        });
+
+        await offer.save();
+
+        if (type === 'products') {
+            await Product.updateMany(
+                { _id: item },
+                { $addToSet: { offers: offer._id } }
+            );
+        } else if (type === 'categories') {
+            await Product.updateMany(
+                { category: item },
+                { $addToSet: { offers: offer._id } }
+            );
+        }
+
+        res.status(200).json({ success: true });
+
+    } catch (error) {
+        console.error('Error creating offer', error);
+        res.status(500).json({ success: false });
+    }
+}
+
+const toggleOfferStatus = async (req, res) => {
+    try {
+        const { offer_id } = req.params;
+        const { isActive } = req.body;
+
+        console.log('offerId: ', offer_id, 'isActive: ' , isActive);
+    
+        const offer = await Offer.findById(offer_id);
+        if (!offer) {
+          return res.status(404).json({ success: false, message: 'offer not found!' });
+        }
+    
+        offer.isActive = isActive;
+        await offer.save();
+    
+        res.status(200).json({ success: true });
+      } catch (error) {
+        res.status(500).json({ success: false, message: 'Internal server error!' });
+      }
+}
+
 
 
 
@@ -776,5 +853,8 @@ module.exports = {
     verifyCreateCoupon,
     verifyEditCoupon,
     deleteCoupon,
+    toCreateOffer,
+    verifyCreateOffer,
+    toggleOfferStatus,
 
 }

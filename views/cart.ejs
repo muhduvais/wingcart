@@ -186,10 +186,16 @@
                                                         </div>
                                                     </td>
                                                     <td class="price-col <% if (item.product.stock === 0) { %>text-danger<% } %>">
+                                                        <% 
+                                                            const product = item.product;
+                                                            const applicableOffers = offers.filter(o => o.item.includes(product._id) || o.item.includes(product.category));
+                                                            const maxOffer = applicableOffers.reduce((max, offer) => Math.max(max, offer.discount), 0);
+                                                            const priceAfterDiscount = product.price - (product.price * maxOffer / 100);
+                                                        %>
                                                         <% if (item.product.stock === 0) { %>
                                                             Out of stock
                                                         <% } else { %>
-                                                            ₹<span class="price"><%= item.product.price %></span>
+                                                            ₹<span class="price"><%= priceAfterDiscount %></span>
                                                         <% } %>
                                                     </td>
                                                     <td class="quantity-col">
@@ -200,15 +206,20 @@
                                                         </div>
                                                         <span class="stock-message py-3" style="color: red; display: none;"></span>
                                                     </td>
-                                                    <td class="total-col"><span class="total-price <%= item.product.stock === 0 ? 'd-none' : '' %>">
-                                                        <% if(item.product.stock !== 0 && item.quantity !== 0) { %>
-                                                            ₹ <%= item.product.price * item.quantity %>
-                                                        <% } else if (item.product.stock !== 0 && item.quantity === 0) { %>
-                                                            ₹ <%= item.product.price %>
-                                                        <% } else { %>
-                                                            0
-                                                        <% } %>
-                                                    </span></td>
+                                                    <td class="total-col">
+                                                        <span class="total-price <%= item.product.stock === 0 ? 'd-none' : '' %>">
+                                                            <% 
+                                                                if (item.product.stock !== 0 && item.quantity !== 0) {
+                                                                    const itemTotal = priceAfterDiscount * item.quantity;
+                                                                    %> ₹ <%= itemTotal %>
+                                                                <% } else if (item.product.stock !== 0 && item.quantity === 0) { %>
+                                                                    ₹ <%= priceAfterDiscount %>
+                                                                <% } else { %>
+                                                                    0
+                                                                <% } 
+                                                            %>
+                                                        </span>
+                                                    </td>
                                                     <td class="remove-col">
                                                         <form class="removeBtn" data-product-id="<%= item.product._id %>">
                                                             <button type="submit" class="btn-remove"><i class="icon-close"></i></button>
@@ -231,33 +242,40 @@
 
 	                		</div><!-- End .col-lg-9 -->
 	                		<aside class="col-lg-3">
-	                			<div class="summary summary-cart">
-    <h3 class="summary-title">Cart Total</h3>
-    <table class="table table-summary">
-        <tbody>
-            <tr class="summary-subtotal">
-                <td>Subtotal:</td>
-                <td class="summary-subtotal-value">₹<%= subtotal.toFixed(2) %></td>
-            </tr>
-            <tr class="summary-gst">
-                <td>GST (18%):</td>
-                <td class="summary-gst-value">₹<%= (subtotal * 0.18).toFixed(2) %></td>
-            </tr>
-            <tr class="summary-gst">
-                <td>Shipping:</td>
-                <td class="summary-shipping-value">₹<%= subtotal < 500 ? 40 : 0 %>.00</td>
-            </tr>
-            <tr class="summary-total">
-                <td>Total:</td>
-                <td class="summary-total-value">₹<%= (subtotal * 1.18 + (subtotal < 500 ? 40 : 0)).toFixed(2) %></td>
-            </tr>
-        </tbody>
-    </table>
-    <a href="/checkout" class="btn btn-outline-primary-2 btn-order btn-block">PROCEED TO CHECKOUT</a>
-</div>
-
-		            			<a href="/shop" class="btn btn-outline-dark-2 btn-block mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
-	                		</aside><!-- End .col-lg-3 -->
+                                <div class="summary summary-cart">
+                                    <h3 class="summary-title">Cart Total</h3>
+                                    <table class="table table-summary">
+                                        <tbody>
+                                            <tr class="summary-real-subtotal">
+                                                <td>Subtotal:</td>
+                                                <td class="summary-real-subtotal-value">₹<%= realSubtotal.toFixed(2) %></td>
+                                            </tr>
+                                            <tr class="summary-discount-total">
+                                                <td>Total Discounts:</td>
+                                                <td class="summary-discount-total-value">-₹<%= discountTotal.toFixed(2) %></td>
+                                            </tr>
+                                            <tr class="summary-subtotal d-none">
+                                                <td>Subtotal after Discounts:</td>
+                                                <td class="summary-subtotal-value">₹<%= subtotal.toFixed(2) %></td>
+                                            </tr>
+                                            <tr class="summary-gst">
+                                                <td>GST (18%):</td>
+                                                <td class="summary-gst-value">₹<%= gst.toFixed(2) %></td>
+                                            </tr>
+                                            <tr class="summary-shipping">
+                                                <td>Shipping:</td>
+                                                <td class="summary-shipping-value">₹<%= shipping.toFixed(2) %>.00</td>
+                                            </tr>
+                                            <tr class="summary-total">
+                                                <td>Total:</td>
+                                                <td class="summary-total-value">₹<%= total.toFixed(2) %></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <a href="/checkout" class="btn btn-outline-primary-2 btn-order btn-block">PROCEED TO CHECKOUT</a>
+                                </div>
+                                <a href="/shop" class="btn btn-outline-dark-2 btn-block mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
+                            </aside><!-- End .col-lg-3 -->
 	                	</div><!-- End .row -->
 	                </div><!-- End .container -->
                 </div><!-- End .cart -->
@@ -704,46 +722,6 @@
     </script>
 
     <script>
-    // //////sub-total-summary-table///////////
-    // document.querySelectorAll('.quantity-input').forEach(input => {
-    //     input.addEventListener('input', function() {
-    //         const quantity = parseInt(this.value, 10);
-    //         const productRow = this.closest('tr');
-    //         const price = parseFloat(productRow.querySelector('.price').textContent);
-    //         const totalPriceElement = productRow.querySelector('.total-price');
-
-    //         // Update total price for the item
-    //         const newTotal = price * quantity;
-    //         totalPriceElement.textContent = `₹${newTotal}`;
-
-    //         // Update subtotal and total
-    //         updateSummary();
-
-    //         // Send updated quantity to the server
-    //         const productId = productRow.getAttribute('data-product-id');
-    //         fetch(`/updateCart`, {
-    //             method: 'PATCH',
-    //             headers: {
-    //                 'Content-Type': 'application/json'
-    //             },
-    //             body: JSON.stringify({
-    //                 productId: productId,
-    //                 quantity: quantity
-    //             })
-    //         })
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             if (data.success) {
-    //                 console.log('Cart updated successfully');
-    //             } else {
-    //                 console.error('Error updating cart:', data.message);
-    //             }
-    //         })
-    //         .catch(error => {
-    //             console.error('Error:', error);
-    //         });
-    //     });
-    // });
 
     function updateSummary() {
     let subtotal = 0;

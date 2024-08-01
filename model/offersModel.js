@@ -4,15 +4,21 @@ const offerSchema = new mongoose.Schema({
     name: {
         type: String
     },
-    description: {
+    discount: {
+        type: Number
+    },
+    type: {
         type: String
     },
-    discount: {
-        type: double
-    },
-    validity: {
-        type: date
+    item: [{
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'type'
+    }],
+    isActive: {
+        type: Boolean,
+        default: true
     }
+
 });
 
 const Offer = mongoose.model('offers', offerSchema);

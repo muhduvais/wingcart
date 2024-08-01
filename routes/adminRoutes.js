@@ -59,6 +59,11 @@ adminRouter.post('/createCoupon', adminController.verifyCreateCoupon);
 adminRouter.put('/editCoupon/:coupon_id', adminController.verifyEditCoupon);
 adminRouter.delete('/deleteCoupon/:coupon_id', adminController.deleteCoupon);
 
+// Offers N Coupons - Offers
+adminRouter.get('/createOffer', adminAuth, adminController.toCreateOffer);
+adminRouter.post('/createOffer', adminController.verifyCreateOffer);
+adminRouter.post('/offerStatusToggle/:offer_id', adminController.toggleOfferStatus);
+
 //Test Route
 adminRouter.get('/ddd', (req, res) => {
   res.render('ddddddddddddd');

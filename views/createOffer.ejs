@@ -2,10 +2,15 @@
 <html lang="en">
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Product Management</title>
+    <title>Create Offer</title>
     <meta
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
       name="viewport"
+    />
+    <link
+      rel="icon"
+      href="/assets2/img/kaiadmin/  .ico"
+      type="image/x-icon"
     />
 
     <!-- Fonts and icons -->
@@ -32,10 +37,26 @@
     <link rel="stylesheet" href="/assets2/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/assets2/css/plugins.min.css" />
     <link rel="stylesheet" href="/assets2/css/kaiadmin.min.css" />
+    <link rel="stylesheet" href="/assets2/css/loginStyle.css" />
     <link rel="stylesheet" href="/assets2/css/adminStyle.css">
     <!-- Sweet Alert CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- bootstrap -->
+    <!-- Select-options -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+    <style>
+      label.error {
+        color: #ff0000;
+      }
+      input.error {
+        border-color: #ff0000;
+      }
+      textarea.error {
+        border-color: #ff0000;
+      }
+    </style>
+
   </head>
   <body>
     
@@ -92,7 +113,7 @@
 
                 </a>
               </li>
-              <li class="nav-item active">
+              <li class="nav-item">
                 <a href="/admin/orderManagement">
                     <i class="fas fa-shopping-cart"></i>
                   <p>Order Management</p>
@@ -106,7 +127,7 @@
 
                 </a>
               </li>
-              <li class="nav-item">
+              <li class="nav-item active">
                 <a href="/admin/offersAndCoupons">
                   <i class="fas fa-tags"></i>
                   <p>Offers & Coupons</p>
@@ -161,20 +182,24 @@
                 class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
               >
 
-              <!-- Search -->
+              <!-- Search Form -->
+              <form action="">
                 <div class="input-group">
-                  <div class="input-group-prepend">
-                    <button type="submit" class="btn btn-search pe-1">
-                      <i class="fa fa-search search-icon"></i>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search ..."
-                    class="form-control"
-                  />
+                    <div class="input-group-prepend">
+                        <button type="submit" class="btn btn-search pe-1">
+                            <i class="fa fa-search search-icon"></i>
+                        </button>
+                    </div>
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Search ..."
+                        class="form-control"
+                        value="<%= locals.search ? search : '' %>"
+                    />
+                     <!-- Ensure current page is maintained -->
                 </div>
-              </nav>
+              </form>
 
               <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
                 <li
@@ -259,7 +284,7 @@
         <div class="container">
           <div class="page-inner">
             <div class="page-header">
-              <h4 class="page-title">Order Management</h4>
+              <h4 class="page-title">Create Offer</h4>
               <ul class="breadcrumbs">
                 <li class="nav-home">
                   <a href="/admin/dashboard">
@@ -270,120 +295,74 @@
                   <i class="icon-arrow-right"></i>
                 </li>
                 <li class="nav-item">
-                  <a href="/admin/orderManagement"><p>Order Management</p></a>
+                  <a href="/admin/offersAndCoupons"><p>Offers and Coupons</p></a>
                 </li>
                 <li class="separator">
                   <i class="icon-arrow-right"></i>
                 </li>
                 <li class="nav-item">
-                  <p>Order Details</p>
+                  <p>Create Offer</p>
                 </li>
               </ul>
             </div>
 
 
-            <!-- ///////order-details////////// -->
-            <div class="container-order-details mx-3 mt-3">
-              <div class="top-div d-md-flex align-items-start justify-content-between p-4">
-                  <div class="order-details-header">
-                      <div class="address-div">
-                          <h5>Address:</h5>
-                          <p class="text-muted"><%= order.address.fname + ' ' + order.address.lname %> <br>
-                              <%= order.address.city + ', ' + order.address.state + ', ' + order.address.country %> <br>
-                              <%= order.address.pincode %></p>
-                      </div>
-                  </div>
-                  <div class="price-breakup">
-                    <p>Subtotal: &nbsp; &nbsp;₹<%= locals.subtotal ? subtotal.toFixed(2) : '' %><br>
-                        Gst (18%): &nbsp; &nbsp;₹<%= locals.gst ? gst.toFixed(2) : '' %><br>
-                        <% if (couponDiscount && couponDiscount != null) { %>
-                          Coupon: &nbsp; &nbsp;<span class="text-danger">- ₹<%= locals.couponDiscount ? couponDiscount.toFixed(2) : '' %></span><br>
-                        <% } %>
-                        Shipping: &nbsp; &nbsp;₹<%= locals.shipping ? shipping : '0.00' %><br>
-                        <b>Total: &nbsp; &nbsp;₹<%= locals.totalAmount ? totalAmount : '' %></b></p>
-                </div>
-                  <div class="date-div">
-                    <h5>Order Date:</h5>
-                    <p class="text-muted"><%= order.orderDate.toDateString() %></p>
-                  </div>
-                  <h5>Order ID: <%= order.orderId %></h5>
+          <div class="coupons">
+            <!-- ///Card///// -->
+            <div class="row justify-content-center my-5">
+              <div class="col-md-6">
+                  <form id="createOfferForm" class="form-vertical shadow" style="background-color: #f6f6f6; padding: 30px; border-radius: 20px;">
+                      <fieldset>
+                          <p class="text-danger main-error"></p>
+          
+                          <!-- Row -->
+                          <div class="row">
+                              <div class="form-group col-md-6">
+                                  <label class="control-label errorMsg" for="offerName">Name</label>
+                                  <input id="offerName" name="offerName" class="form-control input-md" type="text" style="background-color: #fafafa; border: 1px solid #bfbfbf;">
+                              </div>
+          
+                              <div class="form-group col-md-6">
+                                  <label class="control-label errorMsg" for="discount">Discount</label>
+                                  <input id="discount" name="discount" class="form-control input-md" type="text" style="background-color: #fafafa; border: 1px solid #bfbfbf;">
+                              </div>
+                          </div>
+          
+                          <!-- Row -->
+                          <div class="row">
+                              <div class="form-group col-md-12">
+                                  <label class="control-label errorMsg" for="type">Type</label>
+                                  <select id="type" name="type" class="form-control input-md" style="background-color: #fafafa; border: 1px solid #bfbfbf;">
+                                      <option value="" selected disabled>Select Type</option>
+                                      <option value="products">Product Offer</option>
+                                      <option value="categories">Category Offer</option>
+                                  </select>
+                              </div>
+                          </div>
+          
+                          <!-- Row -->
+                          <div class="row" id="itemRow" style="display: none;">
+                              <div class="form-group col-md-12">
+                                  <label class="control-label errorMsg" for="item">Item</label>
+                                  <select id="item" name="item" class="form-control input-md" style="background-color: #fafafa; border: 1px solid #bfbfbf;" multiple>
+                                      <!-- Options will be dynamically added here -->
+                                  </select>
+                              </div>
+                          </div>
+          
+                          <!-- Row -->
+                          <div class="row">
+                              <div class="form-group mt-3">
+                                  <button type="submit" id="addBrandBtn" name="addBrandBtn" class="btn btn-primary text-white mt-2">Submit</button>
+                                  <a href="/admin/offersAndCoupons"><button type="button" id="addBrandCancel" name="addBrandCancel" class="btn btn-primary text-light mt-2">Cancel</button></a>
+                              </div>
+                          </div>
+                      </fieldset>
+                  </form>
               </div>
           </div>
-          <!-- ///////////////////// -->
-
-          <!-- Table -->
-          <div class="table-responsive">
-            <table id="add-row" class="display table table-striped table-hover">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Quantity</th>
-                  <th>Total Price</th>
-                  <th>Payment Method</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="category-table-body">
-                <% if (order && order !== null) { %>
-                  <% order.products.forEach((item, index) => { %>
-                    <tr>
-                      <td><%= item.product.name %></td>
-                      <td><%= item.quantity %></td>
-                      <td>₹<%= item.price * item.quantity %></td>
-                      <td><%= order.payment.type %></td>
-                      <td><%= item.status %></td>
-                      <td>
-                        <select class="form-select mx-2 <%= item.status === 'cancelled' ? 'd-none' : '' %>" 
-                                onchange="updateStatus('<%= order._id %>', '<%= item.product._id %>', this.value)" 
-                                <%= item.status === 'delivered' || item.status === 'cancelled' ? 'disabled' : '' %>>
-                          <option value="" selected disabled>Status</option>
-                          <% if (item.status === 'pending') { %>
-                            <option value="dispatched">Dispatched</option>
-                            <option value="delivered">Delivered</option>
-                          <% } else if (item.status === 'dispatched') { %>
-                            <option value="delivered">Delivered</option>
-                          <% } %>
-                        </select>
-                        <button type="button" class="btn btn-primary <%= item.status !== 'cancelled' ? 'd-none' : '' %>" onclick="showModal(<%= index %>)">
-                          Details
-                        </button>
-                      </td>
-                    </tr>
-                  <% }) %>
-                <% } %>
-              </tbody>
-            </table>
+            <!-- //////////// -->
           </div>
-
-          <!-- Modals -->
-          <% if (order && order !== null) { %>
-            <% order.products.forEach((item, index) => { %>
-              <div class="modal fade" id="reDetails<%= index %>" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="exampleModalLabel">Cancel Details</h5>
-                      <button type="button" class="close" onclick="closeModal(<%= index %>)" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <span class="text-muted">Cancellation Reason: <br></span>
-                      <span><%= item.cancellationReason %> <br></span>
-
-                      <span class="text-muted"><br>Cancellation Date: <br></span>
-                      <span><%= item.cancellationDate !== null ? item.cancellationDate.toDateString() : '' %></span>
-                      
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" onclick="closeModal(<%= index %>)">Close</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            <% }) %>
-          <% } %>
 
 
           </div>
@@ -411,53 +390,171 @@
     </div>
 
     <script>
-      function showModal(index) {
-          $('#reDetails' + index).modal('show');
-        }
-
-        function closeModal(index) {
-          $('#reDetails' + index).modal('hide');
-        }
-    </script>
+      document.addEventListener('DOMContentLoaded', () => {
+          // Assuming you are injecting these variables from your server-side code
+          const products = <%- JSON.stringify(products) %>;
+          const categories = <%- JSON.stringify(categories) %>;
+      
+          // Initialize Choices.js
+          const itemSelect = new Choices('#item', {
+              removeItemButton: true,
+              searchEnabled: true,
+              shouldSort: false
+          });
+      
+          document.getElementById('type').addEventListener('change', function() {
+              const type = this.value;
+              const itemRow = document.getElementById('itemRow');
+      
+              // Clear previous choices and selected items
+              itemSelect.clearChoices();
+              itemSelect.clearStore(); // Clear stored values if any
+              itemSelect.removeActiveItems(); // Remove any active items
+      
+              if (type === 'products') {
+                  const productChoices = products.map(product => ({
+                      value: product._id,
+                      label: product.name
+                  }));
+                  itemSelect.setChoices(productChoices, 'value', 'label', true);
+                  itemRow.style.display = 'block';
+              } else if (type === 'categories') {
+                  const categoryChoices = categories.map(category => ({
+                      value: category._id,
+                      label: category.name
+                  }));
+                  itemSelect.setChoices(categoryChoices, 'value', 'label', true);
+                  itemRow.style.display = 'block';
+              } else {
+                  // Hide the item dropdown if no valid type is selected
+                  itemRow.style.display = 'none';
+              }
+          });
+      });
+      </script>
 
     <script>
+      const createOfferForm = document.getElementById('createOfferForm');
+      const offerName = document.getElementById('offerName');
+      const discount = document.getElementById('discount');
+      const type = document.getElementById('type');
+      const item = document.getElementById('item');
 
-      //Update order status
-        async function updateStatus(orderId, productId, status) {
-          await fetch(`/admin/updateOrderStatus/${orderId}/${productId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ status })
-            }).then(response => response.json())
-              .then(data => {
-                if (!data.success) {
-                  Swal.fire({
-                  icon: 'error',
-                  title: 'Error',
-                  text: 'Error changing status'
-                });
-                } else if (data.success) {
-                  Swal.fire({
-                  icon: 'success',
-                  title: 'Success',
-                  text: 'Order status updated'
-                }).then(() => {
-                  location.reload();
-                });
-                }
+      createOfferForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      validateOffer();
+      });
+
+      const setError = (element, message) => {
+          const formGroup = element.parentElement;
+          const errorDisplay = formGroup.querySelector('.errorMsg');
+      
+
+      errorDisplay.innerText = message;
+      element.classList.add('error');
+      errorDisplay.classList.add('error');
+      element.classList.remove('success');
+      errorDisplay.classList.remove('success');
+
+      }; 
+
+      const setSuccess = (element, message) => {
+          const formGroup = element.parentElement;
+          const errorDisplay = formGroup.querySelector('.errorMsg');
+
+      errorDisplay.innerText = message;
+      element.classList.add('success');
+      errorDisplay.classList.add('success');
+      element.classList.remove('error');
+      errorDisplay.classList.remove('error');
+
+      };
+
+      async function validateOffer () {
+
+      const offerNameValue = offerName.value.trim();
+      const discountValue = discount.value.trim();
+      const typeValue = type.value.trim();
+      const itemValue = Array.from(item.selectedOptions).map(option => option.value);
+
+      let isValid = true;
+
+      if(!offerNameValue) {
+          setError(offerName, "*Please enter the offer name");
+          isValid = false;
+      }
+      else {
+          setSuccess(offerName, "Name");
+      }
+
+      if(!discountValue) {
+          setError(discount, "*Please enter the discount rate");
+          isValid = false;
+      }
+      else {
+          setSuccess(discount, "Discount");
+      }
+
+      if(!typeValue) {
+          setError(type, "*Select the offer type");
+          isValid = false;
+      }
+      else {
+          setSuccess(type, "Description");
+      }
+
+      console.log(itemValue);
+
+      // if (itemValue.length === 0) {
+      //   setError(item, "*Select the offer item(s)");
+      //   isValid = false;
+      // } else {
+      //   setSuccess(item, "Item");
+      // }
+
+      if(!isValid) {
+        return;
+      }
+
+      const response = await fetch('/admin/createOffer', {
+              method: "POST",
+              headers: {
+                  'content-type': 'application/json'
+              },
+              body: JSON.stringify({
+                name: offerNameValue,
+                discount: discountValue,
+                type: typeValue,
+                item: itemValue,
+              })
+          });
+
+          const data = await response.json();
+
+          if(data.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: 'Offer created successfully'
+            }).then(()=> {
+              window.location.href = "/admin/offersAndCoupons";
             });
-        }
-    </script>
+          }
+          else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Error creating offer!'
+            })
+            window.location.href = "/admin/createOffer";
+          }
+      }
+  </script>
 
-    <!-- Sweet Alert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Include jQuery and Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!-- Bootstrap -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Select-Options -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <!--   Core JS Files   -->
     <script src="/assets2/js/core/jquery-3.7.1.min.js"></script>
     <script src="/assets2/js/core/popper.min.js"></script>

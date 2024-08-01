@@ -6,6 +6,8 @@ const Address = require("../model/addressesModel");
 const Cart = require("../model/cartModel");
 const Payment = require("../model/paymentModel");
 const Order = require("../model/ordersModel");
+const Coupon = require("../model/couponsModel");
+const Offer = require("../model/offersModel");
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const sendEmail = require("../model/sendEmail");
@@ -260,12 +262,32 @@ const isNewProduct = (addedDate) => {
     return addedDate >= twoDaysAgo;
 };
 
+//Best offer function
+const getBestOffer = (product, offers) => {
+    if (!product.offers || product.offers.length === 0) {
+        return null;
+    }
+
+    const relevantOffers = offers.filter(offer => product.offers.includes(offer._id));
+
+    const productOffers = relevantOffers.filter(offer => offer.type === 'products' && offer.isActive);
+    const categoryOffers = relevantOffers.filter(offer => offer.type === 'categories' && offer.isActive);
+
+    const allActiveOffers = [...productOffers, ...categoryOffers];
+
+    const bestOffer = allActiveOffers.reduce((maxOffer, offer) => offer.discount > maxOffer.discount ? offer : maxOffer, { discount: 0 });
+
+    return bestOffer.discount > 0 ? bestOffer : null;
+};
+
 const toshop = async (req, res) => {
     try {
         const sortBy = req.query.sortby || 'featured';
         const searchVal = req.query.searchVal || '';
         const user = req.session.user;
+        const offers = await Offer.find().populate('item');
 
+        // Get listed categories and brands
         const listedCategories = await Category.find({ isListed: true }).select('_id');
         const listedBrands = await Brand.find({ isListed: true }).select('_id');
         const filterCategories = req.query.filterCategories ? [].concat(req.query.filterCategories) : [];
@@ -274,8 +296,8 @@ const toshop = async (req, res) => {
 
         // Add listedCategories to filterCategories
         const categoryFilter = filterCategories.length > 0
-        ? { $in: filterCategories.filter(cat => listedCategories.map(lc => lc._id.toString()).includes(cat)) }
-        : { $in: listedCategories.map(cat => cat._id) };
+            ? { $in: filterCategories.filter(cat => listedCategories.map(lc => lc._id.toString()).includes(cat)) }
+            : { $in: listedCategories.map(cat => cat._id) };
 
         // Add listedBrands to filterBrands
         const brandFilter = filterBrands.length > 0
@@ -294,142 +316,101 @@ const toshop = async (req, res) => {
         if (searchVal) {
             filter.description = { $regex: searchVal, $options: 'i' };
         }
-        
-        console.log(filter);
 
         const brands = await Brand.find({ isListed: true });
         const categories = await Category.find({});
 
-        //Pagination
+        // Pagination
         const page = parseInt(req.query.page, 10) || 1;
         const limit = 9;
-
-        const totalProductsCount = await Product.countDocuments({
-            ...filter,
-        });
-
-        const totalPages = Math.ceil(totalProductsCount / limit);
-
         const skip = (page - 1) * limit;
 
-        //Sorted by new arrivals
-        const newSorted = await Product.find({
-            ...filter,
-        })
-        .sort({ addedDate: -1 })
-        .populate('category')
-        .populate('brand')
-        .skip(skip)
-        .limit(limit);
-
-        //Sorted by featured
-        const popular = await Order.aggregate([
-            { $unwind: '$products' },
-            { $group: { _id: '$products.product', count: { $sum: '$products.quantity' } } },
-            { $sort: { count: -1 } }
-        ]);
-
-        const popularProductIds = popular.map(item => item._id);
-
-        // const skipPopular = skip < popularProductIds.length ? skip : popularProductIds.length;
-        // const popularLimit = Math.min(limit, popularProductIds.length);
-
-        const popularProducts = await Product.find({ 
-            ...filter,
-            _id: { $in: popularProductIds },
-            // isListed: true,
-        })
-        .populate('category')
-        .populate('brand')
-        .limit(limit);
-
-        // const remainingSkip = Math.max(0, skip - popularProductIds.length);
-        // const remainingLimit = limit - popularProducts.length;
-
-        const otherProducts = await Product.find({ 
-            ...filter,
-            _id: { $nin: popularProductIds },
-            // isListed: true,
-        })
-        .populate('category')
-        .populate('brand')
-        .limit(limit);
-
-        const combinedProducts = [...popularProducts, ...otherProducts].slice(0, limit);
-
-        const collation = { locale: 'en', strength: 2 };
-
-        //Sorted price H2L
-        const priceHighToLow = await Product.find({
-            ...filter,
-        })
-        .sort({ price: -1 })
-        .populate('category')
-        .populate('brand')
-        .skip(skip)
-        .limit(limit);
-
-        //Sorted price L2H
-        const priceLowToHigh = await Product.find({
-            ...filter,
-        })
-        .sort({ price: 1 })
-        .populate('category')
-        .populate('brand')
-        .skip(skip)
-        .limit(limit);
-
-        //Sorted in ascending order
-        const descendingSorted = await Product.find({
-            ...filter,
-        })
-        .collation(collation)
-        .sort({ name: -1 })
-        .populate('category')
-        .populate('brand')
-        .skip(skip)
-        .limit(limit);
-
-        //Sorted in descending order
-        const ascendingSorted = await Product.find({
-            ...filter,
-        })
-        .collation(collation)
-        .sort({ name: 1 })
-        .populate('category')
-        .populate('brand')
-        .skip(skip)
-        .limit(limit);
-
-        //Featured products
-        const featuredProducts = await Product.find({
-            ...filter,
-        })
-        .collation(collation)
-        .populate('category')
-        .populate('brand')
-        .skip(skip)
-        .limit(limit);
+        const totalProductsCount = await Product.countDocuments(filter);
+        const totalPages = Math.ceil(totalProductsCount / limit);
 
         let products;
+
+        // Fetch products based on sortBy
+        const collation = { locale: 'en', strength: 2 };
+
         if (sortBy === 'newArrivals') {
-            products = newSorted;
-        }else if (sortBy === 'popularity') {
-            products = combinedProducts;
-        }else if (sortBy === 'highToLow') {
-            products = priceHighToLow;
-        }else if (sortBy === 'lowToHigh') {
-            products = priceLowToHigh;
+            products = await Product.find(filter)
+                .sort({ addedDate: -1 })
+                .populate('category')
+                .populate('brand')
+                .skip(skip)
+                .limit(limit);
+        } else if (sortBy === 'popularity') {
+            const popular = await Order.aggregate([
+                { $unwind: '$products' },
+                { $group: { _id: '$products.product', count: { $sum: '$products.quantity' } } },
+                { $sort: { count: -1 } }
+            ]);
+            const popularProductIds = popular.map(item => item._id);
+
+            const popularProducts = await Product.find({
+                ...filter,
+                _id: { $in: popularProductIds }
+            })
+                .populate('category')
+                .populate('brand')
+                .limit(limit);
+
+            const otherProducts = await Product.find({
+                ...filter,
+                _id: { $nin: popularProductIds }
+            })
+                .populate('category')
+                .populate('brand')
+                .limit(limit);
+
+            products = [...popularProducts, ...otherProducts].slice(0, limit);
+        } else if (sortBy === 'highToLow') {
+            products = await Product.find(filter)
+                .sort({ price: -1 })
+                .populate('category')
+                .populate('brand')
+                .skip(skip)
+                .limit(limit);
+        } else if (sortBy === 'lowToHigh') {
+            products = await Product.find(filter)
+                .sort({ price: 1 })
+                .populate('category')
+                .populate('brand')
+                .skip(skip)
+                .limit(limit);
         } else if (sortBy === 'ascending') {
-            products = ascendingSorted;
+            products = await Product.find(filter)
+                .collation(collation)
+                .sort({ name: 1 })
+                .populate('category')
+                .populate('brand')
+                .skip(skip)
+                .limit(limit);
         } else if (sortBy === 'descending') {
-            products = descendingSorted;
+            products = await Product.find(filter)
+                .collation(collation)
+                .sort({ name: -1 })
+                .populate('category')
+                .populate('brand')
+                .skip(skip)
+                .limit(limit);
         } else {
-            products = featuredProducts;
+            products = await Product.find(filter)
+                .populate('category')
+                .populate('brand')
+                .skip(skip)
+                .limit(limit);
         }
 
+        // Assign best offer to each product
+        products.forEach(product => {
+            product.bestOffer = getBestOffer(product, offers);
+        });
+
+        // Render the shop page
         if (!user) {
-            res.render('shop' , {
+            res.render('shop', {
                 products,
                 categories,
                 sortBy,
@@ -442,15 +423,12 @@ const toshop = async (req, res) => {
                 filterBrands,
                 searchVal
             });
-        }
-        else {
-            const cart = await Cart.findOne({user: user._id}).populate('products.product');
+        } else {
+            const cart = await Cart.findOne({ user: user._id }).populate('products.product');
             let subtotal = 0;
 
             if (cart) {
-                subtotal = cart.products.reduce((sum, item) => {
-                return sum + (item.product.price * item.quantity);
-                }, 0);
+                subtotal = cart.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
             }
             res.render('shop', {
                 user,
@@ -477,15 +455,26 @@ const toshop = async (req, res) => {
 const toProdDetails = async (req, res) => {
     try {
         const user = req.session.user;
-        const product = await Product.findOne({_id: req.params.product_id}).populate('category');
+        const product = await Product.findOne({_id: req.params.product_id})
+            .populate('category')
+            .populate('offers');
+
+        const categoryOffers = await Offer.find({ type: 'categories', item: product.category, isActive: true });
+        const productOffers = await Offer.find({ type: 'products', item: product._id, isActive: true });
+        
+        const allActiveOffers = [...productOffers, ...categoryOffers];
+        const bestOffer = allActiveOffers.reduce((maxOffer, offer) => offer.discount > maxOffer.discount ? offer : maxOffer, { discount: 0 });
+
+        product.bestOffer = bestOffer.discount > 0 ? bestOffer : null;
+
         const category = product.category;
-        const recomProducts = await Product.find({category, _id: { $ne: req.params.product_id }});
+        const recomProducts = await Product.find({ category, _id: { $ne: req.params.product_id } });
 
         let subtotal = 0;
 
         if (!user) {
             res.render('prodDetails', { 
-                user : false,
+                user: false,
                 product, 
                 recomProducts,
                 subtotal,
@@ -494,15 +483,11 @@ const toProdDetails = async (req, res) => {
             return;
         }
 
-        const cart = await Cart.findOne({user: user._id}).populate('products.product');
+        const cart = await Cart.findOne({ user: user._id }).populate('products.product');
 
         if (cart) {
-            subtotal = cart.products.reduce((sum, item) => {
-            return sum + (item.product.price * item.quantity);
-            }, 0);
+            subtotal = cart.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
         }
-
-        console.log(cart);
 
         res.render('prodDetails', { 
             user,
@@ -511,7 +496,7 @@ const toProdDetails = async (req, res) => {
             recomProducts,
             subtotal,
             isNewProduct,
-        })
+        });
     } catch (err) {
         console.error(err, "Error rendering product details");
     }
@@ -722,8 +707,42 @@ const toCart = async (req, res) => {
         const cart = await Cart.findOne({ user: userId }).populate('products.product');
 
         if (cart) {
+            // Fetch product IDs and category IDs
+            const productIds = cart.products.map(item => item.product._id);
+            const products = await Product.find({ _id: { $in: productIds } }).populate('offers');
+            const categories = await Category.find({ _id: { $in: products.map(p => p.category) } });
+            const offers = await Offer.find({ _id: { $in: products.flatMap(product => product.offers) } });
+
+            // Determine the best offer for each product
+            const offerByProductId = {};
+            offers.forEach(offer => {
+                if (offer.isActive) {
+                    offer.item.forEach(itemId => {
+                        if (!offerByProductId[itemId] || offer.discount > offerByProductId[itemId].discount) {
+                            offerByProductId[itemId] = offer;
+                        }
+                    });
+                }
+            });
+
+            let realSubtotal = 0;
+            let discountTotal = 0;
             const subtotal = cart.products.reduce((sum, item) => {
-                return sum + (item.product.price * item.quantity);
+                const product = products.find(p => p._id.equals(item.product._id));
+                if (product) {
+                    const productOffer = offerByProductId[product._id];
+                    const categoryOffer = offerByProductId[product.category];
+                    const bestOffer = productOffer && (!categoryOffer || productOffer.discount > categoryOffer.discount)
+                        ? productOffer
+                        : categoryOffer;
+
+                    const discount = bestOffer ? bestOffer.discount : 0;
+                    const priceAfterDiscount = product.price * (1 - discount / 100);
+                    realSubtotal += product.price * item.quantity; // Total of real prices
+                    discountTotal += (product.price - priceAfterDiscount) * item.quantity; // Total discounts
+                    return sum + (priceAfterDiscount * item.quantity);
+                }
+                return sum;
             }, 0);
 
             const gst = subtotal * 0.18;
@@ -734,13 +753,16 @@ const toCart = async (req, res) => {
                 user,
                 userId,
                 cart,
+                realSubtotal,
+                discountTotal,
                 subtotal,
                 gst,
                 shipping,
-                total
+                total,
+                offers
             });
         } else {
-            res.render('cart', { user, userId, cart, subtotal: 0, gst: 0, shipping: 0, total: 0 });
+            res.render('cart', { user, userId, cart, realSubtotal: 0, discountTotal: 0, subtotal: 0, gst: 0, shipping: 0, total: 0, offers: [] });
         }
     } catch (err) {
         console.error('Error fetching cart', err);
@@ -833,6 +855,7 @@ const toCheckout = async (req, res) => {
         const user = await User.findById(userId);
         const cart = await Cart.findOne({user: userId}).populate('products.product');
         const addresses = await Address.find({user: userId});
+        const coupons = await Coupon.find({});
         let paymentMethod = await Payment.find({user: userId});
 
         if (paymentMethod.length === 0) {
@@ -854,9 +877,9 @@ const toCheckout = async (req, res) => {
 
             const gst = subtotal * 0.18;
             const shipping = subtotal < 500 ? 40 : 0;
-            const total = subtotal + gst + shipping;
+            let total = subtotal + gst + shipping;
 
-            res.render('checkout', {user, userId, cart, total, gst, shipping, addresses, paymentMethod});
+            res.render('checkout', {user, userId, cart, total, gst, shipping, coupons, addresses, paymentMethod});
         } else {
             res.render('checkout', { user, userId, cart, subtotal: 0, addresses, paymentMethod });
         }
@@ -920,7 +943,7 @@ const updateProductQuantities = async (orderId) => {
 const createOrder = async (req, res) => {
     try {
         const userId = req.session.user._id;
-        const { addressId, paymentMethodId } = req.body;
+        const { addressId, paymentMethodId, couponCode } = req.body;
 
         console.log(addressId);
 
@@ -947,7 +970,26 @@ const createOrder = async (req, res) => {
         const subtotal = orderProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
         const shipping = subtotal < 500 ? 40 : 0;
-        const totalAmount = subtotal + gst + shipping;
+        let totalAmount = subtotal + gst + shipping;
+
+        let couponDiscount;
+        let coupon = null;
+
+        if (couponCode) {
+            const couponDoc = await Coupon.findOne({ code: couponCode });
+            coupon = {
+                code :couponDoc.code,
+                discount: couponDoc.discount,
+                description: couponDoc.description,
+                minPurchase: couponDoc.minPurchase,
+                maxAmount: couponDoc.maxAmount,
+                validity: couponDoc.validity
+            }
+            couponDiscount = subtotal * coupon.discount / 100;
+            totalAmount -= couponDiscount;
+            console.log('couponDiscount: ',couponDiscount); //
+            console.log('totalAmount: ', totalAmount); //
+        }
 
         const newOrder = new Order({
             orderId: orderId,
@@ -962,7 +1004,7 @@ const createOrder = async (req, res) => {
                 phone: address.phone
             },
             orderDate: new Date(),
-            coupon: null,
+            coupon,
             products: orderProducts,
             payment: paymentMethodId,
             offers: [],
@@ -1004,8 +1046,9 @@ const toOrderConf = async (req, res) => {
         const gst = subtotal * 0.18;
         const shippingCharge = subtotal < 500 ? 40 : 0;
         const totalAmount = subtotal + gst + shippingCharge;
+        const couponDiscount = subtotal * order.coupon.discount / 100;
 
-        res.render('orderConfirmation', { user, order, deliveryDay, subtotal, gst, shippingCharge, totalAmount });
+        res.render('orderConfirmation', { user, order, deliveryDay, subtotal, gst, shippingCharge, totalAmount, couponDiscount });
     } catch (err) {
         console.error('Error fetching order confirmation', err);
         res.status(500).send('Internal server error'); 
@@ -1039,8 +1082,9 @@ const toOrderDetails = async (req, res) => {
         const gst = subtotal * 0.18;
         const shipping = subtotal < 500 ? 40 : 0;
         const totalAmount = subtotal + gst + shipping;
+        const couponDiscount = subtotal * order.coupon.discount / 100;
 
-        res.render('orderDetails', { user, order, subtotal, gst, shipping, totalAmount });
+        res.render('orderDetails', { user, order, subtotal, gst, shipping, totalAmount, couponDiscount });
     } catch (err) {
         console.error('Error fetching order details', err);
         res.status(500).send('Internal server error');
@@ -1160,6 +1204,109 @@ const verifyResetPass = async (req, res) => {
     }
 }
 
+const applyCoupon = async (req, res) => {
+    try {
+        const code = req.params.couponCode;
+        const user = req.session.user;
+        const cart = await Cart.findOne({ user: user._id }).populate('products.product');
+        const coupon = await Coupon.findOne({ code: code });
+
+        if (!coupon) {
+            res.json({ success: false, message: 'The coupon is not valid!' });
+            return;
+        }
+
+        if (!cart) {
+            res.json({ success: false, message: 'The cart is empty!' });
+            return;
+        }
+
+        const orderProducts = cart.products.map(item => ({
+            product: item.product._id,
+            quantity: item.quantity,
+            price: item.product.price,
+            status: 'pending',
+            cancellationDate: null,
+            cancellationReason: null,
+            returnDate: null,
+            returnReason: null,
+        }));
+
+        const subtotal = orderProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        const currDate = Date.now();
+
+        if (subtotal < coupon.minPurchase || coupon.validity < currDate) {
+            res.json({ success: false, message: 'The coupon is not valid!' });
+            return;
+        }
+
+        const couponDiscount = subtotal * coupon.discount / 100;
+
+        // Update the cart totals
+        const gst = subtotal * 0.18;
+        const totalAmount = subtotal + gst - couponDiscount + (cart.shipping || 0);
+
+        res.status(200).json({
+            success: true,
+            cart: {
+                products: cart.products,
+                gst,
+                totalAmount,
+                shipping: cart.shipping || 0
+            },
+            couponDiscount,
+            couponDescription: coupon.description,
+            code
+        });
+
+    } catch (err) {
+        console.error('Error applying the coupon: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+// const removeCoupon = async (req, res) => {
+//     try {
+//         const user = req.session.user;
+//         const cart = await Cart.findOne({ user: user._id }).populate('products.product');
+
+//         if (!cart) {
+//             res.json({ success: false, message: 'The cart is empty!' });
+//             return;
+//         }
+
+//         const orderProducts = cart.products.map(item => ({
+//             product: item.product._id,
+//             quantity: item.quantity,
+//             price: item.product.price,
+//             status: 'pending',
+//             cancellationDate: null,
+//             cancellationReason: null,
+//             returnDate: null,
+//             returnReason: null,
+//         }));
+
+//         const subtotal = orderProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+//         const gst = subtotal * 0.18;
+//         const totalAmount = subtotal + gst + (cart.shipping || 0);
+
+//         res.status(200).json({
+//             success: true,
+//             cart: {
+//                 products: cart.products,
+//                 gst,
+//                 totalAmount,
+//                 shipping: cart.shipping || 0
+//             }
+//         });
+
+//     } catch (err) {
+//         console.error('Error removing the coupon: ', err);
+//         res.status(500).send('Internal server error');
+//     }
+// }
+
 
 
 module.exports = {
@@ -1199,4 +1346,6 @@ module.exports = {
     verifyForgotPass,
     resetForgotPass,
     verifyResetPass,
+    applyCoupon,
+    // removeCoupon,
 }

@@ -32,6 +32,31 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        .product-media {
+            position: relative;
+        }
+
+        .product-label.label-offer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* Offer price */
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            margin-right: 5px;
+        }
+        .offer-price {
+            color: #e74c3c;
+        }
         </style>
 </head>
 
@@ -262,7 +287,7 @@
 
                             <div class="products mb-3">
                                 <div class="row justify-content-center">
-                                    <% if (locals.products) { %>
+                                    <% if (products && products.length > 0) { %>
                                         <% products.forEach(product => { %>
                                             <div class="col-6 col-md-4 col-lg-4">
                                                 <div class="product product-7 text-center">
@@ -272,51 +297,57 @@
                                                         <% } else if (isNewProduct(product.addedDate)) { %>
                                                             <span class="product-label label-new">New</span>
                                                         <% } %>
+                                                        
+                                                        <% if (product.bestOffer) { %>
+                                                            <span class="product-label label-offer">Offer: <%= product.bestOffer.discount %>% Off</span>
+                                                        <% } %>
+                                                        
                                                         <a href="/prodDetails/<%= product._id %>">
                                                             <img src="/assets2/img/<%= product.images[0] %>" alt="Product image" class="product-image">
                                                         </a>
-
+                            
                                                         <div class="product-action-vertical">
                                                             <a class="btn-product-icon btn-wishlist btn-expandable"><span>add to wishlist</span></a>
-                                                        </div><!-- End .product-action-vertical -->
-
+                                                        </div>
+                            
                                                         <div class="product-action">
                                                             <form class="add-to-cart w-100">
                                                                 <input type="hidden" class="product-id" name="productId" value="<%= product._id %>">
                                                                 <% if (product.stock !== 0) { %>
-                                                                <a class="btn-product btn-cart"><button type="submit" style="outline: none; border: none; background: none;">
-                                                                <span>add to cart</span></button></a>
+                                                                    <a class="btn-product btn-cart"><button type="submit" style="outline: none; border: none; background: none;">
+                                                                    <span>add to cart</span></button></a>
                                                                 <% } %>
                                                             </form>
                                                         </div><!-- End .product-action -->
                                                     </figure><!-- End .product-media -->
-
+                            
                                                     <div class="product-body">
-                                                        <!-- <div class="product-cat">
-                                                            <a href="#">Women</a>
-                                                        </div>End .product-cat -->
                                                         <h3 class="product-title card-text"><a href="/prodDetails/<%= product._id %>"><%= product.description %></a></h3><!-- End .product-title -->
+                                                        
                                                         <div class="product-price">
-                                                            <% if (product.stock === 0) { %>
-                                                                <span class="out-price">₹<%= product.price %></span>
+                                                            <% if (product.bestOffer) { %>
+                                                                <!-- Display original price crossed out and offer price -->
+                                                                <span class="original-price">₹<%= product.price %></span>
+                                                                <span class="offer-price">₹<%= (product.price * (1 - (product.bestOffer.discount / 100))).toFixed(2) %></span>
                                                             <% } else { %>
+                                                                <!-- Display the price without an offer -->
                                                                 ₹<%= product.price %>
                                                             <% } %>
                                                         </div><!-- End .product-price -->
+                                                        
                                                         <div class="ratings-container">
                                                             <div class="ratings">
                                                                 <div class="ratings-val" style="width: 20%;"></div><!-- End .ratings-val -->
                                                             </div><!-- End .ratings -->
                                                             <span class="ratings-text">( 2 Reviews )</span>
                                                         </div><!-- End .rating-container -->
-
-                                                        
                                                     </div><!-- End .product-body -->
                                                 </div><!-- End .product -->
                                             </div><!-- End .col-sm-6 col-lg-4 -->
                                         <% }) %>
+                                    <% } else { %>
+                                        <p>No products found</p>
                                     <% } %>
-                                    
                                 </div><!-- End .row -->
                             </div><!-- End .products -->
 

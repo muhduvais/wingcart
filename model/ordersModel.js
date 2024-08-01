@@ -26,7 +26,8 @@ const orderSchema = new mongoose.Schema({
         description: String,
         discount: Number,
         minPurchase: Number,
-        maxAmount: Number
+        maxAmount: Number,
+        validity: Date,
       },
       products: [{
         product: {
