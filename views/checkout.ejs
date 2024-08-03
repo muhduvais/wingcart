@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>WingCart | <%= user.fname %></title>
+    <title>WingCart | <%= locals.user ? user.fname : '' %></title>
     <link rel="stylesheet" href="/static/css/profileStyle.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <meta name="keywords" content="HTML5 Template">
@@ -114,7 +114,7 @@
                     <!-- Header-right -->
                     <div class="header-right">
                         <div class="wishlist">
-                            <a href="#" title="Wishlist">
+                            <a href="/wishlist" title="Wishlist">
                                 <div class="icon">
                                     <i class="icon-heart-o"></i>
                                     <span class="wishlist-count badge">0</span>
@@ -184,7 +184,7 @@
                                         </button>
                                     </div>
                                     <div class="modal-body">
-                                        <% if (coupons && coupons.length > 0) { %>
+                                        <% if (locals.coupons && coupons.length > 0) { %>
                                             <ul class="list-group">
                                                 <% coupons.forEach(coupon => { %>
                                                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -396,19 +396,19 @@
                                             <tbody>
                                                 <tr>
                                                     <td><b>Subtotal:</b></td>
-                                                    <td>₹<%= subtotal.toFixed(2) %></td>
+                                                    <td>₹<%= locals.subtotal ? subtotal.toFixed(2) : '0' %></td>
                                                 </tr>
                                                 <tr>
                                                     <td><b>Gst(18%):</b></td>
-                                                    <td>₹<%= gst.toFixed(2) %></td>
+                                                    <td>₹<%= locals.gst ? gst.toFixed(2) : '0' %></td>
                                                 </tr>
                                                 <tr>
                                                     <td><b>Shipping:</b></td>
-                                                    <td>₹<%= shipping %></td>
+                                                    <td>₹<%= locals.shipping ? shipping : '0' %></td>
                                                 </tr>
                                                 <tr>
                                                     <td><b>Total Amount:</b></td>
-                                                    <td><b>₹<%= total.toFixed(2) %></b></td>
+                                                    <td><b>₹<%= locals.total ? total.toFixed(2) : '0' %></b></td>
                                                 </tr>
                                                 <input type="hidden" id="totalAmount" name="totalAmount" value="<%= totalAmount %>">
                                             </tbody>
@@ -420,7 +420,7 @@
                                                 <div class="card-header" id="heading-3">
                                                     <% paymentMethod.forEach(method => { %>
                                                         <h2 class="card-title pt-2">
-                                                            <input type="radio" name="paymentMethod" value="<%= method._id %>" id="<%= method._id %>"> <%= method.type %>
+                                                            <input type="radio" name="paymentMethod" value="<%= method._id %>" type-data="<%= method.type %>" id="<%= method._id %>"> <%= method.type %>
                                                         </h2>
                                                     <% }) %>
                                                 </div><!-- End .card-header -->
@@ -1261,9 +1261,8 @@ const updateCartSummary = (data) => {
     });
     </script>
 
-<script>
-    document.getElementById('btn-order').addEventListener('click', async () => {
-        // Ensure that the addressSelect element exists
+    <script>
+        document.getElementById('btn-order').addEventListener('click', async () => {
         const addressSelect = document.getElementById('addressSelect');
         if (!addressSelect) {
             alert('Address selection element is missing.');
@@ -1273,7 +1272,6 @@ const updateCartSummary = (data) => {
         const selectedIndex = addressSelect.value;
         const selectedAddress = addresses[selectedIndex];
 
-        // Ensure that the cart element exists and has data
         const cartElement = document.getElementById('btn-order');
         if (!cartElement || !cartElement.hasAttribute('data-cart')) {
             alert('Cart data is missing.');
@@ -1282,15 +1280,6 @@ const updateCartSummary = (data) => {
 
         const cart = cartElement.getAttribute('data-cart');
 
-        // Ensure that the totalAmount element exists and has a value
-        // const totalAmountElement = document.getElementById('totalAmount');
-        // if (!totalAmountElement) {
-        //     alert('Total amount element is missing.');
-        //     return;
-        // }
-        // const totalAmount = totalAmountElement.value;
-
-        // Ensure that a payment method is selected
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
         if (!paymentMethod) {
             alert('Please select a payment method.');
@@ -1299,7 +1288,6 @@ const updateCartSummary = (data) => {
 
         const paymentMethodId = paymentMethod.value;
 
-        // Ensure that the couponCodeInput element exists and has a value
         const couponCodeInput = document.getElementById('appliedCouponCode');
         if (!couponCodeInput) {
             alert('Coupon code input element is missing.');
@@ -1314,6 +1302,7 @@ const updateCartSummary = (data) => {
         };
 
         try {
+            console.log('Going to fetch the order!');
             const response = await fetch('/createOrder', {
                 method: 'POST',
                 headers: {
@@ -1323,16 +1312,47 @@ const updateCartSummary = (data) => {
             });
 
             const result = await response.json();
-
-            const orderId = result.orderId;
-            const totalDiscountAmount = result.totalDiscountAmount;
+            console.log('Payment Method: ', result.paymentMethod);
+            console.log('Result: ', result);
 
             if (result.success) {
-                window.location.href = `/orderConfirmation/${orderId}?discount=${totalDiscountAmount}`;
-            } else if (response.ok) {
-                alert(result.message);
+                if (result.paymentMethod === 'Razorpay') {
+                    console.log('Initiating Razorpay payment...');
+
+                    const options = {
+                        key: result.key,
+                        amount: result.totalAmount,
+                        currency: 'INR',
+                        name: 'Wingcart',
+                        description: 'Test Transaction',
+                        image: 'https://your-logo-url.com',
+                        order_id: result.razorpayOrderId,
+                        handler: function (response) {
+                            console.log('Payment successful. Redirecting...');
+                            window.location.href = `/orderConfirmation/${result.orderId}?discount=${result.totalDiscountAmount}`;
+                        },
+                        prefill: {
+                            name: result.user.name,
+                            email: result.user.email,
+                            contact: result.user.phone
+                        },
+                        notes: {
+                            address: selectedAddress.city
+                        },
+                        theme: {
+                            color: '#3399cc'
+                        }
+                    };
+                    const rzp1 = new Razorpay(options);
+                    console.log('Opening Razorpay...');
+                    rzp1.open();
+                } else {
+                    console.log('Non-Razorpay payment method. Redirecting...');
+                    window.location.href = `/orderConfirmation/${result.orderId}?discount=${result.totalDiscountAmount}`;
+                }
             } else {
-                alert('Error creating order: ' + result.message);
+                console.log('Order creation failed. Message: ', result.message);
+                alert(result.message);
             }
         } catch (error) {
             console.error('Error creating order:', error);
@@ -1343,6 +1363,8 @@ const updateCartSummary = (data) => {
 
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Razorpay -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <!-- Plugins JS File -->
     <script src="/static/js/jquery.min.js"></script>

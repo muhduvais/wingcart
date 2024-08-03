@@ -44,7 +44,11 @@ userRoutes.get('/orderHistory', userAuth.isUserActive, userAuth.isUserBlocked, u
 userRoutes.get('/orderDetails/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderDetails);
 // userRoutes.post('/updateOrderStatus/:orderId/:productId', userController.updateOrderStatus);
 userRoutes.post('/cancelProduct/:orderId/:productId', userController.cancelProduct);
+userRoutes.post('/returnProduct/:orderId/:productId', userController.returnProduct);
 userRoutes.post('/applyCoupon/:couponCode', userController.applyCoupon);
 // userRoutes.post('/removeCoupon', userController.removeCoupon);
+userRoutes.get('/wishlist', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWishlist);
+userRoutes.post('/addToWishlist/:product_id', userController.addToWishlist);
+userRoutes.delete('/removeFromWishlist/:product_id', userController.removeFromWishlist);
 
 module.exports = userRoutes;

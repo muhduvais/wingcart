@@ -336,13 +336,16 @@
                       <td>
                         <select class="form-select mx-2 <%= item.status === 'cancelled' ? 'd-none' : '' %>" 
                                 onchange="updateStatus('<%= order._id %>', '<%= item.product._id %>', this.value)" 
-                                <%= item.status === 'delivered' || item.status === 'cancelled' ? 'disabled' : '' %>>
+                                <%= item.status !== 'return requested' && item.status === 'delivered' || item.status === 'cancelled' ? 'disabled' : '' %>>
                           <option value="" selected disabled>Status</option>
                           <% if (item.status === 'pending') { %>
                             <option value="dispatched">Dispatched</option>
                             <option value="delivered">Delivered</option>
                           <% } else if (item.status === 'dispatched') { %>
                             <option value="delivered">Delivered</option>
+                          <% } else if (item.status === 'return requested') { %>
+                            <option value="accept">Accept</option>
+                            <option value="reject">Reject</option>
                           <% } %>
                         </select>
                         <button type="button" class="btn btn-primary <%= item.status !== 'cancelled' ? 'd-none' : '' %>" onclick="showModal(<%= index %>)">

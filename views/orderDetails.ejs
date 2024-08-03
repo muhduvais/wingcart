@@ -69,7 +69,7 @@
                 <!-- Header-right -->
                 <div class="header-right">
                     <div class="wishlist">
-                        <a href="#" title="Wishlist">
+                        <a href="/wishlist" title="Wishlist">
                             <div class="icon">
                                 <i class="icon-heart-o"></i>
                                 <span class="wishlist-count badge">0</span>
@@ -165,9 +165,23 @@
                                                     </div>
                                                     <div class="card-right d-md-flex align-items-center">
                                                         <span class="badge badge-primary fs-5 m-3 p-3"><%= item.status %></span>
-                                                        <button class="btn btn-danger" data-toggle="modal" data-target="#cancelModal<%= index %>" <%= item.status === 'cancelled' ? 'disabled' : '' %>>
-                                                            <%= item.status === 'delivered' ? 'Return' : 'Cancel' %>
-                                                        </button>
+                                                        <% if (item.status === 'delivered' || item.status === 'return requested') { %>
+                                                            <button class="btn btn-danger" data-toggle="modal" data-target="#returnModal<%= index %>" <%= item.status === 'return requested' ? 'disabled' : '' %>>
+                                                                Request Return
+                                                            </button>
+                                                        <% } else if (item.status === 'return accepted') { %>
+                                                            <button class="btn btn-danger" disabled>
+                                                                Returned
+                                                            </button>
+                                                        <% } else if (item.status === 'return rejected') { %>
+                                                            <button class="btn btn-danger" disabled>
+                                                                Return Rejected
+                                                            </button>
+                                                        <% } else { %>
+                                                            <button class="btn btn-danger" disabled>
+                                                                Cancel
+                                                            </button>
+                                                        <% } %>
                                                     </div>
                                                 </div>
                                             </div>
@@ -198,6 +212,32 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- Return Modal -->
+                                        <div class="modal fade" id="returnModal<%= index %>" tabindex="-1" role="dialog" aria-labelledby="returnModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content p-5">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="returnModalLabel">Request for return</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <form id="returnForm<%= index %>">
+                                                            <div class="form-group">
+                                                                <input type="hidden" id="orderId<%= index %>" value="<%= order._id %>">
+                                                                <input type="hidden" id="productId<%= index %>" value="<%= item.product._id %>">
+                                                                <label for="reason" class="errorMsg">Reason for returning:</label>
+                                                                <textarea class="form-control" id="returnReason<%= index %>"></textarea>
+                                                            </div>
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-primary">Submit</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     <% }); %>
                                 </div>
                             </div>
@@ -214,23 +254,6 @@
     </div>
 
     <script>
-        // async function updateStatus(orderId, productId, status) {
-        //     const response = await fetch(`/updateOrderStatus/${orderId}/${productId}`, {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json'
-        //         },
-        //         body: JSON.stringify({ status })
-        //     });
-
-        //     const statusData = response.json();
-
-        //     if (statusData.success) {
-        //         alert('Status updated!');
-        //     } else if (response.ok) {
-        //         alert(statusData.message);
-        //     }
-        // }
     
         //Cancel product
         document.querySelectorAll('[id^=cancelForm]').forEach(form => {
@@ -287,6 +310,67 @@
             });
         });
     </script>
+
+    <script>
+        //Return product
+        document.querySelectorAll('[id^=returnForm]').forEach(form => {
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const index = this.id.replace('returnForm', '');
+            const orderId = document.getElementById(`orderId${index}`).value;
+            const productId = document.getElementById(`productId${index}`).value;
+            const reason = document.getElementById(`returnReason${index}`).value;
+            const errorMsg = document.querySelector('.errorMsg');
+            
+
+            if (reason.trim() === '') {
+                errorMsg.innerText = 'Please enter the return reason';
+                errorMsg.classList.add('text-danger');
+                return;
+            }
+            
+
+            fetch( `/returnProduct/${orderId}/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ reason }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Return requested'
+                }).then(() => {
+                    window.location.reload();
+                    location.reload();
+                });
+                } else {
+                    Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error Cancelling Order'
+                });
+            });
+        });
+        });
+    </script>
+
+    
 
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

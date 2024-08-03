@@ -307,7 +307,10 @@
                                                         </a>
                             
                                                         <div class="product-action-vertical">
-                                                            <a class="btn-product-icon btn-wishlist btn-expandable"><span>add to wishlist</span></a>
+                                                            <form class="add-to-whishlist">
+                                                                <input type="hidden" class="wishlist-product-id" value="<%= product._id %>">
+                                                                <button type="submit" class="btn-product-icon btn-wishlist btn-expandable"><span>add to wishlist</span></button>
+                                                            </form>
                                                         </div>
                             
                                                         <div class="product-action">
@@ -910,6 +913,57 @@
                         icon: 'error',
                         title: 'Error',
                         text: 'Failed to add the product.'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An unexpected error occurred. Please try again later.'
+                });
+            }
+        });
+    });
+    </script>
+
+    <script>
+        document.querySelectorAll('.add-to-whishlist').forEach(form => {
+        form.addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const productId = form.querySelector('.wishlist-product-id').value;
+
+            try {
+                const response = await fetch(`/addToWishlist/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Added to wishlist'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else if (!data.success) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Info',
+                        text: data.message
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to add to wishlist.'
                     });
                 }
             } catch (error) {

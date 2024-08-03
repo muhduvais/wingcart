@@ -656,11 +656,28 @@ const updateOrderStatus = async (req, res) => {
         const product = order.products.find(item => item.product.toString() === productId);
 
         const statusOrder = ['pending', 'dispatched', 'delivered'];
-        if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
-            product.status = status;
+        const returnRequestStatus = ['accept', 'reject'];
+
+        if (statusOrder.includes(product.status)) {
+            if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
+                product.status = status;
+                await order.save();
+                return res.json({ success: true });
+            }
+        } else if (product.status === 'return requested' && returnRequestStatus.includes(status)) {
+            if (status === 'accept') {
+                product.status = 'return accepted'
+                product.returnDate = new Date();
+            }  else if (status === 'reject') {
+                product.status = 'return rejected'
+            } else {
+                product.status = status;
+            }
+
             await order.save();
             return res.json({ success: true });
         }
+
         res.json({ success: false });
     } catch (err) {
         console.error('Error updating order status', err);
