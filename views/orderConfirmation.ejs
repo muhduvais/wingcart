@@ -182,14 +182,20 @@
                                         <td><%= item.product.name %></td>
                                         <td class="image-col"><img src="/assets2/img/<%= item.product.images[0] %>" style="width: 100px;" alt="image"></td>
                                         <td><%= item.quantity %></td>
-                                        <td>₹<%= item.price.toFixed(2) %></td>
-                                        <td>₹<%= (item.price * item.quantity).toFixed(2) %></td>
+                                        <td>₹<%= item.product.price.toFixed(2) %></td>
+                                        <td>₹<%= (item.product.price * item.quantity).toFixed(2) %></td>
                                     </tr>
                                 <% }); %>
                                 <tr>
                                     <td colspan="3"><strong>Subtotal:</strong></td>
-                                    <td>₹<%= subtotal.toFixed(2) %></td>
+                                    <td>₹<%= subtotalBefore.toFixed(2) %></td>
                                 </tr>
+                                <% if ( locals.totalDiscount) { %>
+                                    <tr>
+                                        <td colspan="3"><strong>Total Discount:</strong></td>
+                                        <td>- ₹<%= totalDiscount.toFixed(2) %></td>
+                                    </tr>
+                                    <% } %>
                                 <tr>
                                     <td colspan="3"><strong>GST (18%):</strong></td>
                                     <td>₹<%= gst.toFixed(2) %></td>
@@ -198,12 +204,6 @@
                                     <td colspan="3"><strong>Shipping Charge:</strong></td>
                                     <td>₹<%= shippingCharge.toFixed(2) %></td>
                                 </tr>
-                                <% if (order.coupon) { %>
-                                <tr>
-                                    <td colspan="3"><strong>Coupon (<%= order.coupon.description %>):</strong></td>
-                                    <td>- ₹<%= couponDiscount.toFixed(2) %></td>
-                                </tr>
-                                <% } %>
                                 <tr>
                                     <td colspan="3"><strong>Grand Total:</strong></td>
                                     <td><strong>₹<%= totalAmount.toFixed(2) %></strong></td>

@@ -383,83 +383,61 @@
                                 <!-- /////addModal///// -->
 
 		                		<aside class="col-lg-3">
-		                			<div class="summary">
-		                				<h3 class="summary-title">Your Order</h3><!-- End .summary-title -->
-
-		                				<table class="table table-summary">
+                                    <div class="summary">
+                                        <h3 class="summary-title">Your Order</h3><!-- End .summary-title -->
+                                
+                                        <table class="table table-summary">
                                             <thead>
                                                 <tr>
-                                                    <th>Products</th>
-                                                    <th>Total</th>
+                                                    <th>Description</th>
+                                                    <th>Amount</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <% let totalAmount = 0; %>
-                                                <% if (cart && cart.products.length > 0) { %>
-                                                    <% cart.products.forEach(item => { %>
-                                                        <tr>
-                                                            <td><a href="/prodDetails/<%= item.product._id %>"><%= item.quantity + ' x ' + item.product.name %></a></td>
-                                                            <td>₹<%= (item.product.price * item.quantity).toFixed(2) %></td>
-                                                        </tr>
-                                                    <% }); %>
-                                                <% } else { %>
-                                                    <tr>
-                                                        <td colspan="5" class="text-center">Your cart is empty.</td>
-                                                    </tr>
-                                                <% } %>
+                                                <tr>
+                                                    <td><b>Subtotal:</b></td>
+                                                    <td>₹<%= subtotal.toFixed(2) %></td>
+                                                </tr>
                                                 <tr>
                                                     <td><b>Gst(18%):</b></td>
-                                                    <td>₹<%= locals.gst ? gst.toFixed(2) : '' %></td>
+                                                    <td>₹<%= gst.toFixed(2) %></td>
                                                 </tr>
-                                                <% if (locals.couponDiscount) { %>
-                                                <tr>
-                                                    <td><b>Coupon applied:</b></td>
-                                                    <td>₹<%= couponDiscount %> <br> <small><%= couponDescription %></small> <br> <small>Discount: <%= discountRate %></small></td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="2">
-                                                        <button id="removeCouponBtn" class="btn btn-danger">Remove Coupon</button>
-                                                    </td>
-                                                </tr>
-                                                <% } %>
                                                 <tr>
                                                     <td><b>Shipping:</b></td>
-                                                    <td>₹<%= locals.shipping ? shipping : '0.00' %></td>
+                                                    <td>₹<%= shipping %></td>
                                                 </tr>
                                                 <tr>
                                                     <td><b>Total Amount:</b></td>
-                                                    <td><b>₹<%= locals.total ? total.toFixed(2) : '' %></b></td>
+                                                    <td><b>₹<%= total.toFixed(2) %></b></td>
                                                 </tr>
                                                 <input type="hidden" id="totalAmount" name="totalAmount" value="<%= totalAmount %>">
                                             </tbody>
                                         </table>
                                         <!-- ///////// -->
-
-		                				<div class="accordion-summary" id="accordion-payment">
-										
-
-										    <div class="card">
-										        <div class="card-header" id="heading-3">
+                                
+                                        <div class="accordion-summary" id="accordion-payment">
+                                            <div class="card">
+                                                <div class="card-header" id="heading-3">
                                                     <% paymentMethod.forEach(method => { %>
                                                         <h2 class="card-title pt-2">
                                                             <input type="radio" name="paymentMethod" value="<%= method._id %>" id="<%= method._id %>"> <%= method.type %>
                                                         </h2>
                                                     <% }) %>
-										        </div><!-- End .card-header -->
-										        <div id="collapse-3" class="collapse" aria-labelledby="heading-3" data-parent="#accordion-payment">
-										            <div class="card-body">Pay by cash at the time of delivery 
-										            </div><!-- End .card-body -->
-										        </div><!-- End .collapse -->
-										    </div><!-- End .card -->
-
-										</div><!-- End .accordion -->
-
-		                				<button type="submit" id="btn-order" data-cart="<%= cart %>" data-code="<%= locals.code ? code : '' %>" class="btn btn-outline-primary-2 btn-order btn-block">
-		                					<span class="btn-text">Place Order</span>
-		                					<span class="btn-hover-text">Place Order</span>
-		                				</button>
-		                			</div><!-- End .summary -->
-		                		</aside><!-- End .col-lg-3 -->
+                                                </div><!-- End .card-header -->
+                                                <div id="collapse-3" class="collapse" aria-labelledby="heading-3" data-parent="#accordion-payment">
+                                                    <div class="card-body">Pay by cash at the time of delivery
+                                                    </div><!-- End .card-body -->
+                                                </div><!-- End .collapse -->
+                                            </div><!-- End .card -->
+                                        </div><!-- End .accordion -->
+                                
+                                        <button type="submit" id="btn-order" data-cart="<%= cart %>" data-code="<%= locals.code ? code : '' %>" class="btn btn-outline-primary-2 btn-order btn-block">
+                                            <span class="btn-text">Place Order</span>
+                                            <span class="btn-hover-text">Place Order</span>
+                                        </button>
+                                    </div><!-- End .summary -->
+                                </aside><!-- End .col-lg-3 -->
+                                
 		                	</div><!-- End .row -->
 	                </div><!-- End .container -->
                 </div><!-- End .checkout -->
@@ -809,119 +787,103 @@
     <!-- Apply-Coupon -->
     <script>
         const couponCode = document.getElementById('checkout-discount-input');
-        const couponForm = document.getElementById('applyCouponForm');
-        const removeCouponBtn = document.getElementById('removeCouponBtn');
-        const applyCouponBtns = document.querySelectorAll('.apply-coupon-btn');
-        const appliedCouponCodeInput = document.getElementById('appliedCouponCode');
-    
-        couponForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            validateCode(couponCode.value.trim());
+const couponForm = document.getElementById('applyCouponForm');
+const removeCouponBtn = document.getElementById('removeCouponBtn');
+const applyCouponBtns = document.querySelectorAll('.apply-coupon-btn');
+const appliedCouponCodeInput = document.getElementById('appliedCouponCode');
+
+couponForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    validateCode(couponCode.value.trim());
+});
+
+// Apply coupon buttons event listeners
+applyCouponBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-coupon-code');
+        couponCode.value = code;
+        validateCode(code);
+    });
+});
+
+// Function to validate and apply coupon
+const validateCode = async (code) => {
+    try {
+        const response = await fetch(`/applyCoupon/${code}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
         });
-    
-        // if (removeCouponBtn) {
-        //     removeCouponBtn.addEventListener('click', (event) => {
-        //         event.preventDefault();
-        //         removeCoupon();
-        //     });
-        // }
-    
-        applyCouponBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const code = btn.getAttribute('data-coupon-code');
-                couponCode.value = code;
-                validateCode(code);
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Coupon applied successfully!'
+            }).then(() => {
+                appliedCouponCodeInput.value = code;
+                updateCartSummary(data);  // Pass entire data object
+                $('#availableCouponsModal').modal('hide');
             });
-        });
-    
-        const validateCode = async (code) => {
-            const response = await fetch(`/applyCoupon/${code}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to apply the coupon.'
             });
-    
-            const data = await response.json();
-    
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Coupon applied successfully!'
-                }).then(() => {
-                    appliedCouponCodeInput.value = code;
-                    updateCartSummary(data.cart, data.couponDiscount, data.couponDescription, data.discountRate);
-                    $('#availableCouponsModal').modal('hide');
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: data.message || 'Failed to apply the coupon.'
-                });
-            }
-        };
-        
-        // Remove-coupon
-        // const removeCoupon = async () => {
-        //     const response = await fetch('/removeCoupon', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json'
-        //         },
-        //     });
-    
-        //     const data = await response.json();
-    
-        //     if (data.success) {
-        //         alert('Coupon removed successfully!');
-        //         updateCartSummary(data.cart, null, null, null);
-        //     } else {
-        //         alert(data.message || 'Failed to remove the coupon.');
-        //     }
-        // };
-    
-        const updateCartSummary = (cart, couponDiscount, couponDescription, discountRate) => {
-            let cartProductsHTML = '';
-            cart.products.forEach(item => {
-                cartProductsHTML += `
-                    <tr>
-                        <td><a href="/prodDetails/${item.product._id}">${item.quantity} x ${item.product.name}</a></td>
-                        <td>₹${(item.product.price * item.quantity).toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-    
-            document.querySelector('.table-summary tbody').innerHTML = `
-                ${cartProductsHTML}
-                <tr>
-                    <td><b>Gst(18%):</b></td>
-                    <td>₹${(cart.gst).toFixed(2)}</td>
-                </tr>
-                ${couponDiscount ? `
-                <tr>
-                    <td class="d-flex align-items-center"><i class="fa-solid fa-circle-xmark pr-3" onclick="location.reload()"></i><b>Coupon applied: </b></td>
-                    <td>- ₹${(couponDiscount).toFixed(2)} <br> <small>${couponDescription}</small></td>
-                </tr>` : ''}
-                
-                <tr>
-                    <td><b>Shipping:</b></td>
-                    <td>₹${(cart.shipping).toFixed(2)}</td>
-                </tr>
-                <tr>
-                    <td><b>Total Amount:</b></td>
-                    <td><b>₹${(cart.totalAmount).toFixed(2)}</b></td>
-                </tr>
-                <input type="hidden" id="totalAmount" name="totalAmount" value="<%= totalAmount %>">
-            `;
-            if (document.getElementById('removeCouponBtn')) {
-                document.getElementById('removeCouponBtn').addEventListener('click', (event) => {
-                    event.preventDefault();
-                    removeCoupon();
-                });
-            }
-        };
+        }
+    } catch (error) {
+        console.error('Error validating coupon code:', error);
+    }
+};
+
+// Function to update cart summary
+const updateCartSummary = (data) => {
+    // Ensure data is valid and contains necessary properties
+    if (!data || typeof data !== 'object') {
+        console.error('Invalid data for updateCartSummary:', data);
+        return;
+    }
+
+    const {
+        subtotal = 0,
+        gst = 0,
+        totalAmount = 0,
+        couponDiscount = 0,
+        couponDescription = '',
+        shipping = 0
+    } = data;
+
+    document.querySelector('.table-summary tbody').innerHTML = `
+        <tr>
+            <td><b>Subtotal:</b></td>
+            <td>₹${subtotal.toFixed(2)}</td>
+        </tr>
+        <tr>
+            <td><b>Gst(18%):</b></td>
+            <td>₹${gst.toFixed(2)}</td>
+        </tr>
+        ${couponDiscount ? `
+        <tr>
+            <td class="d-flex align-items-center">
+                <i class="fa-solid fa-circle-xmark pr-3" onclick="location.reload()"></i>
+                <b>Coupon applied: </b>
+            </td>
+            <td>- ₹${couponDiscount.toFixed(2)} <br> <small>${couponDescription}</small></td>
+        </tr>` : ''}
+        <tr>
+            <td><b>Shipping:</b></td>
+            <td>₹${shipping.toFixed(2)}</td>
+        </tr>
+        <tr>
+            <td><b>Total Amount:</b></td>
+            <td><b>₹${totalAmount.toFixed(2)}</b></td>
+        </tr>
+    `;
+};
     </script>
 
     <script>
@@ -1299,19 +1261,37 @@
     });
     </script>
 
-    <script>
-        document.getElementById('btn-order').addEventListener('click', async () => {
-
+<script>
+    document.getElementById('btn-order').addEventListener('click', async () => {
+        // Ensure that the addressSelect element exists
         const addressSelect = document.getElementById('addressSelect');
+        if (!addressSelect) {
+            alert('Address selection element is missing.');
+            return;
+        }
+
         const selectedIndex = addressSelect.value;
         const selectedAddress = addresses[selectedIndex];
 
-        const cart = document.getElementById('btn-order').getAttribute('data-cart');
+        // Ensure that the cart element exists and has data
+        const cartElement = document.getElementById('btn-order');
+        if (!cartElement || !cartElement.hasAttribute('data-cart')) {
+            alert('Cart data is missing.');
+            return;
+        }
 
-        const totalAmount = document.getElementById('totalAmount').value;
+        const cart = cartElement.getAttribute('data-cart');
 
+        // Ensure that the totalAmount element exists and has a value
+        // const totalAmountElement = document.getElementById('totalAmount');
+        // if (!totalAmountElement) {
+        //     alert('Total amount element is missing.');
+        //     return;
+        // }
+        // const totalAmount = totalAmountElement.value;
+
+        // Ensure that a payment method is selected
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
-
         if (!paymentMethod) {
             alert('Please select a payment method.');
             return;
@@ -1319,7 +1299,12 @@
 
         const paymentMethodId = paymentMethod.value;
 
+        // Ensure that the couponCodeInput element exists and has a value
         const couponCodeInput = document.getElementById('appliedCouponCode');
+        if (!couponCodeInput) {
+            alert('Coupon code input element is missing.');
+            return;
+        }
         const couponCodeValue = couponCodeInput.value;
 
         const orderData = {
@@ -1340,9 +1325,10 @@
             const result = await response.json();
 
             const orderId = result.orderId;
+            const totalDiscountAmount = result.totalDiscountAmount;
 
             if (result.success) {
-                window.location.href = `/orderConfirmation/${orderId}`
+                window.location.href = `/orderConfirmation/${orderId}?discount=${totalDiscountAmount}`;
             } else if (response.ok) {
                 alert(result.message);
             } else {
@@ -1353,7 +1339,7 @@
             alert('An error occurred while creating the order.');
         }
     });
-    </script>
+</script>
 
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

@@ -294,10 +294,10 @@
                       </div>
                   </div>
                   <div class="price-breakup">
-                    <p>Subtotal: &nbsp; &nbsp;₹<%= locals.subtotal ? subtotal.toFixed(2) : '' %><br>
+                    <p>Subtotal: &nbsp; &nbsp;₹<%= locals.subtotalBefore ? subtotalBefore.toFixed(2) : '' %><br>
                         Gst (18%): &nbsp; &nbsp;₹<%= locals.gst ? gst.toFixed(2) : '' %><br>
-                        <% if (couponDiscount && couponDiscount != null) { %>
-                          Coupon: &nbsp; &nbsp;<span class="text-danger">- ₹<%= locals.couponDiscount ? couponDiscount.toFixed(2) : '' %></span><br>
+                        <% if (totalDiscount && totalDiscount != null) { %>
+                          Discounts: &nbsp; &nbsp;<span class="text-danger">- ₹<%= locals.totalDiscount ? totalDiscount.toFixed(2) : '' %></span><br>
                         <% } %>
                         Shipping: &nbsp; &nbsp;₹<%= locals.shipping ? shipping : '0.00' %><br>
                         <b>Total: &nbsp; &nbsp;₹<%= locals.totalAmount ? totalAmount : '' %></b></p>

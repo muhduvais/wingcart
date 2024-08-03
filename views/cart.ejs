@@ -186,16 +186,10 @@
                                                         </div>
                                                     </td>
                                                     <td class="price-col <% if (item.product.stock === 0) { %>text-danger<% } %>">
-                                                        <% 
-                                                            const product = item.product;
-                                                            const applicableOffers = offers.filter(o => o.item.includes(product._id) || o.item.includes(product.category));
-                                                            const maxOffer = applicableOffers.reduce((max, offer) => Math.max(max, offer.discount), 0);
-                                                            const priceAfterDiscount = product.price - (product.price * maxOffer / 100);
-                                                        %>
                                                         <% if (item.product.stock === 0) { %>
                                                             Out of stock
                                                         <% } else { %>
-                                                            ₹<span class="price"><%= priceAfterDiscount %></span>
+                                                            ₹<span class="price"><%= item.product.price %></span>
                                                         <% } %>
                                                     </td>
                                                     <td class="quantity-col">
@@ -206,20 +200,15 @@
                                                         </div>
                                                         <span class="stock-message py-3" style="color: red; display: none;"></span>
                                                     </td>
-                                                    <td class="total-col">
-                                                        <span class="total-price <%= item.product.stock === 0 ? 'd-none' : '' %>">
-                                                            <% 
-                                                                if (item.product.stock !== 0 && item.quantity !== 0) {
-                                                                    const itemTotal = priceAfterDiscount * item.quantity;
-                                                                    %> ₹ <%= itemTotal %>
-                                                                <% } else if (item.product.stock !== 0 && item.quantity === 0) { %>
-                                                                    ₹ <%= priceAfterDiscount %>
-                                                                <% } else { %>
-                                                                    0
-                                                                <% } 
-                                                            %>
-                                                        </span>
-                                                    </td>
+                                                    <td class="total-col"><span class="total-price <%= item.product.stock === 0 ? 'd-none' : '' %>">
+                                                        <% if(item.product.stock !== 0 && item.quantity !== 0) { %>
+                                                            ₹ <%= item.product.price * item.quantity %>
+                                                        <% } else if (item.product.stock !== 0 && item.quantity === 0) { %>
+                                                            ₹ <%= item.product.price %>
+                                                        <% } else { %>
+                                                            0
+                                                        <% } %>
+                                                    </span></td>
                                                     <td class="remove-col">
                                                         <form class="removeBtn" data-product-id="<%= item.product._id %>">
                                                             <button type="submit" class="btn-remove"><i class="icon-close"></i></button>
@@ -246,25 +235,21 @@
                                     <h3 class="summary-title">Cart Total</h3>
                                     <table class="table table-summary">
                                         <tbody>
-                                            <tr class="summary-real-subtotal">
+                                            <tr class="summary-subtotal">
                                                 <td>Subtotal:</td>
                                                 <td class="summary-real-subtotal-value">₹<%= realSubtotal.toFixed(2) %></td>
                                             </tr>
-                                            <tr class="summary-discount-total">
-                                                <td>Total Discounts:</td>
-                                                <td class="summary-discount-total-value">-₹<%= discountTotal.toFixed(2) %></td>
+                                            <tr class="summary-discount">
+                                                <td>Discount:</td>
+                                                <td class="summary-discount-value">-₹<%= discountTotal.toFixed(2) %></td>
                                             </tr>
-                                            <tr class="summary-subtotal d-none">
-                                                <td>Subtotal after Discounts:</td>
+                                            <tr class="summary-subtotalc d-none">
+                                                <td>Subtotal (after discount):</td>
                                                 <td class="summary-subtotal-value">₹<%= subtotal.toFixed(2) %></td>
                                             </tr>
-                                            <tr class="summary-gst">
-                                                <td>GST (18%):</td>
-                                                <td class="summary-gst-value">₹<%= gst.toFixed(2) %></td>
-                                            </tr>
-                                            <tr class="summary-shipping">
+                                            <tr class="summary-shipping-">
                                                 <td>Shipping:</td>
-                                                <td class="summary-shipping-value">₹<%= shipping.toFixed(2) %>.00</td>
+                                                <td class="summary-shipping-value">₹<%= shipping.toFixed(2) %></td>
                                             </tr>
                                             <tr class="summary-total">
                                                 <td>Total:</td>
@@ -275,7 +260,7 @@
                                     <a href="/checkout" class="btn btn-outline-primary-2 btn-order btn-block">PROCEED TO CHECKOUT</a>
                                 </div>
                                 <a href="/shop" class="btn btn-outline-dark-2 btn-block mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
-                            </aside><!-- End .col-lg-3 -->
+                            </aside>
 	                	</div><!-- End .row -->
 	                </div><!-- End .container -->
                 </div><!-- End .cart -->
@@ -671,79 +656,92 @@
             const quantity = parseInt(this.value, 10);
             const maxStock = parseInt(this.max, 10);
             const productRow = this.closest('tr');
-            const price = parseFloat(productRow.querySelector('.price').textContent);
-            const totalPriceElement = productRow.querySelector('.total-price');
+            const productId = productRow.getAttribute('data-product-id');
             const stockMessage = productRow.querySelector('.stock-message');
 
             // Check if quantity exceeds maxStock
             if (quantity === maxStock) {
                 console.log(`Max value ${quantity}`);
-            this.value = maxStock;
-            if (maxStock === 1) {
-                stockMessage.textContent = `Only ${maxStock} stock left`;
-            } else if (maxStock !== 1) {
-                stockMessage.textContent = `Only ${maxStock} stocks left`;
-            }
-            stockMessage.style.display = 'block';
+                this.value = maxStock;
+                if (maxStock === 1) {
+                    stockMessage.textContent = `Only ${maxStock} stock left`;
+                } else if (maxStock !== 1) {
+                    stockMessage.textContent = `Only ${maxStock} stocks left`;
+                }
+                stockMessage.style.display = 'block';
             } else {
-            stockMessage.style.display = 'none';
+                stockMessage.style.display = 'none';
             }
-
-            // Update total price for the item
-            const newTotal = price * quantity;
-            totalPriceElement.textContent = `₹ ${newTotal}`;
 
             // Send updated quantity to the server
-            const productId = productRow.getAttribute('data-product-id');
             fetch(`/updateCart`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                productId: productId,
-                quantity: quantity
-            })
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    quantity: quantity
+                })
             })
             .then(response => response.json())
             .then(data => {
-            if (data.success) {
-                console.log('Cart updated successfully');
-                updateSummary();
-            } else {
-                console.error('Error updating cart:', data.message);
-            }
+                if (data.success) {
+                    console.log('Cart updated successfully');
+                    updateProductRow(productRow, data.updatedItem);
+                    updateSummary();
+                } else {
+                    console.error('Error updating cart:', data.message);
+                }
             })
             .catch(error => {
-            console.error('Error:', error);
+                console.error('Error:', error);
             });
         });
-        });
-    </script>
-
-    <script>
-
-    function updateSummary() {
-    let subtotal = 0;
-    document.querySelectorAll('.total-price').forEach(element => {
-        subtotal += parseFloat(element.textContent.replace('₹', ''));
     });
 
-        const gst = subtotal * 0.18;
-        const shipping = subtotal < 500 ? 40 : 0;
-        const total = subtotal + gst + shipping;
+    function updateProductRow(productRow, updatedItem) {
+        const priceCol = productRow.querySelector('.price-col');
+        const totalCol = productRow.querySelector('.total-col');
 
+        if (updatedItem.discountedPrice < updatedItem.originalPrice) {
+            priceCol.innerHTML = `
+                <span class="original-price" style="text-decoration: line-through;">₹${updatedItem.originalPrice.toFixed(2)}</span><br>
+                ₹<span class="price">${updatedItem.discountedPrice.toFixed(2)}</span>
+            `;
+        } else {
+            priceCol.innerHTML = `₹<span class="price">${updatedItem.originalPrice.toFixed(2)}</span>`;
+        }
+
+        totalCol.querySelector('.total-price').textContent = `₹ ${updatedItem.itemTotal.toFixed(2)}`;
+    }
+
+    function updateSummary() {
+        let realSubtotal = 0;
+        let discountTotal = 0;
+        let subtotal = 0;
+        document.querySelectorAll('tr[data-product-id]').forEach(row => {
+            const quantity = parseInt(row.querySelector('.quantity-input').value, 10);
+            const originalPrice = parseFloat(row.querySelector('.original-price')?.textContent.replace('₹', '') || row.querySelector('.price').textContent);
+            const discountedPrice = parseFloat(row.querySelector('.price').textContent);
+            const totalPrice = parseFloat(row.querySelector('.total-price').textContent.replace('₹', ''));
+
+            realSubtotal += originalPrice * quantity;
+            discountTotal += (originalPrice - discountedPrice) * quantity;
+            subtotal += totalPrice;
+        });
+
+        // const gst = subtotal * 0.18;
+        const shipping = subtotal < 500 ? 40 : 0;
+        const total = subtotal + shipping;
+
+        document.querySelector('.summary-real-subtotal-value').textContent = `₹${realSubtotal.toFixed(2)}`;
+        document.querySelector('.summary-discount-value').textContent = `-₹${discountTotal.toFixed(2)}`;
         document.querySelector('.summary-subtotal-value').textContent = `₹${subtotal.toFixed(2)}`;
-        document.querySelector('.summary-gst-value').textContent = `₹${gst.toFixed(2)}`;
+        // document.querySelector('.summary-gst-value').textContent = `₹${gst.toFixed(2)}`;
         document.querySelector('.summary-shipping-value').textContent = `₹${shipping.toFixed(2)}`;
         document.querySelector('.summary-total-value').textContent = `₹${total.toFixed(2)}`;
     }
-
-    document.querySelectorAll('input[name="shipping"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            updateSummary();
-        });
-    });
     </script>
 
     <!-- Sweet Alert -->

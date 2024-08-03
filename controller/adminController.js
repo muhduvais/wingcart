@@ -624,9 +624,12 @@ const toOrderDetails = async (req, res) => {
 
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
+        const subtotalBefore = order.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
         const shipping = subtotal < 500 ? 40 : 0;
-        const totalAmount = subtotal + gst + shipping;
+        const totalAmount = order.totalAmount;
+        const offerDiscount = subtotalBefore - subtotal;
         const couponDiscount = subtotal * order.coupon.discount / 100;
+        const totalDiscount = offerDiscount + couponDiscount;
 
         res.render('adminOrderDetails', { 
             order,
@@ -634,7 +637,8 @@ const toOrderDetails = async (req, res) => {
             gst,
             shipping,
             totalAmount,
-            couponDiscount
+            subtotalBefore,
+            totalDiscount
          });
     } catch (err) {
         console.error('Error fetching order details', err);
