@@ -9,6 +9,7 @@ const Order = require("../model/ordersModel");
 const Coupon = require("../model/couponsModel");
 const Offer = require("../model/offersModel");
 const Wishlist = require("../model/wishlistModel");
+const Wallet = require("../model/walletsModel");
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const sendEmail = require("../model/sendEmail");
@@ -1061,7 +1062,7 @@ const createOrder = async (req, res) => {
         const address = await Address.findById(addressId);
 
         if (!cart) {
-            return res.status(200).json({ message: 'Cart is empty' });
+            return res.json({ message: 'Cart is empty' });
         }
 
         const orderProducts = [];
@@ -1233,7 +1234,7 @@ const toOrderConf = async (req, res) => {
         
 
         const discount1 = parseFloat(offerDiscount);
-        const discount2 = parseFloat(couponDiscount);
+        const discount2 = isNaN(couponDiscount) ? 0 : parseFloat(couponDiscount);
         const totalDiscount = discount1 + discount2;
 
         totalAmount -= discount2;
@@ -1288,6 +1289,7 @@ const cancelProduct = async (req, res) => {
 
         const { orderId, productId } = req.params;
         const reason = req.body.reason;
+        const user = req.session.user;
 
     try {
         const order = await Order.findById(orderId);
@@ -1304,6 +1306,26 @@ const cancelProduct = async (req, res) => {
         product.status = 'cancelled';
         product.cancellationDate = Date.now();
         product.cancellationReason = reason;
+
+        const productPurchasePrice = product.price;
+
+        let wallet  = await Wallet.findOne({ user: user._id });
+
+        if (!wallet) {
+            const newWallet = new Wallet({
+                user: user._id,
+                balance: 0,
+                transactions: []
+            });
+
+            await newWallet.save();
+
+            wallet = await Wallet.findOne({ user: user._id });
+        }
+
+        wallet.balance += productPurchasePrice;
+
+        await wallet.save();
 
         const updateProduct = await Product.findOne({ _id: productId });
 
@@ -1507,7 +1529,8 @@ const applyCoupon = async (req, res) => {
             return;
         }
 
-        const couponDiscount = subtotal * coupon.discount / 100;
+        const couponDiscountAmount = subtotal * coupon.discount / 100;
+        const couponDiscount = couponDiscountAmount <= coupon.maxAmount ? couponDiscountAmount : coupon.maxAmount;
         const gst = subtotal * 0.18;
         const totalAmount = subtotal + gst - couponDiscount + (cart.shipping || 0);
 
@@ -1642,6 +1665,19 @@ const removeFromWishlist = async (req, res) => {
     }
 };
 
+const toWallet = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const wallet = await Wallet.findOne({ user: user._id });
+        console.log(wallet);
+        
+        res.render('wallet', { user, wallet });
+    } catch (err) {
+        console.error('Error fetching wallet: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
 
 
 module.exports = {
@@ -1687,4 +1723,5 @@ module.exports = {
     toWishlist,
     addToWishlist,
     removeFromWishlist,
+    toWallet,
 }

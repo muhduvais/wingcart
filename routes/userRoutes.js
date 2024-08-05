@@ -50,5 +50,6 @@ userRoutes.post('/applyCoupon/:couponCode', userController.applyCoupon);
 userRoutes.get('/wishlist', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWishlist);
 userRoutes.post('/addToWishlist/:product_id', userController.addToWishlist);
 userRoutes.delete('/removeFromWishlist/:product_id', userController.removeFromWishlist);
+userRoutes.get('/wallet', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWallet);
 
 module.exports = userRoutes;

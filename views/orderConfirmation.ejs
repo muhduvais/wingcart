@@ -159,7 +159,7 @@
                 <div class="container">
                     <h4 class="py-3">Thank you for your order!</h4>
                     <div class="top-info">
-                        <p>Your order ID: <strong><%= order._id %></strong>.</p>
+                        <p>Your order ID: <strong><%= order.orderId %></strong>.</p>
                         <p>Order date: <strong><%= new Date(order.orderDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></strong>.</p>
                         <p class="py-md-2 fs-2">Expected delivery: <strong><%= deliveryDay %></strong>.</p>
                     </div>

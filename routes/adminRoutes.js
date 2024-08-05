@@ -64,6 +64,13 @@ adminRouter.get('/createOffer', adminAuth, adminController.toCreateOffer);
 adminRouter.post('/createOffer', adminController.verifyCreateOffer);
 adminRouter.post('/offerStatusToggle/:offer_id', adminController.toggleOfferStatus);
 
+
+//Sales Report
+adminRouter.get('/salesReport', adminAuth, adminController.toSalesReport);
+adminRouter.post('/generateSalesReport', adminController.generateSalesReport);
+adminRouter.get('/downloadSalesReport', adminAuth, adminController.downloadSalesReport);
+adminRouter.put('/editOffer/:offer_id', adminController.verifyEditOffer);
+
 //Test Route
 adminRouter.get('/ddd', (req, res) => {
   res.render('ddddddddddddd');
