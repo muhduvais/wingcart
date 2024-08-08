@@ -908,6 +908,14 @@ const toCheckout = async (req, res) => {
             }
         });
         const addresses = await Address.find({ user: userId });
+
+        const orders = await Order.find({ user: userId}, {'coupon.code': 1});
+        // let  couponCodes = new Set();
+        // orders.forEach(order => {
+        //     couponCodes.add(order.coupon.code);
+        // });
+        // couponCodes = Array.from(couponCodes);
+
         const coupons = await Coupon.find({});
         let paymentMethod = await Payment.find({ user: userId });
 
@@ -961,7 +969,7 @@ const toCheckout = async (req, res) => {
 
             const gst = subtotal * 0.18;
             const shipping = subtotal < 500 ? 40 : 0;
-            const total = subtotal + gst + shipping;
+            const total = subtotal + shipping;
 
             res.render('checkout', {
                 user,
@@ -1138,7 +1146,13 @@ const createOrder = async (req, res) => {
         const gst = subtotal * 0.18;
         subtotal -= couponDiscount;
         const shipping = subtotal < 500 ? 40 : 0;
-        let totalAmount = subtotal + gst + shipping;
+        let totalAmount = subtotal + shipping;
+
+        if (totalAmount > 1000 && paymentMethod.type === 'Cash on delivery') {
+            return res.json({ message: 'Cash on delivery is applicable only for orders less than Rs. 1000!' });
+        }
+
+        const paymentStatus = 'Completed';
 
         const newOrder = new Order({
             orderId: orderId,
@@ -1160,7 +1174,8 @@ const createOrder = async (req, res) => {
             totalAmount: parseFloat(totalAmount.toFixed(2)),
             gst: parseFloat(gst.toFixed(2)),
             shipping: parseFloat(shipping.toFixed(2)),
-            totalDiscountAmount: parseFloat(totalDiscountAmount.toFixed(2))
+            totalDiscountAmount: parseFloat(totalDiscountAmount.toFixed(2)),
+            paymentStatus: paymentStatus
         });
 
         await newOrder.save();
@@ -1202,17 +1217,58 @@ const createOrder = async (req, res) => {
     }
 };
 
+const retryPayment = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const orderId = req.body.orderId;
+        const order = await Order.findOne({ orderId: orderId });
+        const totalAmount = order.totalAmount;
+
+        const razorpayOrder = await razorpay.orders.create({
+            amount: parseInt(totalAmount * 100),
+            currency: 'INR',
+            receipt: orderId,
+            payment_capture: 1
+        });
+
+        return res.status(200).json({
+            success: true,
+            totalAmount: parseInt(totalAmount * 100),
+            orderId: orderId,
+            razorpayOrderId: razorpayOrder.id,
+            key: process.env.KEY_ID,
+            user: {
+                name: user.fname,
+                email: user.email,
+                phone: user.phone
+            },
+            address: order.address
+        });
+    } catch (err) {
+        console.error('Error retrying the payment', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
 const toOrderConf = async (req, res) => {
     try {
         const user = req.session.user;
+        const paymentStatus = req.query.payment;
+        console.log('paymentStatus: ', paymentStatus);
+        
         const orderId = req.params.order_id;
         const offerDiscount = req.query.discount;
         const order = await Order.findOne({ orderId })
             .populate('products.product');
 
-            console.log('Order: ', order);
+        if (paymentStatus === 'failed') {
+            order.paymentStatus = 'Pending'
+            await order.save();
+        } else {
+            order.paymentStatus = 'Completed'
+            await order.save();
+        }
             
-
         const orderDate = new Date(order.orderDate);
         const expectedDeliveryDate = new Date(orderDate);
         expectedDeliveryDate.setDate(orderDate.getDate() + 3);
@@ -1223,23 +1279,23 @@ const toOrderConf = async (req, res) => {
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
         const shippingCharge = subtotal < 500 ? 40 : 0;
-        let totalAmount = subtotal + gst + shippingCharge;
+        let totalAmount = subtotal + shippingCharge;
         let couponDiscount = 0;
         if (order.coupon !== null) {
             couponDiscount = subtotal * order.coupon.discount / 100;
         }
-        const subtotalBefore = order.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+        // const subtotalBefore = order.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
         console.log(offerDiscount, couponDiscount);
         
 
-        const discount1 = parseFloat(offerDiscount);
+        // const discount1 = parseFloat(offerDiscount);
         const discount2 = isNaN(couponDiscount) ? 0 : parseFloat(couponDiscount);
-        const totalDiscount = discount1 + discount2;
+        // const totalDiscount = discount1 + discount2;
 
         totalAmount -= discount2;
 
-        res.render('orderConfirmation', { user, order, deliveryDay, subtotal, subtotalBefore, gst, shippingCharge, totalAmount, totalDiscount });
+        res.render('orderConfirmation', { user, order, deliveryDay, subtotal, subtotal, gst, shippingCharge, totalAmount, couponDiscount, paymentStatus });
     } catch (err) {
         console.error('Error fetching order confirmation', err);
         res.status(500).send('Internal server error'); 
@@ -1251,10 +1307,31 @@ const toOrderHistory = async (req, res) => {
         const user = req.session.user;
         const orders = await Order.find({ user: user._id }).sort({ orderDate: -1 });
 
+        // //Update payment status
+        // const orderId = req.query.orderId;
+        // const updateOrder = await Order.findOne({ orderId: orderId });
+        // if (updateOrder) {
+        //     updateOrder.paymentStatus = 'Completed';
+        //     await updateOrder.save();
+        // }
+
         res.render('orderHistory', { user, orders });
     }
     catch (err) {
         console.error('Error fetching order History', err);
+        res.status(500).send('Internal server error'); 
+    }
+}
+
+const updatePaymentStatus = async (req, res) => {
+    try {
+        const orderId = req.body.orderId;
+        await Order.updateOne({ orderId: orderId }, {$set: {paymentStatus: 'Completed' }});
+
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.error('Error updating payment status!', err);
         res.status(500).send('Internal server error'); 
     }
 }
@@ -1271,14 +1348,13 @@ const toOrderDetails = async (req, res) => {
 
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
-        const subtotalBefore = order.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+        // const subtotalBefore = order.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
         const shipping = subtotal < 500 ? 40 : 0;
         const totalAmount = order.totalAmount;
-        const offerDiscount = subtotalBefore - subtotal;
+        // const offerDiscount = subtotalBefore - subtotal;
         const couponDiscount = subtotal * order.coupon.discount / 100;
-        const totalDiscount = offerDiscount + couponDiscount;
 
-        res.render('orderDetails', { user, order, subtotalBefore, totalDiscount , gst, shipping, totalAmount });
+        res.render('orderDetails', { user, order, subtotal, couponDiscount , gst, shipping, totalAmount });
     } catch (err) {
         console.error('Error fetching order details', err);
         res.status(500).send('Internal server error');
@@ -1299,6 +1375,8 @@ const cancelProduct = async (req, res) => {
         }
 
         const product = order.products.find(item => item.product.toString() === productId);
+        console.log('Product: ', product);
+        
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found in order' });
         }
@@ -1532,7 +1610,7 @@ const applyCoupon = async (req, res) => {
         const couponDiscountAmount = subtotal * coupon.discount / 100;
         const couponDiscount = couponDiscountAmount <= coupon.maxAmount ? couponDiscountAmount : coupon.maxAmount;
         const gst = subtotal * 0.18;
-        const totalAmount = subtotal + gst - couponDiscount + (cart.shipping || 0);
+        const totalAmount = subtotal - couponDiscount + (cart.shipping || 0);
 
         res.status(200).json({
             success: true,
@@ -1724,4 +1802,6 @@ module.exports = {
     addToWishlist,
     removeFromWishlist,
     toWallet,
+    retryPayment,
+    updatePaymentStatus
 }

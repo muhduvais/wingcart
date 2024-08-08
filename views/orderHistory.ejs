@@ -133,15 +133,20 @@
                                 <div class="row" id="orders-row">
                                     <% orders.forEach((order, index) => { %>
                                         <div class="col-12 mb-3">
-                                            <div class="card p-5" style="background-color: #f9f9f9;">
-                                                <div class="card-body d-md-flex align-items-center justify-content-between">
+                                            <div class="card p-5 shadow-sm" style="background-color: #f9f9f9; border-radius: 20px;">
+                                                <div class="card-body d-md-flex align-items-center justify-content-between" style="padding: 0;">
                                                     <div class="card-left">
                                                         <p class="card-title pb-2">Order <%= orders.length - index %></p>
                                                         <h5 class="">Order Id: <%= order.orderId %></h5>
-                                                        <p class="card-text">
-                                                            Total Amount: <strong>₹<%= order.totalAmount.toFixed(2) %></strong><br>
-                                                            Order Date: <%= order.orderDate.toDateString() %><br>
-                                                        </p>
+                                                        <div class="card-text d-flex align-items-end justify-content-between">
+                                                            <div>
+                                                                Total Amount: <strong>₹<%= order.totalAmount.toFixed(2) %></strong><br>
+                                                                Order Date: <%= order.orderDate.toDateString() %><br>
+                                                            </div>
+                                                            <% if (order.paymentStatus === 'Pending') { %>
+                                                                <button type="button" class="badge badge-danger retryBtn" data-order-id="<%= order.orderId %>" style="padding: 10px; border: none;"><strong>Payment Pending</strong></span><i class="fa-solid fa-rotate-right px-2"></i></button>
+                                                            <% } %>
+                                                        </div>
                                                     </div>
                                                     <div class="card-right">
                                                         <a href="/orderDetails/<%= order._id %>"><button class="btn btn-primary">View Details</button></a>
@@ -163,8 +168,107 @@
         </div>
     </div>
 
+    <script>
+        const retryBtn = document.querySelectorAll('.retryBtn').forEach((btn) => {
+                btn.addEventListener('click', (event) => {
+                event.preventDefault();
+                const orderId = btn.getAttribute('data-order-id');
+                retryPayment(orderId);
+            })
+        });
+
+        const retryPayment = async (orderId) => {
+            try {
+                const response = await fetch('/retryPayment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        orderId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                        console.log('Initiating Razorpay payment...');
+
+                        const options = {
+                            key: result.key,
+                            amount: result.totalAmount,
+                            currency: 'INR',
+                            name: 'Wingcart',
+                            description: 'Test Transaction',
+                            image: 'https://your-logo-url.com',
+                            order_id: result.razorpayOrderId,
+                            handler: async function (response) {
+                                console.log('Payment successful. Redirecting...');
+                                // window.location.href = `/orderHistory?orderId=${orderId}`;
+                                const updatePaymentStatus = await fetch('/updatePaymentStatus', {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    orderId
+                                })
+                            });
+
+                            const updateResult = await updatePaymentStatus.json();
+
+                            if (updateResult.success) {
+                                location.reload();
+                            }
+
+                            },
+                            prefill: {
+                                name: result.user.name,
+                                email: result.user.email,
+                                contact: result.user.phone
+                            },
+                            notes: {
+                                address: result.address.city
+                            },
+                            theme: {
+                                color: '#3399cc'
+                            }
+                        };
+
+                        const rzp1 = new Razorpay(options);
+                        
+                        // Payment failure
+                        rzp1.on('payment.failed', function (response) {
+                            console.error('Payment failed:', response.error);
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Alert',
+                                text: 'Payment has failed. Please try again!'
+                            })
+                            .then(() => {
+                                window.location.href = `/orderHistory`;
+                            })
+
+                        });
+
+                        console.log('Opening Razorpay...');
+                        rzp1.open();
+                } else {
+                    console.log('Order creation failed. Message: ', result.message);
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('Error creating order:', error);
+                alert('An error occurred while creating the order.');
+            }
+        }
+    </script>
+
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Razorpay -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>

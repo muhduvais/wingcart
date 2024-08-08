@@ -399,8 +399,8 @@
                                                     <td>₹<%= locals.subtotal ? subtotal.toFixed(2) : '0' %></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><b>Gst(18%):</b></td>
-                                                    <td>₹<%= locals.gst ? gst.toFixed(2) : '0' %></td>
+                                                    <td><b>Inclusive of GST(18%):</b></td>
+                                                    <td>(₹<%= locals.gst ? gst.toFixed(2) : '0' %>)</td>
                                                 </tr>
                                                 <tr>
                                                     <td><b>Shipping:</b></td>
@@ -420,7 +420,7 @@
                                                 <div class="card-header" id="heading-3">
                                                     <% paymentMethod.forEach(method => { %>
                                                         <h2 class="card-title pt-2">
-                                                            <input type="radio" name="paymentMethod" value="<%= method._id %>" type-data="<%= method.type %>" id="<%= method._id %>"> <%= method.type %>
+                                                            <input type="radio" name="paymentMethod" value="<%= method._id %>" type-data="<%= method.type %>" id="<%= method._id %>"> <%= method.type === 'Razorpay' ? 'Online/ Debit Card/ Credit Card' : method.type %>
                                                         </h2>
                                                     <% }) %>
                                                 </div><!-- End .card-header -->
@@ -863,8 +863,8 @@ const updateCartSummary = (data) => {
             <td>₹${subtotal.toFixed(2)}</td>
         </tr>
         <tr>
-            <td><b>Gst(18%):</b></td>
-            <td>₹${gst.toFixed(2)}</td>
+            <td><b>Inclusive of GST(18%):</b></td>
+            <td>(₹${gst.toFixed(2)})</td>
         </tr>
         ${couponDiscount ? `
         <tr>
@@ -1260,7 +1260,7 @@ const updateCartSummary = (data) => {
         $('#addAddressModal').modal('show');
     });
     </script>
-
+<!-- //////////////////////////////////Place Odrder///////////////////////////////////////////// -->
     <script>
         document.getElementById('btn-order').addEventListener('click', async () => {
         const addressSelect = document.getElementById('addressSelect');
@@ -1343,7 +1343,23 @@ const updateCartSummary = (data) => {
                             color: '#3399cc'
                         }
                     };
+
                     const rzp1 = new Razorpay(options);
+
+                    // Payment failure
+                    rzp1.on('payment.failed', function (response) {
+                        console.error('Payment failed:', response.error);
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Alert',
+                            text: 'Payment has failed. Please complete the payment!'
+                        })
+                        .then(() => {
+                            window.location.href = `/orderConfirmation/${result.orderId}?discount=${result.totalDiscountAmount}&payment=failed`;
+                        })
+
+                    });
+
                     console.log('Opening Razorpay...');
                     rzp1.open();
                 } else {

@@ -11,36 +11,38 @@ const sharp = require('sharp');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
 
-const generatePDF = async (reportData) => {
-    const doc = new PDFDocument();
-    let buffers = [];
-    doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', () => {
-        const pdfBuffer = Buffer.concat(buffers);
-        return pdfBuffer;
-    });
-
-    doc.text('Sales Report', { align: 'center', underline: true });
-
-    doc.moveDown();
-    doc.text(`Total Orders: ${reportData.totalOrders}`);
-    doc.text(`Total Sales Amount: ${reportData.totalSales}`);
-    doc.text(`Total Discounts: ${reportData.totalDiscounts}`);
-    doc.moveDown();
-
-    reportData.orders.forEach(order => {
-        doc.text(`Order ID: ${order.orderId}`);
-        doc.text(`Order Date: ${new Date(order.orderDate).toLocaleDateString()}`);
-        doc.text(`Total Amount: ${order.totalAmount}`);
-        doc.text(`Discount: ${order.discountAmount}`);
-        doc.text('Products:');
-        order.products.forEach(product => {
-            doc.text(`- ${product.productName}: ${product.quantity} x ${product.price}`);
+const generatePDF = (reportData) => {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument();
+        let buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => {
+            const pdfBuffer = Buffer.concat(buffers);
+            resolve(pdfBuffer);
         });
-        doc.moveDown();
-    });
 
-    doc.end();
+        doc.text('Sales Report', { align: 'center', underline: true });
+
+        doc.moveDown();
+        doc.text(`Total Orders: ${reportData.totalOrders}`);
+        doc.text(`Total Sales Amount: ${reportData.totalSales}`);
+        doc.text(`Total Discounts: ${reportData.totalDiscounts}`);
+        doc.moveDown();
+
+        reportData.orders.forEach(order => {
+            doc.text(`Order ID: ${order.orderId}`);
+            doc.text(`Order Date: ${new Date(order.orderDate).toLocaleDateString()}`);
+            doc.text(`Total Amount: ${order.totalAmount}`);
+            doc.text(`Discount: ${order.discountAmount}`);
+            doc.text('Products:');
+            order.products.forEach(product => {
+                doc.text(`- ${product.productName}: ${product.quantity} x ${product.price}`);
+            });
+            doc.moveDown();
+        });
+
+        doc.end();
+    });
 };
 
 const generateExcel = async (reportData) => {
@@ -1065,7 +1067,7 @@ const generateReportData = async (reportType, startDate, endDate) => {
             orderId: order.orderId,
             orderDate: order.orderDate,
             totalAmount: order.totalAmount,
-            discountAmount: discountAmount,
+            discountAmount: isNaN(discountAmount) ? 0 : discountAmount,
             products: order.products.map(item => ({
                 productName: item.product.name,
                 quantity: item.quantity,

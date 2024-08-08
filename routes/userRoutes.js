@@ -51,5 +51,7 @@ userRoutes.get('/wishlist', userAuth.isUserActive, userAuth.isUserBlocked, userC
 userRoutes.post('/addToWishlist/:product_id', userController.addToWishlist);
 userRoutes.delete('/removeFromWishlist/:product_id', userController.removeFromWishlist);
 userRoutes.get('/wallet', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWallet);
+userRoutes.post('/retryPayment', userController.retryPayment);
+userRoutes.patch('/updatePaymentStatus', userController.updatePaymentStatus);
 
 module.exports = userRoutes;

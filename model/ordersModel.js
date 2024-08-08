@@ -57,6 +57,9 @@ const orderSchema = new mongoose.Schema({
       totalAmount: {
         type: Number,
       },
+      paymentStatus: {
+        type: String,
+      }
 });
 
 const Order = mongoose.model('orders', orderSchema);
