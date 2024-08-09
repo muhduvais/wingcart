@@ -231,66 +231,109 @@
             </div>
 
             <!-- ///////////////////////// -->
-            <div class="wrapper">
-              <!-- Sidebar -->
-              <!-- Your sidebar code remains unchanged -->
-            </div>
-            
-            <div class="main-panel">
-              <div class="main-header">
-                <!-- Main header content remains unchanged -->
-              </div>
-            
-              <div class="container">
-                <div class="page-inner">
-                  <div class="page-header">
-                    <h4 class="page-title">Dashboard</h4>
-                    <ul class="breadcrumbs">
-                      <li class="nav-home">
-                        <a href="/admin/dashboard">
-                          <i class="icon-home"></i>
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-            
-                  <!-- General Content Section -->
-                  <div class="row">
-                    <!-- Statistics Section -->
-                    <div class="col-md-6">
-                      <div class="card">
-                        <div class="card-header">
-                          <h4 class="card-title">Statistics</h4>
-                        </div>
-                        <div class="card-body">
-                          <!-- Add your statistics here -->
-                          <p>Total Users: <%= users.length %></p>
-                          <!-- Add more statistics as needed -->
-                        </div>
-                      </div>
-                    </div>
-            
-                    <!-- Recent Activities Section -->
-                    <div class="col-md-6">
-                      <div class="card">
-                        <div class="card-header">
-                          <!-- ////ACTIVITIES -->
-                        </div>
-                        <div class="card-body">
-                          <!-- Add more recent activities as needed -->
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- End General Content Section -->
-                </div>
-              </div>
-            
 
-          </div>
+            <!-- //Tables -->
+            <div class="container mt-4">
+              <div class="page-inner">
+
+                <!-- /////////////// -->
+                <div class="charts my-3" style="width: 100%; ">
+                  <div class="row d-flex align-items-center justify-content-between p-3">
+                    <!-- Doughnut Chart -->
+                    <div class="col-md-6"">
+                      <canvas id="salesReportDoughnut"></canvas>
+                    </div>
+                
+                    <!-- Bar Chart with Toggle Buttons -->
+                    <div class="col-md-6"">
+                      <div class="d-flex justify-content-center mb-3">
+                        <button id="weeklyBtn" class="btn mx-2 text-white" style="background-color: #1A2035;">Weekly</button>
+                        <button id="monthlyBtn" class="btn mx-2 text-white" style="background-color: #1A2035;">Monthly</button>
+                        <button id="yearlyBtn" class="btn mx-2 text-white" style="background-color: #1A2035;">Yearly</button>
+                      </div>
+                      <canvas id="salesReportBar"></canvas>
+                    </div>
+                  </div>
+                </div>
+                <!-- /////////////// -->
+
+
+                <div class="tables my-3">
+                  <div class="row">
+                    <!-- Top Selling Products -->
+                    <div class="col-md-4">
+                      <h5>Top Products</h5>
+                      <table class="table table-striped table-dark mx-1">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% topProducts.forEach(product => { %>
+                            <tr>
+                              <td><%= product.productName %></td>
+                              <td><%= product.totalQuantity %></td>
+                            </tr>
+                          <% }); %>
+                        </tbody>
+                      </table>
+                    </div>
+              
+                    <!-- Top Selling Categories -->
+                    <div class="col-md-4">
+                      <h5>Top Categories</h5>
+                      <table class="table table-striped table-dark mx-1">
+                        <thead>
+                          <tr>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% topCategories.forEach(category => { %>
+                            <tr>
+                              <td><%= category.categoryName %></td>
+                              <td><%= category.totalQuantity %></td>
+                            </tr>
+                          <% }); %>
+                        </tbody>
+                      </table>
+                    </div>
+              
+                    <!-- Top Selling Brands -->
+                    <div class="col-md-4">
+                      <h5>Top Brands</h5>
+                      <table class="table table-striped table-dark mx-1">
+                        <thead>
+                          <tr>
+                            <th>Brand</th>
+                            <th>Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% topBrands.forEach(brand => { %>
+                            <tr>
+                              <td><%= brand.brandName %></td>
+                              <td><%= brand.totalQuantity %></td>
+                            </tr>
+                          <% }); %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            
+            
+            
         </div>
 
-        <footer class="footer">
+        <footer style="color: #505775;" class="footer">
           <div class="container-fluid d-flex justify-content-between">
             <nav class="pull-left">
               <ul class="nav">
@@ -310,5 +353,90 @@
         </footer>
       </div>
     </div>
+
+    <!-- Chart-library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      // Doughnut Chart Data
+      const doughnutData = {
+        labels: ['Delivered', 'Cancelled', 'Returned'],
+        datasets: [{
+          data: [<%= delivered %>, <%= cancelled %>, <%= returned %>],
+          backgroundColor: ['#1A2035', '#505775', '#878ca0'],
+          hoverBackgroundColor: ['#66BB6A', '#EF5350', '#FFD54F']
+        }]
+      };
+    
+      // Doughnut Chart Options
+      const doughnutOptions = {
+        responsive: true,
+        legend: {
+          position: 'top',
+        }
+      };
+    
+      // Initialize Doughnut Chart
+      const ctxDoughnut = document.getElementById('salesReportDoughnut').getContext('2d');
+      const salesReportDoughnut = new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: doughnutData,
+        options: doughnutOptions
+      });
+    
+      // Bar Chart Data (initially showing weekly data)
+      const weeklyData = [<%= weekly %>, 0, 0];
+      const monthlyData = [0, <%= monthly %>, 0];
+      const yearlyData = [0, 0, <%= yearly %>];
+    
+      const barData = {
+        labels: ['Weekly', 'Monthly', 'Yearly'],
+        datasets: [{
+          label: 'Total Sales',
+          data: weeklyData,
+          backgroundColor: '#1A2035',
+          hoverBackgroundColor: '#64B5F6'
+        }]
+      };
+    
+      // Bar Chart Options
+      const barOptions = {
+        responsive: true,
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            }
+          }]
+        }
+      };
+    
+      // Initialize Bar Chart
+      const ctxBar = document.getElementById('salesReportBar').getContext('2d');
+      const salesReportBar = new Chart(ctxBar, {
+        type: 'bar',
+        data: barData,
+        options: barOptions
+      });
+    
+      // Update the Bar Chart Data
+      const updateBarChart = (data) => {
+        salesReportBar.data.datasets[0].data = data;
+        salesReportBar.update();
+      };
+    
+      // Event listeners for buttons
+      document.getElementById('weeklyBtn').addEventListener('click', () => {
+        updateBarChart(weeklyData); // Weekly Data
+      });
+    
+      document.getElementById('monthlyBtn').addEventListener('click', () => {
+        updateBarChart(monthlyData); // Monthly Data
+      });
+    
+      document.getElementById('yearlyBtn').addEventListener('click', () => {
+        updateBarChart(yearlyData); // Yearly Data
+      });
+    </script>
 
     <%- include('./layout/adminFooter.ejs') %>

@@ -101,13 +101,166 @@ const toAdminDash = async (req, res) => {
     try {
         const admin = req.session.admin;
         const users = await User.find();
-        res.render("adminDash",{admin, users});
-    }
-    catch (err) {
+
+        // Delivered, Returned, and Cancelled Counts (Same as before)
+        const deliveredCount = await Order.aggregate([
+            { $unwind: "$products" },
+            { $match: { "products.status": { $in: ["delivered", "return requested"] } } },
+            { $count: "deliveredCount" }
+        ]);
+
+        const returnedCount = await Order.aggregate([
+            { $unwind: "$products" },
+            { $match: { "products.status": "return accepted" } },
+            { $count: "returnedCount" }
+        ]);
+
+        const cancelledCount = await Order.aggregate([
+            { $unwind: "$products" },
+            { $match: { "products.status": "cancelled" } },
+            { $count: "cancelledCount" }
+        ]);
+
+        const delivered = deliveredCount[0] ? deliveredCount[0].deliveredCount : 0;
+        const returned = returnedCount[0] ? returnedCount[0].returnedCount : 0;
+        const cancelled = cancelledCount[0] ? cancelledCount[0].cancelledCount : 0;
+
+        // Weekly, Monthly, and Yearly Orders Count (Same as before)
+        const weeklyOrders = await Order.aggregate([
+            { $unwind: "$products" },
+            {
+                $match: {
+                    orderDate: {
+                        $gte: new Date(new Date().setDate(new Date().getDate() - 7))
+                    },
+                    "products.status": { $in: ["delivered", "return rejected"] }
+                }
+            },
+            { $count: "weeklyCount" }
+        ]);
+
+        const monthlyOrders = await Order.aggregate([
+            { $unwind: "$products" },
+            {
+                $match: {
+                    orderDate: {
+                        $gte: new Date(new Date().setMonth(new Date().getMonth() - 1))
+                    },
+                    "products.status": "delivered"
+                }
+            },
+            { $count: "monthlyCount" }
+        ]);
+
+        const yearlyOrders = await Order.aggregate([
+            { $unwind: "$products" },
+            {
+                $match: {
+                    orderDate: {
+                        $gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+                    },
+                    "products.status": "delivered"
+                }
+            },
+            { $count: "yearlyCount" }
+        ]);
+
+        const weekly = weeklyOrders[0] ? weeklyOrders[0].weeklyCount : 0;
+        const monthly = monthlyOrders[0] ? monthlyOrders[0].monthlyCount : 0;
+        const yearly = yearlyOrders[0] ? yearlyOrders[0].yearlyCount : 0;
+
+        // Top 10 Products
+        const topProducts = await Order.aggregate([
+            { $unwind: "$products" },
+            { $group: { _id: "$products.product", totalQuantity: { $sum: "$products.quantity" } }},
+            { $sort: { totalQuantity: -1 }},
+            { $limit: 10 },
+            { $lookup: {
+                from: "products",
+                localField: "_id",
+                foreignField: "_id",
+                as: "productDetails"
+            }},
+            { $unwind: "$productDetails" },
+            { $project: {
+                _id: 0,
+                productName: "$productDetails.name",
+                totalQuantity: 1
+            }}
+        ]);
+
+        // Top 10 Categories
+        const topCategories = await Order.aggregate([
+            { $unwind: "$products" },
+            { $lookup: {
+                from: "products",
+                localField: "products.product",
+                foreignField: "_id",
+                as: "productDetails"
+            }},
+            { $unwind: "$productDetails" },
+            { $group: { _id: "$productDetails.category", totalQuantity: { $sum: "$products.quantity" } }},
+            { $sort: { totalQuantity: -1 }},
+            { $limit: 10 },
+            { $lookup: {
+                from: "categories",
+                localField: "_id",
+                foreignField: "_id",
+                as: "categoryDetails"
+            }},
+            { $unwind: "$categoryDetails" },
+            { $project: {
+                _id: 0,
+                categoryName: "$categoryDetails.name",
+                totalQuantity: 1
+            }}
+        ]);
+
+        // Top 10 Brands
+        const topBrands = await Order.aggregate([
+            { $unwind: "$products" },
+            { $lookup: {
+                from: "products",
+                localField: "products.product",
+                foreignField: "_id",
+                as: "productDetails"
+            }},
+            { $unwind: "$productDetails" },
+            { $group: { _id: "$productDetails.brand", totalQuantity: { $sum: "$products.quantity" } }},
+            { $sort: { totalQuantity: -1 }},
+            { $limit: 10 },
+            { $lookup: {
+                from: "brands",
+                localField: "_id",
+                foreignField: "_id",
+                as: "brandDetails"
+            }},
+            { $unwind: "$brandDetails" },
+            { $project: {
+                _id: 0,
+                brandName: "$brandDetails.name",
+                totalQuantity: 1
+            }}
+        ]);
+
+        res.render("adminDash", {
+            admin,
+            users,
+            delivered,
+            returned,
+            cancelled,
+            weekly,
+            monthly,
+            yearly,
+            topProducts,
+            topCategories,
+            topBrands
+        });
+    } catch (err) {
         console.log("Error fetching admin dashboard", err);
         res.status(500).send("Internal server error");
     }
-}
+};
 
 const loginHome = (req, res) => {
     if (req.session.admin) {
