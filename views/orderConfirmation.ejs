@@ -588,7 +588,7 @@
         const retryPayment = async (orderId) => {
             try {
                 const response = await fetch('/retryPayment', {
-                    method: 'PATCH',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },

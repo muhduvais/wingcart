@@ -411,7 +411,24 @@ const toshop = async (req, res) => {
                 .limit(limit);
         }
 
-        // Assign best offer to each product
+        if (user) {
+            const wishlist = await Wishlist.findOne({ user: user._id });
+            const wishProductIds = wishlist.products.map(item => item.product.toString());
+            console.log('wishProductIds: ', wishProductIds);
+
+            products.forEach(product => {
+                if (wishProductIds.includes(product._id.toString())) {
+                    product.wished = true;
+                } else {
+                    product.wished = false;
+                }
+                console.log(product.wished);
+                
+            });
+        }
+        
+
+        // Assign best offer to each product & check if wished or not
         products.forEach(product => {
             product.bestOffer = getBestOffer(product, offers);
         });
@@ -1077,13 +1094,40 @@ const createOrder = async (req, res) => {
         const appliedOffers = new Set();
         let subtotal = 0;
         let totalDiscountAmount = 0;
+        let discountedPrice = 0;
 
+        /////////////////
+
+        let couponDiscount = 0;
+        let coupon = null;
+
+        if (couponCode) {
+            const couponDoc = await Coupon.findOne({ code: couponCode });
+            if (couponDoc) {
+                coupon = {
+                    code: couponDoc.code,
+                    discount: couponDoc.discount,
+                    description: couponDoc.description,
+                    minPurchase: couponDoc.minPurchase,
+                    maxAmount: couponDoc.maxAmount,
+                    validity: couponDoc.validity
+                };
+                couponDiscount = subtotal * coupon.discount / 100;
+            }
+        }
+
+        ///////////
         for (const item of cart.products) {
+
+            const couponDiscountPerProduct = couponDiscount/cart.products.length;
+            console.log(couponDiscountPerProduct);
+            const finalProdPrice = discountedPrice - couponDiscountPerProduct;
+
             const product = item.product;
             const quantity = item.quantity;
             const productPrice = product.price || 0;
 
-            let discountedPrice = productPrice;
+            discountedPrice = productPrice;
             let bestOfferDiscount = 0;
             let bestOfferId = null;
 
@@ -1110,6 +1154,7 @@ const createOrder = async (req, res) => {
                 product: product._id,
                 quantity,
                 price: discountedPrice,
+                finalPrice: finalProdPrice,
                 status: 'pending',
                 cancellationDate: null,
                 cancellationReason: null,
@@ -1122,24 +1167,6 @@ const createOrder = async (req, res) => {
             if (bestOfferId) {
                 appliedOffers.add(bestOfferId);
                 totalDiscountAmount += bestOfferDiscount * quantity;
-            }
-        }
-
-        let couponDiscount = 0;
-        let coupon = null;
-
-        if (couponCode) {
-            const couponDoc = await Coupon.findOne({ code: couponCode });
-            if (couponDoc) {
-                coupon = {
-                    code: couponDoc.code,
-                    discount: couponDoc.discount,
-                    description: couponDoc.description,
-                    minPurchase: couponDoc.minPurchase,
-                    maxAmount: couponDoc.maxAmount,
-                    validity: couponDoc.validity
-                };
-                couponDiscount = subtotal * coupon.discount / 100;
             }
         }
 
@@ -1368,7 +1395,7 @@ const cancelProduct = async (req, res) => {
         const user = req.session.user;
 
     try {
-        const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId).populate('payment');
         console.log(order.address);
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
@@ -1387,23 +1414,25 @@ const cancelProduct = async (req, res) => {
 
         const productPurchasePrice = product.price;
 
-        let wallet  = await Wallet.findOne({ user: user._id });
+        if (order.payment.type === 'Razorpay') {
+            let wallet  = await Wallet.findOne({ user: user._id });
 
-        if (!wallet) {
-            const newWallet = new Wallet({
-                user: user._id,
-                balance: 0,
-                transactions: []
-            });
+            if (!wallet) {
+                const newWallet = new Wallet({
+                    user: user._id,
+                    balance: 0,
+                    transactions: []
+                });
 
-            await newWallet.save();
+                await newWallet.save();
 
-            wallet = await Wallet.findOne({ user: user._id });
+                wallet = await Wallet.findOne({ user: user._id });
+            }
+
+            wallet.balance += productPurchasePrice;
+
+            await wallet.save();
         }
-
-        wallet.balance += productPurchasePrice;
-
-        await wallet.save();
 
         const updateProduct = await Product.findOne({ _id: productId });
 
@@ -1689,6 +1718,10 @@ const addToWishlist = async (req, res) => {
     try {
         const user = req.session.user;
         const productId = req.params.product_id;
+
+        if (!user) {
+            return res.json({ success: false, user: false,  message: 'User not logged in!' });
+        }
 
         const cart = await Cart.findOne({ user: user._id });
         if (cart) {

@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="/static/css/plugins/nouislider/nouislider.css">
     <link rel="stylesheet" href="/static/css/skins/skin-demo-2.css">
     <link rel="stylesheet" href="/static/css/demos/demo-2.css">
+    <!-- Font-awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         .card-text {
             display: -webkit-box;
@@ -307,9 +309,14 @@
                                                         </a>
                             
                                                         <div class="product-action-vertical">
-                                                            <form class="add-to-whishlist">
+                                                            <form class="<%= product.wished === true ? '' : 'add-to-whishlist' %>">
                                                                 <input type="hidden" class="wishlist-product-id" value="<%= product._id %>">
-                                                                <button type="submit" class="btn-product-icon btn-wishlist btn-expandable"><span>add to wishlist</span></button>
+                                                                <% if (product.wished === true) { %>
+                                                                    <!-- <button type="submit" class="btn-product-icon btn-wishlist btn-wishlist-wished btn-expandable" style="border: none;"><span>Already added!</span></button> -->
+                                                                    <a href="/wishlist"><i class="fa-solid fa-heart" style="color: #a6c76c;"></i></a>
+                                                                <% } else { %>
+                                                                    <button type="submit" class="btn-product-icon btn-wishlist btn-expandable" style="border: none;"><span>add to wishlist</span></button>
+                                                                <% } %>
                                                             </form>
                                                         </div>
                             
@@ -953,6 +960,8 @@
                     }).then(() => {
                         window.location.reload();
                     });
+                } else if (!data.user) {
+                    window.location.href = '/userLogin';
                 } else if (!data.success) {
                     Swal.fire({
                         icon: 'info',
