@@ -1098,30 +1098,12 @@ const createOrder = async (req, res) => {
 
         /////////////////
 
+        /////////////////
+
         let couponDiscount = 0;
         let coupon = null;
 
-        if (couponCode) {
-            const couponDoc = await Coupon.findOne({ code: couponCode });
-            if (couponDoc) {
-                coupon = {
-                    code: couponDoc.code,
-                    discount: couponDoc.discount,
-                    description: couponDoc.description,
-                    minPurchase: couponDoc.minPurchase,
-                    maxAmount: couponDoc.maxAmount,
-                    validity: couponDoc.validity
-                };
-                couponDiscount = subtotal * coupon.discount / 100;
-            }
-        }
-
-        ///////////
         for (const item of cart.products) {
-
-            const couponDiscountPerProduct = couponDiscount/cart.products.length;
-            console.log(couponDiscountPerProduct);
-            const finalProdPrice = discountedPrice - couponDiscountPerProduct;
 
             const product = item.product;
             const quantity = item.quantity;
@@ -1150,11 +1132,12 @@ const createOrder = async (req, res) => {
             }
 
             discountedPrice -= bestOfferDiscount;
+
             orderProducts.push({
                 product: product._id,
                 quantity,
                 price: discountedPrice,
-                finalPrice: finalProdPrice,
+                finalPrice: 0,
                 status: 'pending',
                 cancellationDate: null,
                 cancellationReason: null,
@@ -1168,6 +1151,39 @@ const createOrder = async (req, res) => {
                 appliedOffers.add(bestOfferId);
                 totalDiscountAmount += bestOfferDiscount * quantity;
             }
+        }
+
+        //Coupon-check
+        if (couponCode) {
+            const couponDoc = await Coupon.findOne({ code: couponCode });
+            if (couponDoc) {
+                coupon = {
+                    code: couponDoc.code,
+                    discount: couponDoc.discount,
+                    description: couponDoc.description,
+                    minPurchase: couponDoc.minPurchase,
+                    maxAmount: couponDoc.maxAmount,
+                    validity: couponDoc.validity
+                };
+                couponDiscount = subtotal * coupon.discount / 100;
+                couponDiscount = couponDiscount <= coupon.maxAmount ? couponCode : coupon.maxAmount;
+            }
+        }
+
+        //Coupon discount per product
+        console.log('couponDiscount: ', couponDiscount);
+        console.log('cart.products.length: ', cart.products.length);
+        const couponDiscountPerProduct = couponDiscount/cart.products.length;
+        console.log('couponDiscountPerProduct: ', couponDiscountPerProduct);
+
+        //Add the final price to all products
+        for (const item of cart.products) {
+
+            orderProducts.forEach( item => {
+                const finalProdPrice = item.price - couponDiscountPerProduct;
+                console.log('finalProdPrice: ', finalProdPrice);
+                item.finalPrice = finalProdPrice
+            });
         }
 
         const gst = subtotal * 0.18;
@@ -1311,6 +1327,7 @@ const toOrderConf = async (req, res) => {
         if (order.coupon !== null) {
             couponDiscount = subtotal * order.coupon.discount / 100;
         }
+        couponDiscount = couponDiscount <= order.coupon.maxAmount ? couponDiscount : order.coupon.maxAmount;
         // const subtotalBefore = order.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
         console.log(offerDiscount, couponDiscount);
@@ -1379,7 +1396,8 @@ const toOrderDetails = async (req, res) => {
         const shipping = subtotal < 500 ? 40 : 0;
         const totalAmount = order.totalAmount;
         // const offerDiscount = subtotalBefore - subtotal;
-        const couponDiscount = subtotal * order.coupon.discount / 100;
+        let couponDiscount = subtotal * order.coupon.discount / 100;
+        couponDiscount = couponDiscount <= order.coupon.maxAmount ? couponDiscount: order.coupon.maxAmount;
 
         res.render('orderDetails', { user, order, subtotal, couponDiscount , gst, shipping, totalAmount });
     } catch (err) {
@@ -1387,6 +1405,12 @@ const toOrderDetails = async (req, res) => {
         res.status(500).send('Internal server error');
     }
 };
+
+function generateTransactionId() {
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substr(2, 4);
+    return `TXN-${timestamp}-${randomPart}`;
+}
 
 const cancelProduct = async (req, res) => {
 
@@ -1396,13 +1420,11 @@ const cancelProduct = async (req, res) => {
 
     try {
         const order = await Order.findById(orderId).populate('payment');
-        console.log(order.address);
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
         const product = order.products.find(item => item.product.toString() === productId);
-        console.log('Product: ', product);
         
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found in order' });
@@ -1412,7 +1434,9 @@ const cancelProduct = async (req, res) => {
         product.cancellationDate = Date.now();
         product.cancellationReason = reason;
 
-        const productPurchasePrice = product.price;
+        const productPurchasePrice = product.finalPrice;
+        
+        const totalProductPrice = productPurchasePrice * product.quantity;
 
         if (order.payment.type === 'Razorpay') {
             let wallet  = await Wallet.findOne({ user: user._id });
@@ -1429,7 +1453,18 @@ const cancelProduct = async (req, res) => {
                 wallet = await Wallet.findOne({ user: user._id });
             }
 
-            wallet.balance += productPurchasePrice;
+            const transactionId = generateTransactionId();
+            
+
+            const transactions = {
+                amount: totalProductPrice,
+                date: new Date(),
+                type: 'credit',
+                transactionId: transactionId
+            }
+            
+            wallet.balance += totalProductPrice;
+            wallet.transactions.push(transactions);
 
             await wallet.save();
         }
@@ -1450,7 +1485,7 @@ const cancelProduct = async (req, res) => {
 
 const returnProduct = async (req, res) => {
     
-
+    const user = req.session.user;
     const { orderId, productId } = req.params;
     const reason = req.body.reason;
 
@@ -1468,6 +1503,37 @@ try {
 
     product.status = 'return requested';
     product.returnReason = reason;
+
+    const productPurchasePrice = product.finalPrice;
+    const totalProductPrice = productPurchasePrice * product.quantity;
+
+    let wallet  = await Wallet.findOne({ user: user._id });
+
+    if (!wallet) {
+        const newWallet = new Wallet({
+            user: user._id,
+            balance: 0,
+            transactions: []
+        });
+
+        await newWallet.save();
+
+        wallet = await Wallet.findOne({ user: user._id });
+    }
+
+    const transactionId = generateTransactionId();
+
+    const transactions = {
+        amount: totalProductPrice,
+        date: new Date(),
+        type: 'credit',
+        transactionId: transactionId
+    }
+            
+    wallet.balance += totalProductPrice;
+    wallet.transactions.push(transactions);
+
+    await wallet.save();
 
     const updateProduct = await Product.findOne({ _id: productId });
 
@@ -1780,9 +1846,11 @@ const toWallet = async (req, res) => {
     try {
         const user = req.session.user;
         const wallet = await Wallet.findOne({ user: user._id });
+        const lastTxnIndex = wallet.transactions.length-1;
+        const lastTransaction = wallet.transactions[lastTxnIndex];
         console.log(wallet);
         
-        res.render('wallet', { user, wallet });
+        res.render('wallet', { user, wallet, lastTransaction });
     } catch (err) {
         console.error('Error fetching wallet: ', err);
         res.status(500).send('Internal server error');

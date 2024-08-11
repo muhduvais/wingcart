@@ -12,9 +12,8 @@ const walletSchema = new mongoose.Schema({
       amount: {
           type: Number,
       },
-      timestamp: {
+      date: {
           type: Date,
-          default: Date.now,
       },
       transactionId: {
           type: String,

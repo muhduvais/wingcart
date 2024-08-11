@@ -22,32 +22,40 @@
 
     <style>
         .wallet-card {
-      background-color: #ffffff;
-      border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      margin: 20px 0;
-      border: 1px solid #dee2e6;
-    }
-    .wallet-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #dee2e6;
-      padding-bottom: 15px;
-      margin-bottom: 15px;
-    }
-    .wallet-balance {
-      font-size: 1.5em;
-      font-weight: bold;
-    }
-    .wallet-info {
-      font-size: 1.2em;
-    }
-    .wallet-details p {
-      margin: 0;
-    }
-      </style>
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+        }
+        .wallet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .wallet-balance {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .wallet-info {
+            font-size: 1.2em;
+        }
+        .wallet-details p {
+            margin: 0;
+        }
+
+        .table-rounded {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        }
+        .table-rounded tbody tr:last-child td {
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -65,7 +73,6 @@
                     </a>
                 </div><!-- End .header-left -->
 
-                
                 <nav class="main-nav">
                     <ul class="menu sf-arrows">
                         <li class="megamenu-container active">
@@ -104,13 +111,10 @@
                             <p>Cart</p>
                         </a>
                     </div><!-- End .compare-dropdown -->
-
-                    
                 </div><!-- End .header-right -->
             </div><!-- End .container -->
         </div><!-- End .header-middle -->
     </header><!-- End .header -->
-
 
     <div class="container light-style flex-grow-1 container-p-y">
         <h4 class="font-weight-bold py-3 mb-4">
@@ -123,50 +127,66 @@
             <div class="row no-gutters row-bordered row-border-light">
                 <div class="col-md-3 pt-0">
                     <div class="list-group list-group-flush account-settings-links">
-                        <a class="list-group-item list-group-item-action active"
-                            href="/userProfile">General</a>
-                        <a class="list-group-item list-group-item-action"
-                            href="/changePassword">Change password</a>
-                        <a class="list-group-item list-group-item-action"
-                            href="/addressManagement">Manage Addresses</a>
-                        <a class="list-group-item list-group-item-action"
-                            href="/wishlist">Wishlist</a>
-                        <a class="list-group-item list-group-item-action"
-                            href="/orderHistory">Order History</a>
-                        <a class="list-group-item list-group-item-action"
-                            href="/wallet">Wallet</a>
+                        <a class="list-group-item list-group-item-action active" href="/userProfile">General</a>
+                        <a class="list-group-item list-group-item-action" href="/changePassword">Change password</a>
+                        <a class="list-group-item list-group-item-action" href="/addressManagement">Manage Addresses</a>
+                        <a class="list-group-item list-group-item-action" href="/wishlist">Wishlist</a>
+                        <a class="list-group-item list-group-item-action" href="/orderHistory">Order History</a>
+                        <a class="list-group-item list-group-item-action" href="/wallet">Wallet</a>
                     </div>
                 </div>
                 <div class="col-md-9">
                     <div class="tab-content">
                         <div class="tab-pane fade active show" id="account-general">
-                            <!-- //////////// -->
+                            <!-- Wallet Card -->
                             <div class="container">
                                 <div class="row">
-                                  <div class="col-lg-4 col-md-6 col-sm-12">
-                                    <div class="wallet-card">
-                                      <div class="wallet-header">
-                                        <div class="wallet-info">
-                                          <span id="username"><%= locals.user ? user.fname + ' ' + user.lname : '' %></span>
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <div class="wallet-card">
+                                            <div class="wallet-header">
+                                                <div class="wallet-info">
+                                                    <span id="username"><%= locals.user ? user.fname + ' ' + user.lname : '' %></span>
+                                                </div>
+                                                <div class="wallet-balance">
+                                                    ₹<span id="balance"><%= locals.wallet ? wallet.balance : '0' %></span>
+                                                </div>
+                                            </div>
+                                            <div class="wallet-details">
+                                                <p>Account Number: <span id="account-number">1234567890</span></p>
+                                                <p>Last Transaction: <span><%= lastTransaction.date.toISOString().split('T')[0] + ', ' %></span>
+                                                    <span class="<%= lastTransaction.type === 'credit' ? 'text-success' : 'text-danger' %>" id="last-transaction"><%= '₹' + lastTransaction.amount %></span>
+                                                    <span id="last-transaction"><%= lastTransaction.type === 'credit' ? '(Cr)' : '(Db)' %></span>
+                                                </p>
+                                            </div>
+                                            <div class="wallet-actions my-5">
+                                                <button class="btn btn-primary btn-sm flex-grow-1">Add Fund</button>
+                                            </div>
                                         </div>
-                                        <div class="wallet-balance">
-                                          ₹<span id="balance"><%= locals.wallet ? wallet.balance : '0' %></span>
-                                        </div>
-                                      </div>
-                                      <div class="wallet-details">
-                                        <p>Account Number: <span id="account-number">1234567890</span></p>
-                                        <p>Last Transaction: <span id="last-transaction">2023-08-03</span></p>
-                                      </div>
-                                      <div class="wallet-actions my-5">
-                                        <button class="btn btn-primary btn-sm flex-grow-1">Add Fund</button>
-                                      </div>
                                     </div>
-                                  </div>
                                 </div>
-                              </div>
-                             <!-- /////////////// -->
-                        </div>
-                        
+                            </div>
+                            <!-- Responsive Transactions Table -->
+                            <h5 class="font-weight-bold">Transaction History</h5>
+                            <table class="table table-striped mx-1 table-bordered table-rounded">
+                                <thead class="thead-dark">
+                                  <tr>
+                                    <th class="text-center">Transaction ID</th>
+                                    <th class="text-center">Date</th>
+                                    <th class="text-center">Type</th>
+                                    <th class="text-center">Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <% wallet.transactions.forEach(transaction => { %>
+                                    <tr>
+                                      <td class="text-center"><%= transaction.transactionId %></td>
+                                      <td class="text-center"><%= transaction.date.toISOString().split('T')[0] %></td>
+                                      <td class="text-center"><%= transaction.type %></td>
+                                      <td class="text-center <%= transaction.type === 'credit' ? 'text-success' : 'text-danger' %>">₹<%= transaction.amount %></td>
+                                    </tr>
+                                  <% }); %>
+                                </tbody>
+                              </table>
                         </div>
                     </div>
                 </div>
@@ -174,7 +194,6 @@
         </div>
     </div>
 
-    
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
