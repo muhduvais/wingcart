@@ -7,6 +7,7 @@ const Order = require("../model/ordersModel");
 const Coupon = require("../model/couponsModel");
 const Offer = require("../model/offersModel");
 const Admin = require("../model/adminModel");
+const Wallet = require("../model/walletsModel");
 const sharp = require('sharp');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
@@ -867,6 +868,12 @@ const toOrderDetails = async (req, res) => {
     }
 };
 
+function generateTransactionId() {
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substr(2, 4);
+    return `TXN-${timestamp}-${randomPart}`;
+}
+
 const updateOrderStatus = async (req, res) => {
     try {
         const { orderId, productId } = req.params;
@@ -875,6 +882,46 @@ const updateOrderStatus = async (req, res) => {
         const order = await Order.findById(orderId);
 
         const product = order.products.find(item => item.product.toString() === productId);
+
+        const user = await User.findOne({ _id: order.user });
+        
+        //Wallet update
+        if (status === 'accept') {
+            const productPurchasePrice = product.price;
+            const totalProductPrice = productPurchasePrice * product.quantity;
+
+            let wallet  = await Wallet.findOne({ user: user._id });
+
+            if (!wallet) {
+                const newWallet = new Wallet({
+                    user: user._id,
+                    balance: 0,
+                    transactions: []
+                });
+
+                await newWallet.save();
+
+                wallet = await Wallet.findOne({ user: user._id });
+            }
+
+            const transactionId = generateTransactionId();
+
+            const transactions = {
+                amount: totalProductPrice,
+                date: new Date(),
+                type: 'credit',
+                transactionId: transactionId
+            }
+
+            console.log('updateOrderStatus.transactions: ', transactions);
+            
+                    
+            wallet.balance += totalProductPrice;
+            wallet.transactions.push(transactions);
+
+            await wallet.save();
+        }
+        //////////
 
         const statusOrder = ['pending', 'dispatched', 'delivered'];
         const returnRequestStatus = ['accept', 'reject'];
@@ -947,6 +994,13 @@ const toCreateCoupon = async (req, res) => {
 const verifyCreateCoupon = async (req, res) => {
     try {
         const { couponCode, description, discount, minPurchase, maxAmount, validity } = req.body;
+
+        const existingCoupon = await Coupon.findOne({ code: couponCode });
+
+        if (existingCoupon) {
+            return res.status(400).json({ success: false, exist: true });
+        }
+
         const coupon = new Coupon({
             code: couponCode,
             description,
@@ -969,6 +1023,16 @@ const verifyEditCoupon = async (req, res) => {
     try {
         const { couponCode, description, discount, minPurchase, maxAmount, validity } = req.body;
         const couponId = req.params.coupon_id;
+
+        const existingCoupon = await Coupon.findOne({ 
+            code: couponCode, 
+            _id: { $ne: couponId }
+        });
+
+        if (existingCoupon) {
+            return res.status(400).json({ success: false, exist: true });
+        }
+
         await Coupon.findByIdAndUpdate(couponId, {
             code: couponCode,
             description: description,
@@ -1001,17 +1065,28 @@ const deleteCoupon = async (req, res) => {
 const toCreateOffer = async (req, res) => {
     try {
         const products = await Product.find().select('_id name');
-        const categories = await Category.find().select('_id name');
-        res.render('createOffer', { products, categories });
+        res.render('createOffer', { products });
     } catch (error) {
         console.error('Error fetching create offer', error);
         res.status(500).send('Internal server error');
     }
 }
 
-const verifyCreateOffer = async (req, res) => {
+const toCreateCategoryOffer = async (req, res) => {
     try {
-        const { name, discount, type, item } = req.body;
+        const categories = await Category.find().select('_id name');
+        res.render('createCategoryOffer', { categories });
+    } catch (error) {
+        console.error('Error fetching create category offer', error);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const verifyProductOffer = async (req, res) => {
+    try {
+        const { name, discount, item } = req.body;
+
+        const type = 'products';
 
         const offer = new Offer({
             name,
@@ -1022,22 +1097,43 @@ const verifyCreateOffer = async (req, res) => {
 
         await offer.save();
 
-        if (type === 'products') {
-            await Product.updateMany(
-                { _id: item },
-                { $addToSet: { offers: offer._id } }
-            );
-        } else if (type === 'categories') {
-            await Product.updateMany(
-                { category: item },
-                { $addToSet: { offers: offer._id } }
-            );
-        }
+        await Product.updateMany(
+            { _id: item },
+            { $addToSet: { offers: offer._id } }
+        );
 
         res.status(200).json({ success: true });
 
     } catch (error) {
         console.error('Error creating offer', error);
+        res.status(500).json({ success: false });
+    }
+}
+
+const verifyCategoryOffer = async (req, res) => {
+    try {
+        const { name, discount, item } = req.body;
+
+        const type = 'categories';
+
+        const offer = new Offer({
+            name,
+            discount,
+            type,
+            item,
+        });
+
+        await offer.save();
+
+        await Product.updateMany(
+            { category: item },
+            { $addToSet: { offers: offer._id } }
+        );
+
+        res.status(200).json({ success: true });
+
+    } catch (error) {
+        console.error('Error creating category offer', error);
         res.status(500).json({ success: false });
     }
 }
@@ -1247,7 +1343,7 @@ const verifyEditOffer = async (req, res) => {
             name: offerName,
             discount: discount,
             type: type,
-            items: items
+            item: items
         });
 
         res.status(200).json({ success: true });
@@ -1293,11 +1389,13 @@ module.exports = {
     verifyEditCoupon,
     deleteCoupon,
     toCreateOffer,
-    verifyCreateOffer,
+    toCreateCategoryOffer,
+    verifyProductOffer,
+    verifyCategoryOffer,
     toggleOfferStatus,
     toSalesReport,
     downloadSalesReport,
     generateSalesReport,
-    verifyEditOffer
+    verifyEditOffer,
 
 }

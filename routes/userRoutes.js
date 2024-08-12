@@ -42,6 +42,7 @@ userRoutes.post('/createOrder', userController.createOrder);
 userRoutes.get('/orderConfirmation/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderConf);
 userRoutes.get('/orderHistory', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderHistory);
 userRoutes.get('/orderDetails/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderDetails);
+userRoutes.post('/downloadInvoice', userController.downloadInvoice);
 // userRoutes.post('/updateOrderStatus/:orderId/:productId', userController.updateOrderStatus);
 userRoutes.post('/cancelProduct/:orderId/:productId', userController.cancelProduct);
 userRoutes.post('/returnProduct/:orderId/:productId', userController.returnProduct);

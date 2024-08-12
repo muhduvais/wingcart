@@ -17,6 +17,76 @@ const sendForgotEmail = require("../model/sendForgotEmail");
 const generateOtp = require("../model/generateOtp");
 require('dotenv').config();
 const Razorpay = require('razorpay');
+const pdf = require('html-pdf');
+const path = require('path');
+const fs = require('fs');
+
+const downloadInvoice = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const { orderId } = req.body;
+
+        if (!user) {
+            return res.status(404).json({ user: false });
+        }
+
+        const order = await Order.findById(orderId).populate('products.product');
+        const paymentMethod = await Payment.findById(order.payment);
+        const products = order.products.filter(item =>
+            ['delivered', 'return requested', 'return accepted', 'return rejected'].includes(item.status)
+        );
+
+        let discount = 0;
+
+        const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const gst = subtotal * 0.18;
+        const shipping = subtotal < 500 ? 40 : 0;
+        const totalAmount = order.totalAmount;
+        if (!isNaN(order.coupon)) {
+            const couponDiscount = subtotal * order.coupon.discount / 100;
+            discount = couponDiscount <= order.coupon.maxAmount ? couponDiscount: order.coupon.maxAmount;
+        }
+
+        console.log('order.coupon: ', isNaN(order.coupon));
+        
+
+        const summary = {
+            subtotal: subtotal,
+            gst: gst,
+            shipping: shipping,
+            totalAmount: totalAmount,
+            discount: discount
+        };
+
+        console.log('summary: ', summary);
+        
+
+        if (!order) {
+            return res.status(404).send('Order not found');
+        }
+
+        res.render('invoiceTemplate', { user, order, paymentMethod, products, summary }, (err, html) => {
+            if (err) {
+                console.error('Error rendering invoice template:', err);
+                return res.status(500).send('Error generating invoice');
+            }
+
+            pdf.create(html, {}).toBuffer((err, buffer) => {
+                if (err) {
+                    console.error('Error generating PDF:', err);
+                    return res.status(500).send('Error generating PDF');
+                }
+
+                res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
+                res.setHeader('Content-Type', 'application/pdf');
+                res.send(buffer);
+            });
+        });
+    } catch (err) {
+        console.error('Error fetching order details:', err);
+        res.status(500).send('Internal server error');
+    }
+};
 
 const razorpay = new Razorpay({
     key_id: process.env.KEY_ID,
@@ -1390,6 +1460,9 @@ const toOrderDetails = async (req, res) => {
             return res.status(404).send('Order not found');
         }
 
+        //Checks if there is products which are delivered
+        const hasDeliveredProduct = order.products.some(product => product.status === 'delivered' || product.status === 'return requested' || product.status === 'return accepted');
+
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
         // const subtotalBefore = order.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -1399,7 +1472,7 @@ const toOrderDetails = async (req, res) => {
         let couponDiscount = subtotal * order.coupon.discount / 100;
         couponDiscount = couponDiscount <= order.coupon.maxAmount ? couponDiscount: order.coupon.maxAmount;
 
-        res.render('orderDetails', { user, order, subtotal, couponDiscount , gst, shipping, totalAmount });
+        res.render('orderDetails', { user, order, subtotal, couponDiscount , gst, shipping, totalAmount, hasDeliveredProduct });
     } catch (err) {
         console.error('Error fetching order details', err);
         res.status(500).send('Internal server error');
@@ -1504,36 +1577,36 @@ try {
     product.status = 'return requested';
     product.returnReason = reason;
 
-    const productPurchasePrice = product.finalPrice;
-    const totalProductPrice = productPurchasePrice * product.quantity;
+    // const productPurchasePrice = product.finalPrice;
+    // const totalProductPrice = productPurchasePrice * product.quantity;
 
-    let wallet  = await Wallet.findOne({ user: user._id });
+    // let wallet  = await Wallet.findOne({ user: user._id });
 
-    if (!wallet) {
-        const newWallet = new Wallet({
-            user: user._id,
-            balance: 0,
-            transactions: []
-        });
+    // if (!wallet) {
+    //     const newWallet = new Wallet({
+    //         user: user._id,
+    //         balance: 0,
+    //         transactions: []
+    //     });
 
-        await newWallet.save();
+    //     await newWallet.save();
 
-        wallet = await Wallet.findOne({ user: user._id });
-    }
+    //     wallet = await Wallet.findOne({ user: user._id });
+    // }
 
-    const transactionId = generateTransactionId();
+    // const transactionId = generateTransactionId();
 
-    const transactions = {
-        amount: totalProductPrice,
-        date: new Date(),
-        type: 'credit',
-        transactionId: transactionId
-    }
+    // const transactions = {
+    //     amount: totalProductPrice,
+    //     date: new Date(),
+    //     type: 'credit',
+    //     transactionId: transactionId
+    // }
             
-    wallet.balance += totalProductPrice;
-    wallet.transactions.push(transactions);
+    // wallet.balance += totalProductPrice;
+    // wallet.transactions.push(transactions);
 
-    await wallet.save();
+    // await wallet.save();
 
     const updateProduct = await Product.findOne({ _id: productId });
 
@@ -1891,6 +1964,7 @@ module.exports = {
     toOrderConf,
     toOrderHistory,
     toOrderDetails,
+    downloadInvoice,
     cancelProduct,
     returnProduct,
     forgotPass,

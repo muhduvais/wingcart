@@ -60,8 +60,11 @@ adminRouter.put('/editCoupon/:coupon_id', adminController.verifyEditCoupon);
 adminRouter.delete('/deleteCoupon/:coupon_id', adminController.deleteCoupon);
 
 // Offers N Coupons - Offers
-adminRouter.get('/createOffer', adminAuth, adminController.toCreateOffer);
-adminRouter.post('/createOffer', adminController.verifyCreateOffer);
+adminRouter.get('/createProductOffer', adminAuth, adminController.toCreateOffer);
+adminRouter.post('/createProductOffer', adminController.verifyProductOffer);
+adminRouter.get('/createCategoryOffer', adminAuth, adminController.toCreateCategoryOffer);
+adminRouter.post('/createCategoryOffer', adminController.verifyCategoryOffer);
+adminRouter.put('/editOffer/:offer_id', adminController.verifyEditOffer);
 adminRouter.post('/offerStatusToggle/:offer_id', adminController.toggleOfferStatus);
 
 
@@ -69,7 +72,6 @@ adminRouter.post('/offerStatusToggle/:offer_id', adminController.toggleOfferStat
 adminRouter.get('/salesReport', adminAuth, adminController.toSalesReport);
 adminRouter.post('/generateSalesReport', adminController.generateSalesReport);
 adminRouter.get('/downloadSalesReport', adminAuth, adminController.downloadSalesReport);
-adminRouter.put('/editOffer/:offer_id', adminController.verifyEditOffer);
 
 //Test Route
 adminRouter.get('/ddd', (req, res) => {

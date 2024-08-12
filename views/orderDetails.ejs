@@ -126,10 +126,10 @@
                             <hr class="border-light m-0">
 
                             <!-- ///////order-details////////// -->
+                            <h3 class="text-muted pl-4">Order Details</h3>
                             <div class="container-order-details m-3">
                                 <div class="top-div d-md-flex align-items-center justify-content-between py-4">
                                     <div class="order-details-header">
-                                        <h3 class="text-muted">Order Details</h3>
                                         <div class="address-div p-3">
                                             <h5>Address:</h5>
                                             <p class="text-muted"><%= order.address.fname + ' ' + order.address.lname %> <br>
@@ -146,7 +146,12 @@
                                             Shipping: &nbsp; &nbsp;₹<%= locals.shipping ? shipping : '0.00' %><br>
                                             <b>Total: &nbsp; &nbsp;₹<%= locals.totalAmount ? totalAmount : '' %></b></p>
                                     </div>
-                                    <h5>Order ID: <%= order.orderId %></h5>
+                                    <div class="details-right text-right">
+                                        <h5>Order ID: <%= order.orderId %></h5>
+                                        <% if (hasDeliveredProduct === true) { %>
+                                            <button class="btn btn-primary btn-invoice">Download Invoice</button>
+                                        <% } %>
+                                    </div>
                                 </div>
                                 <div class="row" id="products-row">
                                     <% order.products.forEach((item, index) => { %>
@@ -252,6 +257,44 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.querySelector('.btn-invoice').addEventListener('click', async () => {
+        const orderId = '<%= order._id %>';
+
+        try {
+            const response = await fetch('/downloadInvoice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ orderId })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Invoice_${orderId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else if (response.status === 404) {
+                const data = await response.json();
+                if (!data.user) {
+                    window.location.href = '/userLogin';
+                } else {
+                    console.error('Order not found or other error occurred');
+                }
+            } else {
+                console.error('Failed to generate invoice');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+    </script>
 
     <script>
     

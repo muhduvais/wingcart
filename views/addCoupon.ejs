@@ -415,7 +415,6 @@
           const formGroup = element.parentElement;
           const errorDisplay = formGroup.querySelector('.errorMsg');
       
-
       errorDisplay.innerText = message;
       element.classList.add('error');
       errorDisplay.classList.add('error');
@@ -425,14 +424,14 @@
       }; 
 
       const setSuccess = (element, message) => {
-          const formGroup = element.parentElement;
-          const errorDisplay = formGroup.querySelector('.errorMsg');
+        const formGroup = element.parentElement;
+        const errorDisplay = formGroup.querySelector('.errorMsg');
 
-      errorDisplay.innerText = message;
-      element.classList.add('success');
-      errorDisplay.classList.add('success');
-      element.classList.remove('error');
-      errorDisplay.classList.remove('error');
+        errorDisplay.innerText = message;
+        element.classList.add('success');
+        errorDisplay.classList.add('success');
+        element.classList.remove('error');
+        errorDisplay.classList.remove('error');
 
       };
 
@@ -450,13 +449,19 @@
       if(!couponCodeValue) {
           setError(couponCode, "*Please enter the coupon code");
           isValid = false;
-      }
+      } 
       else {
           setSuccess(couponCode, "Coupon Code");
       }
 
       if(!discountValue) {
           setError(discount, "*Please enter the discount rate");
+          isValid = false;
+      } else if (discountValue < 1 || discountValue > 100) {
+        setError(discount, "*Enter a discount rate between 1-100");
+          isValid = false;
+      }else if (isNaN(discountValue)) {
+        setError(discount, "*Please enter a valid discount rate");
           isValid = false;
       }
       else {
@@ -517,12 +522,38 @@
           const data = await response.json();
 
           if(data.success) {
-            alert('Coupon created!');
-            window.location.href = "/admin/offersAndCoupons";
+            const formGroup = couponCode.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+
+            errorDisplay.innerText = 'Coupon Code';
+            couponCode.classList.add('success');
+            errorDisplay.classList.add('success');
+            couponCode.classList.remove('error');
+            errorDisplay.classList.remove('error');
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: 'Coupon created'
+            }).then(() => {
+              window.location.href = "/admin/offersAndCoupons";
+            });
+          } else if(data.exist) {
+            const formGroup = couponCode.parentElement;
+            const errorDisplay = formGroup.querySelector('.errorMsg');
+
+            errorDisplay.innerText = 'Code already exists!';
+            couponCode.classList.add('error');
+            errorDisplay.classList.add('error');
+            couponCode.classList.remove('success');
+            errorDisplay.classList.remove('success');
           }
           else {
-            alert('Error creating coupon!');
-            window.location.href = "/admin/createCoupon";
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to create coupon.'
+            });
           }
       }
   </script>
