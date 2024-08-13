@@ -1170,6 +1170,9 @@ const toSalesReport = async (req, res) => {
 
 const generateSalesReport = async (req, res) => {
     const { reportType, startDate, endDate } = req.body;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
     let filter = {};
     const currentDate = new Date();
@@ -1180,7 +1183,6 @@ const generateSalesReport = async (req, res) => {
                 $gte: new Date(currentDate.setHours(0, 0, 0, 0)),
                 $lte: new Date(currentDate.setHours(23, 59, 59, 999))
             };
-            console.log('Daily Filter:', filter.orderDate);
             break;
         case 'weekly':
             const today = new Date();
@@ -1194,7 +1196,6 @@ const generateSalesReport = async (req, res) => {
             endOfWeek.setHours(23, 59, 59, 999);
 
             filter.orderDate = { $gte: startOfWeek, $lte: endOfWeek };
-            console.log('Weekly Filter:', filter.orderDate);
             break;
         case 'monthly':
             const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -1202,25 +1203,27 @@ const generateSalesReport = async (req, res) => {
             endOfMonth.setHours(23, 59, 59, 999);
     
             filter.orderDate = { $gte: startOfMonth, $lte: endOfMonth };
-            console.log('Monthly Filter:', filter.orderDate);
             break;
         case 'custom':
             if (startDate && endDate) {
                 filter.orderDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
-                console.log('Custom Filter:', filter.orderDate);
             }
             break;
     }
 
     try {
-        const orders = await Order.find(filter).populate('products.product');
+        const totalOrders = await Order.countDocuments(filter);
+        const orders = await Order.find(filter)
+            .populate('products.product')
+            .sort({ orderDate: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        let totalOrders = 0;
         let totalSales = 0;
         let totalDiscounts = 0;
 
         const report = orders.map(order => {
-            const filteredProducts = order.products.filter(item => item.status === 'delivered' || item.status === 'return requested');
+            const filteredProducts = order.products.filter(item => item.status === 'delivered' || item.status === 'return requested' || 'return accepted' || 'return rejected');
             
             if (filteredProducts.length > 0) {
                 let discountAmount = order.coupon !== null ? order.totalAmount * order.coupon.discount / 100 : 0;
@@ -1231,34 +1234,34 @@ const generateSalesReport = async (req, res) => {
                 
                 totalSales += orderTotal;
                 totalDiscounts += isNaN(discountAmount) ? 0 : discountAmount;
-                totalOrders++;
 
                 return {
                     orderId: order.orderId,
                     orderDate: order.orderDate,
-                    totalAmount: orderTotal,
-                    discountAmount: isNaN(discountAmount) ? 0 : discountAmount,
                     products: filteredProducts.map(item => ({
                         productName: item.product.name,
                         quantity: item.quantity,
-                        price: item.price,
-                        status: item.status
-                    }))
+                        price: item.price
+                    })),
+                    discountAmount: isNaN(discountAmount) ? 0 : discountAmount
                 };
             }
-        }).filter(order => order); // Filter out undefined values
+        }).filter(order => order !== undefined);
+
+        console.log('Report: ', report);
+        
 
         res.json({
             totalOrders,
-            totalSales: totalSales - totalDiscounts,
+            totalSales,
             totalDiscounts,
             orders: report
         });
     } catch (error) {
-        console.error('Error generating sales report:', error);
-        res.status(500).send('Internal server error');
+        console.error(error);
+        res.status(500).json({ message: 'Failed to generate sales report' });
     }
-}
+};
 
 const downloadSalesReport =  async (req, res) => {
     const { format, reportType, startDate, endDate } = req.query;

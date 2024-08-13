@@ -308,7 +308,7 @@
                           <input type="date" id="endDate" class="form-control">
                       </div>
                       <div class="col-md-3 d-flex align-items-end">
-                          <button class="btn btn-primary" onclick="generateReport()">Generate Sales Report</button>
+                          <button class="btn btn-primary" onclick="generateReport(1)">Generate Sales Report</button>
                       </div>
                   </div>
               </div>
@@ -334,6 +334,12 @@
                       </thead>
                       <tbody id="reportDetails"></tbody>
                   </table>
+                  <!-- Pagination Controls -->
+                  <div id="paginationControls" class="d-flex justify-content-center mt-3">
+                      <button class="btn btn-secondary" id="prevPage" onclick="changePage(-1)" disabled>Previous</button>
+                      <span class="mx-2" id="pageInfo"></span>
+                      <button class="btn btn-secondary" id="nextPage" onclick="changePage(1)">Next</button>
+                  </div>
               </div>
               <div class="mt-3">
                   <button class="btn btn-secondary" onclick="downloadReport('pdf')">Download PDF</button>
@@ -379,13 +385,27 @@
       }
     </script>
 
-    <script>
-      async function generateReport() {
+<script>
+  let currentPage = 1;
+  let totalPages = 1;
+  const itemsPerPage = 5;
+
+  function toggleDateFields() {
+      const reportType = document.getElementById('reportType').value;
+      const dateFields = document.querySelectorAll('.date-field');
+      if (reportType === 'custom') {
+          dateFields.forEach(field => field.style.display = 'block');
+      } else {
+          dateFields.forEach(field => field.style.display = 'none');
+      }
+  }
+
+  async function generateReport(page = 1) {
       const reportType = document.getElementById('reportType').value;
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
 
-      const response = await fetch('/admin/generateSalesReport', {
+      const response = await fetch(`/admin/generateSalesReport?page=${page}&limit=${itemsPerPage}`, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json'
@@ -415,15 +435,29 @@
               reportDetails.appendChild(row);
           });
       });
+
+      // Update pagination controls
+      currentPage = page;
+      totalPages = Math.ceil(report.totalOrders / itemsPerPage);
+      document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById('prevPage').disabled = currentPage === 1;
+      document.getElementById('nextPage').disabled = currentPage === totalPages;
   }
 
-      function downloadReport(format) {
-          const reportType = document.getElementById('reportType').value;
-          const startDate = document.getElementById('startDate').value;
-          const endDate = document.getElementById('endDate').value;
-          window.location.href = `/admin/downloadSalesReport?format=${format}&reportType=${reportType}&startDate=${startDate}&endDate=${endDate}`;
+  function changePage(direction) {
+      const newPage = currentPage + direction;
+      if (newPage > 0 && newPage <= totalPages) {
+          generateReport(newPage);
       }
-  </script>
+  }
+
+  function downloadReport(format) {
+      const reportType = document.getElementById('reportType').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      window.location.href = `/admin/downloadSalesReport?format=${format}&reportType=${reportType}&startDate=${startDate}&endDate=${endDate}`;
+  }
+</script>
 
     <!--   Core JS Files   -->
     <script src="/assets2/js/core/jquery-3.7.1.min.js"></script>

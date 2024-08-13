@@ -1507,7 +1507,7 @@ const cancelProduct = async (req, res) => {
         product.cancellationDate = Date.now();
         product.cancellationReason = reason;
 
-        const productPurchasePrice = product.finalPrice;
+        const productPurchasePrice = product.price;
         
         const totalProductPrice = productPurchasePrice * product.quantity;
 
@@ -1919,9 +1919,10 @@ const toWallet = async (req, res) => {
     try {
         const user = req.session.user;
         const wallet = await Wallet.findOne({ user: user._id });
-        const lastTxnIndex = wallet.transactions.length-1;
-        const lastTransaction = wallet.transactions[lastTxnIndex];
-        console.log(wallet);
+
+        wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const lastTransaction = wallet.transactions[0];
         
         res.render('wallet', { user, wallet, lastTransaction });
     } catch (err) {
