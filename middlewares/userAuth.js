@@ -10,6 +10,15 @@ const isUserActive = (req, res, next) => {
     }
 }
 
+const isUserActiveJ = (req, res, next) => {
+    if(req.session.user) {
+        next();
+    }
+    else {
+        res.json({ isActive: false });
+    }
+}
+
 const isUserBlocked = async (req, res, next) => {
     const user = await User.findOne({ _id: req.session.user._id });
     if(user.isBlocked) {
@@ -25,5 +34,6 @@ const isUserBlocked = async (req, res, next) => {
 
 module.exports = {
     isUserActive,
+    isUserActiveJ,
     isUserBlocked
 }

@@ -39,6 +39,14 @@ app.use(passport.session());
 app.use('/', userRoutes);
 app.use('/admin', adminRoutes);
 
+//404
+app.use((req, res, next) => {
+    if (req.originalUrl.startsWith('/admin')) {
+        res.status(404).render('admin404');
+    } else {
+        res.status(404).render('user404');
+    }
+});
 
 // Google auth routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

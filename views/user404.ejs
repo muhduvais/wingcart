@@ -2,253 +2,122 @@
 <html lang="en">
 
 
-<!-- molla/cart.html  22 Nov 2019 09:55:06 GMT -->
+<!-- molla/404.html  22 Nov 2019 10:04:04 GMT -->
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>WingCart | <%= user.fname %></title>
+    <title>WingCart</title>
     <meta name="keywords" content="HTML5 Template">
     <meta name="description" content="Molla - Bootstrap eCommerce Template">
     <meta name="author" content="p-themes">
     <!-- Favicon -->
-     
     <!-- Plugins CSS File -->
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/plugins/owl-carousel/owl.carousel.css">
     <link rel="stylesheet" href="/static/css/plugins/magnific-popup/magnific-popup.css">
     <link rel="stylesheet" href="/static/css/plugins/jquery.countdown.css">
     <!-- Main CSS File -->
-    <link rel="stylesheet" href="/static/css/style1.css">
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/skins/skin-demo-3.css">
-    <link rel="stylesheet" href="/static/css/demos/demo-3.css">
-    <!-- Font awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/static/css/skins/skin-demo-2.css">
+    <link rel="stylesheet" href="/static/css/demos/demo-2.css">
 </head>
 
 <body>
     <div class="page-wrapper">
-        <header class="header header-intro-clearance header-3">
-            <div class="header-top">
-                <div class="container">
-                    <div class="header-left">
-                        <a href="tel:#"><i class="icon-phone"></i>Call: +91 97 4648 3041</a>
-                    </div><!-- End .header-left -->
+        <header class="header">
 
-                    <div class="header-right">
-
-                        <ul class="top-menu">
-                            <li>
-                                <a href="#">Links</a>
-                                <ul>
-                                    <!-- <li>
-                                        <div class="header-dropdown">
-                                            <a href="#">USD</a>
-                                            <div class="header-menu">
-                                                <ul>
-                                                    <li><a href="#">Eur</a></li>
-                                                    <li><a href="#">Usd</a></li>
-                                                </ul>
-                                            </div>End .header-menu
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <div class="header-dropdown">
-                                            <a href="#">English</a>
-                                            <div class="header-menu">
-                                                <ul>
-                                                    <li><a href="#">English</a></li>
-                                                    <li><a href="#">French</a></li>
-                                                    <li><a href="#">Spanish</a></li>
-                                                </ul>
-                                            </div>End .header-menu
-                                        </div>
-                                    </li> -->
-                                    <% if (locals.user) {%>
-                                        <li><a href="/logout">Logout</a></li>
-                                        <li><a href="/userProfile"><%= user.fname %></a></li>
-                                    <% } else {%>
-                                        <li><a href="/userLogin">Signup / Login</a></li>
-                                    <% }%>
-                                </ul>
-                            </li>
-                        </ul><!-- End .top-menu -->
-                    </div><!-- End .header-right -->
-
-                </div><!-- End .container -->
-            </div><!-- End .header-top -->
-            <div class="header-middle">
+            <div class="header-middle sticky-header">
                 <div class="container">
                     <div class="header-left">
                         <button class="mobile-menu-toggler">
                             <span class="sr-only">Toggle mobile menu</span>
                             <i class="icon-bars"></i>
                         </button>
-                        
-                        <a href="#" class="logo">
-                            <h3 class="text-primary">WingCart</h3>
+
+                        <a href="index.html" class="logo">
+                            <h3 class="text-primary pt-2">WingCart</h3>
                         </a>
+
+                        <nav class="main-nav">
+                            <ul class="menu sf-arrows">
+                                <li class="megamenu-container active">
+                                    <a href="/" class="">Home</a>
+                                </li>
+                                <li>
+                                    <a href="/shop" class="">Shop</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="">About</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="">Contact</a>
+                                </li>
+                            </ul><!-- End .menu -->
+                        </nav><!-- End .main-nav -->
                     </div><!-- End .header-left -->
-    
-                    
-                    <nav class="main-nav">
-                        <ul class="menu sf-arrows">
-                            <li class="megamenu-container active">
-                                <a href="/" class="text-white">Home</a>
-                            </li>
-                            <li>
-                                <a href="/shop" class="sf-with-ul text-white">Shop</a>
-                            </li>
-                            <li>
-                                <a href="#" class="sf-with-ul text-white">About</a>
-                            </li>
-                            <li>
-                                <a href="#" class="sf-with-ul text-white">Contact</a>
-                            </li>
-                        </ul><!-- End .menu -->
-                    </nav><!-- End .main-nav -->
-    
-                    <!-- Header-right -->
+
                     <div class="header-right">
-                        <div class="wishlist">
-                            <a href="#" title="Wishlist">
-                                <div class="icon">
-                                    <i class="icon-heart-o"></i>
-                                    <span class="wishlist-count badge">0</span>
-                                </div>
-                                <p>Wishlist</p>
+                        <div class="header-search">
+                            <a href="#" class="search-toggle" role="button" title="Search"><i class="icon-search"></i></a>
+                            <form action="#" method="get">
+                                <div class="header-search-wrapper">
+                                    <label for="q" class="sr-only">Search</label>
+                                    <input type="search" class="form-control" name="q" id="q" placeholder="Search in..." required>
+                                </div><!-- End .header-search-wrapper -->
+                            </form>
+                        </div><!-- End .header-search -->
+
+
+                        <div class="dropdown cart-dropdown">
+                            <a href="#" class="dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-display="static">
+                                <i class="icon-shopping-cart"></i>
+                                <!-- <span class="cart-count">2</span> -->
                             </a>
-                        </div><!-- End .compare-dropdown -->
-    
-                        <div class="wishlist">
-                            <a href="/cartManagement" title="cart">
-                                <div class="icon">
-                                    <i class="icon-shopping-cart"></i>
-                                    <span class="wishlist-count badge">0</span>
-                                </div>
-                                <p>Cart</p>
-                            </a>
-                        </div><!-- End .compare-dropdown -->
-    
-                        
+                        </div><!-- End .cart-dropdown -->
                     </div><!-- End .header-right -->
                 </div><!-- End .container -->
             </div><!-- End .header-middle -->
         </header><!-- End .header -->
 
-
-
         <main class="main">
-        	<div class="page-header text-center" style="background-image: url('/static/images/page-header-bg.jpg')">
-        		<div class="container">
-        			<h1 class="page-title">Order Confirmation</h1>
-        		</div><!-- End .container -->
-        	</div><!-- End .page-header -->
-            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+            <nav aria-label="breadcrumb" class="breadcrumb-nav border-0 mb-0">
                 <div class="container">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="/">Home</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Order Confirmation</li>
+                        <li class="breadcrumb-item active" aria-current="page">404</li>
                     </ol>
                 </div><!-- End .container -->
             </nav><!-- End .breadcrumb-nav -->
 
-            <div class="page-content">
-                <!-- ////////////////////////// -->
-                <div class="container">
-                    <h4 class="py-3">Thank you for your order!</h4>
-                    <div class="top-info">
-                        <p>Your order ID: <strong><%= order.orderId %></strong>.</p>
-                        <p>Order date: <strong><%= new Date(order.orderDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></strong>.</p>
-                        <p class="py-md-2 fs-2">Expected delivery: <strong><%= deliveryDay %></strong>.</p>
-                    </div>
-                
-                    <div class="details-table p-5">
-                        <h3>Order Details</h3>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th></th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% order.products.forEach(item => { %>
-                                    <tr>
-                                        <td><%= item.product.name %></td>
-                                        <td class="image-col"><img src="/assets2/img/<%= item.product.images[0] %>" style="width: 100px;" alt="image"></td>
-                                        <td><%= item.quantity %></td>
-                                        <td>₹<%= item.price.toFixed(2) %></td>
-                                        <td>₹<%= (item.price * item.quantity).toFixed(2) %></td>
-                                    </tr>
-                                <% }); %>
-                                <tr>
-                                    <td colspan="3"><strong>Subtotal:</strong></td>
-                                    <td>₹<%= subtotal.toFixed(2) %></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3"><strong>Inclusive of GST(18%):</strong></td>
-                                    <td>(₹<%= gst.toFixed(2) %>)</td>
-                                </tr>
-                                <% if ( locals.couponDiscount) { %>
-                                    <tr>
-                                        <td colspan="3"><strong>Total Discount:</strong></td>
-                                        <td>- ₹<%= couponDiscount.toFixed(2) %></td>
-                                    </tr>
-                                <% } %>
-                                <tr>
-                                    <td colspan="3"><strong>Shipping Charge:</strong></td>
-                                    <td>₹<%= shippingCharge.toFixed(2) %></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3"><strong>Grand Total:</strong></td>
-                                    <td><strong>₹<%= totalAmount.toFixed(2) %></strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="bottom-details p-2 d-md-flex">
-                        <div class="delivery-address">
-                            <h3>Shipping Address</h3>
-                            <p>
-                                <%= order.address.fname %> <%= order.address.lname %><br>
-                                <%= order.address.city %>, <%= order.address.state %>, <%= order.address.country %><br>
-                                ZIP: <%= order.address.pincode %><br>
-                                Phone: <%= order.address.phone %>
-                            </p>
-                        </div>
-                        <div class="bottom-buttons mx-5">
-                            <a href="/orderHistory" class="btn btn-secondary mx-3 mb-3"><span>VIEW ORDERS</span><i class="icon-list"></i></a>
-                            <a href="/shop" class="btn btn-secondary mx-3 mb-3"><span>CONTINUE SHOPPING</span><i class="icon-refresh"></i></a>
-                            <% if (paymentStatus === 'failed') { %>
-                                <button type="button" id="retryBtn" data-order-id="<%= order.orderId %>" class="btn btn-danger text-white mx-3 mb-3"><span>Retry Payment</span><i class="icon-rotate-right"></i></button>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
-                <!-- ////////////////////////// -->
-            </div><!-- End .page-content -->
+        	<div class="error-content text-center" style="background-image: url(/assets/images/backgrounds/error-bg.jpg)">
+            	<div class="container">
+            		<h1 class="error-title">Error 404</h1><!-- End .error-title -->
+            		<p>We are sorry, the page you've requested is not available.</p>
+            		<a href="/" class="btn btn-outline-primary-2 btn-minwidth-lg">
+            			<span>BACK TO HOMEPAGE</span>
+            			<i class="icon-long-arrow-right"></i>
+            		</a>
+            	</div><!-- End .container -->
+        	</div><!-- End .error-content text-center -->
         </main><!-- End .main -->
 
         <footer class="footer">
-        	<div class="footer-middle">
+        	<div class="footer-middle border-0">
 	            <div class="container">
 	            	<div class="row">
 	            		<div class="col-sm-6 col-lg-3">
 	            			<div class="widget widget-about">
-	            				<h3 class="text-black">WingCart</h3>
-	            			    <p>We make you the best deal with with quality service. Shop selected quality products with a reasonable price</p>
+	            				<img src="/assets/images/logo.png" class="footer-logo" alt="Footer Logo" width="105" height="25">
+	            				<p>Praesent dapibus, neque id cursus ucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. </p>
 
-	            				<div class="widget-call">
-                                    <i class="icon-phone"></i>
-                                    Got Question? Call us 24/7
-                                    <a href="tel:919746483041">+91 97 4648 3041</a>         
-                                </div><!-- End .widget-call -->
+	            				<div class="social-icons">
+	            					<a href="#" class="social-icon" target="_blank" title="Facebook"><i class="icon-facebook-f"></i></a>
+	            					<a href="#" class="social-icon" target="_blank" title="Twitter"><i class="icon-twitter"></i></a>
+	            					<a href="#" class="social-icon" target="_blank" title="Instagram"><i class="icon-instagram"></i></a>
+	            					<a href="#" class="social-icon" target="_blank" title="Youtube"><i class="icon-youtube"></i></a>
+	            					<a href="#" class="social-icon" target="_blank" title="Pinterest"><i class="icon-pinterest"></i></a>
+	            				</div><!-- End .soial-icons -->
 	            			</div><!-- End .widget about-widget -->
 	            		</div><!-- End .col-sm-6 col-lg-3 -->
 
@@ -257,10 +126,26 @@
 	            				<h4 class="widget-title">Useful Links</h4><!-- End .widget-title -->
 
 	            				<ul class="widget-list">
-	            					<li><a href="#">About Wingcart</a></li>
-                                    <li><a href="/shop">Shop</a></li>
-	            					<li><a href="#">Categories</a></li>
-	            					<li><a href="tel:919746483041">Contact us</a></li>
+	            					<li><a href="about.html">About Molla</a></li>
+	            					<li><a href="#">How to shop on Molla</a></li>
+	            					<li><a href="#">FAQ</a></li>
+	            					<li><a href="contact.html">Contact us</a></li>
+	            					<li><a href="login.html">Log in</a></li>
+	            				</ul><!-- End .widget-list -->
+	            			</div><!-- End .widget -->
+	            		</div><!-- End .col-sm-6 col-lg-3 -->
+
+	            		<div class="col-sm-6 col-lg-3">
+	            			<div class="widget">
+	            				<h4 class="widget-title">Customer Service</h4><!-- End .widget-title -->
+
+	            				<ul class="widget-list">
+	            					<li><a href="#">Payment Methods</a></li>
+	            					<li><a href="#">Money-back guarantee!</a></li>
+	            					<li><a href="#">Returns</a></li>
+	            					<li><a href="#">Shipping</a></li>
+	            					<li><a href="#">Terms and conditions</a></li>
+	            					<li><a href="#">Privacy Policy</a></li>
 	            				</ul><!-- End .widget-list -->
 	            			</div><!-- End .widget -->
 	            		</div><!-- End .col-sm-6 col-lg-3 -->
@@ -270,9 +155,11 @@
 	            				<h4 class="widget-title">My Account</h4><!-- End .widget-title -->
 
 	            				<ul class="widget-list">
-	            					<li><a href="/cartManagement">View Cart</a></li>
-	            					<li><a href="/wishlist">My Wishlist</a></li>
-	            					<li><a href="/orders">My Orders</a></li>
+	            					<li><a href="#">Sign In</a></li>
+	            					<li><a href="cart.html">View Cart</a></li>
+	            					<li><a href="#">My Wishlist</a></li>
+	            					<li><a href="#">Track My Order</a></li>
+	            					<li><a href="#">Help</a></li>
 	            				</ul><!-- End .widget-list -->
 	            			</div><!-- End .widget -->
 	            		</div><!-- End .col-sm-6 col-lg-3 -->
@@ -282,7 +169,10 @@
 
 	        <div class="footer-bottom">
 	        	<div class="container">
-	        		<p class="footer-copyright">Copyright © 2024 WingCart. All Rights Reserved.</p><!-- End .footer-copyright -->
+	        		<p class="footer-copyright">Copyright © 2019 Molla Store. All Rights Reserved.</p><!-- End .footer-copyright -->
+	        		<figure class="footer-payments">
+	        			<img src="/assets/images/payments.png" alt="Payment methods" width="272" height="20">
+	        		</figure><!-- End .footer-payments -->
 	        	</div><!-- End .container -->
 	        </div><!-- End .footer-bottom -->
         </footer><!-- End .footer -->
@@ -575,105 +465,17 @@
         </div><!-- End .modal-dialog -->
     </div><!-- End .modal -->
 
-    <script>
-        const btn = document.getElementById('retryBtn');
-
-        btn.addEventListener('click', (event) => {
-            event.preventDefault();
-            const orderId = btn.getAttribute('data-order-id');
-            retryPayment(orderId);
-
-        })
-
-        const retryPayment = async (orderId) => {
-            try {
-                const response = await fetch('/retryPayment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        orderId
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                        console.log('Initiating Razorpay payment...');
-
-                        const options = {
-                            key: result.key,
-                            amount: result.totalAmount,
-                            currency: 'INR',
-                            name: 'Wingcart',
-                            description: 'Test Transaction',
-                            image: 'https://your-logo-url.com',
-                            order_id: result.razorpayOrderId,
-                            handler: function (response) {
-                                console.log('Payment successful. Redirecting...');
-                                window.location.href = `/orderConfirmation/${result.orderId}`;
-                            },
-                            prefill: {
-                                name: result.user.name,
-                                email: result.user.email,
-                                contact: result.user.phone
-                            },
-                            notes: {
-                                address: result.address.city
-                            },
-                            theme: {
-                                color: '#3399cc'
-                            }
-                        };
-
-                        const rzp1 = new Razorpay(options);
-
-                        // Payment failure
-                        rzp1.on('payment.failed', function (response) {
-                            console.error('Payment failed:', response.error);
-                            Swal.fire({
-                                icon: 'info',
-                                title: 'Alert',
-                                text: 'Payment has failed. Please try again!'
-                            })
-                            .then(() => {
-                                window.location.href = `/orderConfirmation/${result.orderId}?payment=failed`;
-                            })
-
-                        });
-
-                        console.log('Opening Razorpay...');
-                        rzp1.open();
-                } else if (!result.isActive) {
-                    window.location.href = '/userLogin';
-                } else {
-                    console.log('Order creation failed. Message: ', result.message);
-                    alert(result.message);
-                }
-            } catch (error) {
-                console.error('Error creating order:', error);
-                alert('An error occurred while creating the order.');
-            }
-        }
-    </script>
-
-    <!-- Sweet Alert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Razorpay -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- Plugins JS File -->
-    <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/jquery.hoverIntent.min.js"></script>
-    <script src="/static/js/jquery.waypoints.min.js"></script>
-    <script src="/static/js/superfish.min.js"></script>
-    <script src="/static/js/owl.carousel.min.js"></script>
-    <script src="/static/js/bootstrap-input-spinner.js"></script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/jquery.hoverIntent.min.js"></script>
+    <script src="/assets/js/jquery.waypoints.min.js"></script>
+    <script src="/assets/js/superfish.min.js"></script>
+    <script src="/assets/js/owl.carousel.min.js"></script>
     <!-- Main JS File -->
-    <script src="/static/js/main.js"></script>
+    <script src="/assets/js/main.js"></script>
 </body>
 
 
-<!-- molla/cart.html  22 Nov 2019 09:55:06 GMT -->
+<!-- molla/404.html  22 Nov 2019 10:04:04 GMT -->
 </html>

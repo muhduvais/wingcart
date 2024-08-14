@@ -730,6 +730,8 @@
                             }).then(() => {
                                 window.location.reload();
                             });
+                        } else if (!result.isActive) {
+                            window.location.href = '/userLogin';
                         } else {
                             Swal.fire({
                                 icon: 'error',

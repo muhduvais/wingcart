@@ -1,49 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Product Management</title>
-    <meta
-      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
-      name="viewport"
-    />
-    <link
-      rel="icon"
-      href="/assets2/img/kaiadmin/  .ico"
-      type="image/x-icon"
-    />
-
-    <!-- Fonts and icons -->
-    <script src="/assets2/js/plugin/webfont/webfont.min.js"></script>
-    <script>
-      WebFont.load({
-        google: { families: ["Public Sans:300,400,500,600,700"] },
-        custom: {
-          families: [
-            "Font Awesome 5 Solid",
-            "Font Awesome 5 Regular",
-            "Font Awesome 5 Brands",
-            "simple-line-icons",
-          ],
-          urls: ["/assets2/css/fonts.min.css"],
-        },
-        active: function () {
-          sessionStorage.fonts = true;
-        },
-      });
-    </script>
-
-    <!-- CSS Files -->
-    <link rel="stylesheet" href="/assets2/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/assets2/css/plugins.min.css" />
-    <link rel="stylesheet" href="/assets2/css/kaiadmin.min.css" />
-    <link rel="stylesheet" href="/assets2/css/loginStyle.css" />
-    <link rel="stylesheet" href="/assets2/css/adminStyle.css">
-    <!-- Sweet Alert CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-  </head>
-  <body>
-    
+<%- include('./layout/adminHeader.ejs') %>
 
     <div class="wrapper">
       <!-- Sidebar -->
@@ -71,8 +26,8 @@
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
             <ul class="nav nav-secondary">
-              <li class="nav-item">
-                <a href="/admin/dashboard">
+              <li class="nav-item active">
+                <a href="/admin/dashboard" >
                   <i class="fas fa-home"></i>
                   <p>Dashboard</p>
                 </a>
@@ -97,7 +52,7 @@
 
                 </a>
               </li>
-              <li class="nav-item active">
+              <li class="nav-item">
                 <a href="/admin/orderManagement">
                     <i class="fas fa-shopping-cart"></i>
                   <p>Order Management</p>
@@ -167,24 +122,20 @@
                 class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
               >
 
-              <!-- Search Form -->
-              <form method="GET" action="/admin/orderManagement">
+              <!-- Search -->
                 <div class="input-group">
-                    <div class="input-group-prepend">
-                        <button type="submit" class="btn btn-search pe-1">
-                            <i class="fa fa-search search-icon"></i>
-                        </button>
-                    </div>
-                    <input
-                        type="text"
-                        name="search"
-                        placeholder="Search ..."
-                        class="form-control"
-                        value="<%= search %>"
-                    />
-                    <input type="hidden" name="page" value="<%= pagination.currentPage %>" /> <!-- Ensure current page is maintained -->
+                  <div class="input-group-prepend">
+                    <button type="submit" class="btn btn-search pe-1">
+                      <i class="fa fa-search search-icon"></i>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search ..."
+                    class="form-control"
+                  />
                 </div>
-              </form>
+              </nav>
 
               <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
                 <li
@@ -227,10 +178,8 @@
                     href="#"
                     aria-expanded="false"
                   >
-                    <div class="avatar-sm">
-                      <i class="fas fa-user-alt"></i>
-                    </div>
                     <span class="profile-username">
+                      <i class="fas fa-user-alt pe-2"></i>
                       <span class="fw-bold">Uvais</span>
                     </span>
                   </a>
@@ -245,7 +194,7 @@
                             <h4>Uvais</h4>
                             <p class="text-muted">uadmin@gmail.com</p>
                             <a
-                              href="/admin/dashboard"
+                              href="profile.html"
                               class="btn btn-xs btn-secondary btn-sm"
                               >View Profile</a
                             >
@@ -268,93 +217,28 @@
 
         <div class="container">
           <div class="page-inner">
-            <div class="page-header mb-5">
-              <h4 class="page-title">Order Management</h4>
+            <div class="page-header">
               <ul class="breadcrumbs">
                 <li class="nav-home">
                   <a href="/admin/dashboard">
                     <i class="icon-home"></i>
                   </a>
                 </li>
-                <li class="separator">
-                  <i class="icon-arrow-right"></i>
-                </li>
-                <li class="nav-item">
-                  <p style="margin-bottom: 0;">Order Management</p>
-                </li>
               </ul>
-              <span class="ps-5 text-primary" style="font-size: 15px;"><strong>Total Orders count:  <%= orders.length %></strong></span>
             </div>
 
-
-            <!-- ///Table///// -->
-            <div class="table-responsive">
-                <table
-                  id="add-row"
-                  class="display table table-striped table-hover"
-                >
-                  <thead>
-                    <tr>
-                      <th>Order Id</th>
-                      <th>User</th>
-                      <th>Date</th>
-                      <th>Total</th>
-                      <th>Payment Method</th>
-                      <th>Payment Status</th>
-                      <th></th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id="category-table-body">
-                      <% if (locals.orders && orders !== null) { %>
-                        <% orders.forEach((order, index) => { %>
-                            <tr>
-                              <td><%= order.orderId %></td>
-                              <td><%= order.user.fname + ' ' + order.user.lname %></td>
-                              <td><%= order.orderDate.toDateString() %></td>
-                              <td>₹<%= order.totalAmount.toFixed(2) %></td>
-                              <td><%= order.payment.type %></td>
-                              <td class="<%= order.paymentStatus === 'Pending' ? 'text-danger' : 'text-success' %>"><%= order.paymentStatus %></td>
-                              <td><th><a href="/admin/orderDetails/<%= order._id %>"><button class="btn btn-primary">Details</button></a></th></td>
-                            </tr>
-                          <% }) %>
-                        <% } %>
-                  </tbody>
-                </table>
-              </div>
-              <!-- //////////// -->
-
-              <!-- Pagination -->
-              <% if (pagination.pages > 1) { %>
-                <nav>
-                    <ul class="pagination justify-content-center">
-                        <% if (pagination.currentPage > 1) { %>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>">Previous</a>
-                            </li>
-                        <% } %>
-
-                        <% for (let i = 1; i <= pagination.pages; i++) { %>
-                            <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
-                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
-                            </li>
-                        <% } %>
-
-                        <% if (pagination.currentPage < pagination.pages) { %>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>">Next</a>
-                            </li>
-                        <% } %>
-                    </ul>
-                </nav>
-              <% } %>
-            <!-- End Pagination -->
-
-
-          </div>
+            <div class="inner-container d-flex flex-column align-items-center justify-content-center">
+                <h4 style="font-size: 7rem;">404</h4>
+                <span class="text-muted pb-4">We are sorry, Not found the paage you are lookig for</span>
+                <a href="/admin/dashboard" class="btn btn-minwidth-lg text-white" style="background-color: #1A2035;">
+                    <span>BACK TO HOMEPAGE</span>
+                    <i class="icon-long-arrow-right"></i>
+                </a>
+            </div>
+            
         </div>
 
-        <footer class="footer">
+        <footer style="color: #505775;" class="footer">
           <div class="container-fluid d-flex justify-content-between">
             <nav class="pull-left">
               <ul class="nav">
@@ -374,34 +258,3 @@
         </footer>
       </div>
     </div>
-
-    <!--   Core JS Files   -->
-    <script src="/assets2/js/core/jquery-3.7.1.min.js"></script>
-    <script src="/assets2/js/core/popper.min.js"></script>
-    <script src="/assets2/js/core/bootstrap.min.js"></script>
-    <!-- jQuery Scrollbar -->
-    <script src="/assets2/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
-    <!-- Chart JS -->
-    <script src="/assets2/js/plugin/chart.js/chart.min.js"></script>
-    <!-- jQuery Sparkline -->
-    <script src="/assets2/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
-    <!-- Chart Circle -->
-    <!-- Datatables -->
-    <script src="/assets2/js/plugin/datatables/datatables.min.js"></script>
-    <!-- Bootstrap Notify -->
-    <script src="/assets2/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
-    <!-- jQuery Vector Maps -->
-    <script src="/assets2/js/plugin/jsvectormap/jsvectormap.min.js"></script>
-    <script src="/assets2/js/plugin/jsvectormap/world.js"></script>
-    <!-- Google Maps Plugin -->
-    <script src="/assets2/js/plugin/gmaps/gmaps.js"></script>
-    <!-- Sweet Alert -->
-    <script src="/assets2/js/plugin/sweetalert/sweetalert.min.js"></script>
-    <!-- Kaiadmin JS -->
-    <script src="/assets2/js/kaiadmin.min.js"></script>
-    <!-- Sweet Alert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    
-  </body>
-</html>

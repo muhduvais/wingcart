@@ -26,14 +26,10 @@ const downloadInvoice = async (req, res) => {
         const user = req.session.user;
         const { orderId } = req.body;
 
-        if (!user) {
-            return res.status(404).json({ user: false });
-        }
-
         const order = await Order.findById(orderId).populate('products.product');
         const paymentMethod = await Payment.findById(order.payment);
         const products = order.products.filter(item =>
-            ['delivered', 'return requested', 'return accepted', 'return rejected'].includes(item.status)
+            ['delivered', 'return requested', 'return rejected'].includes(item.status)
         );
 
         let discount = 0;
@@ -49,7 +45,6 @@ const downloadInvoice = async (req, res) => {
 
         console.log('order.coupon: ', isNaN(order.coupon));
         
-
         const summary = {
             subtotal: subtotal,
             gst: gst,
@@ -1248,12 +1243,9 @@ const createOrder = async (req, res) => {
 
         //Add the final price to all products
         for (const item of cart.products) {
-
-            orderProducts.forEach( item => {
-                const finalProdPrice = item.price - couponDiscountPerProduct;
-                console.log('finalProdPrice: ', finalProdPrice);
-                item.finalPrice = finalProdPrice
-            });
+            const finalProdPrice = item.price - couponDiscountPerProduct;
+            console.log('finalProdPrice: ', finalProdPrice);
+            item.finalPrice = finalProdPrice;
         }
 
         const gst = subtotal * 0.18;
@@ -1264,6 +1256,9 @@ const createOrder = async (req, res) => {
         if (totalAmount > 1000 && paymentMethod.type === 'Cash on delivery') {
             return res.json({ message: 'Cash on delivery is applicable only for orders less than Rs. 1000!' });
         }
+
+        console.log('totalAmount: ', totalAmount);
+        
 
         const paymentStatus = 'Completed';
 
@@ -1290,6 +1285,9 @@ const createOrder = async (req, res) => {
             totalDiscountAmount: parseFloat(totalDiscountAmount.toFixed(2)),
             paymentStatus: paymentStatus
         });
+
+        console.log('newOrder: ', newOrder);
+        
 
         await newOrder.save();
         const createdOrder = await Order.findOne({ orderId });
@@ -1857,10 +1855,6 @@ const addToWishlist = async (req, res) => {
     try {
         const user = req.session.user;
         const productId = req.params.product_id;
-
-        if (!user) {
-            return res.json({ success: false, user: false,  message: 'User not logged in!' });
-        }
 
         const cart = await Cart.findOne({ user: user._id });
         if (cart) {

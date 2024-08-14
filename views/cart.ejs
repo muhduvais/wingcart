@@ -638,6 +638,8 @@
                         }).then(() => {
                             window.location.reload();
                         });
+                } else if (!deleteData.isActive) {
+                    window.location.href = '/userLogin';
                 } else {
                         Swal.fire({
                             icon: 'error',
@@ -690,6 +692,8 @@
                     console.log('Cart updated successfully');
                     updateProductRow(productRow, data.updatedItem);
                     updateSummary();
+                } else if (!data.isActive) {
+                    window.location.href = '/userLogin';
                 } else {
                     console.error('Error updating cart:', data.message);
                 }

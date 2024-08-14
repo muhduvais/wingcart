@@ -219,6 +219,8 @@
 
                             if (updateResult.success) {
                                 location.reload();
+                            } else if (!updateResult.isActive) {
+                                window.location.href = '/userLogin';
                             }
 
                             },
@@ -253,6 +255,8 @@
 
                         console.log('Opening Razorpay...');
                         rzp1.open();
+                } else if (!result.isActive) {
+                    window.location.href = '/userLogin';
                 } else {
                     console.log('Order creation failed. Message: ', result.message);
                     alert(result.message);

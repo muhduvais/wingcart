@@ -282,7 +282,7 @@
                 a.remove();
             } else if (response.status === 404) {
                 const data = await response.json();
-                if (!data.user) {
+                if (!data.isActive) {
                     window.location.href = '/userLogin';
                 } else {
                     console.error('Order not found or other error occurred');
@@ -333,6 +333,8 @@
                         window.location.reload();
                         location.reload();
                     });
+                    } else if (!data.isActive) {
+                        window.location.href = '/userLogin';
                     } else {
                         Swal.fire({
                         icon: 'error',
@@ -392,6 +394,8 @@
                     window.location.reload();
                     location.reload();
                 });
+                } else if (!data.isActive) {
+                    window.location.href = '/userLogin';
                 } else {
                     Swal.fire({
                     icon: 'error',

@@ -828,6 +828,8 @@ const validateCode = async (code) => {
                 updateCartSummary(data);  // Pass entire data object
                 $('#availableCouponsModal').modal('hide');
             });
+        } else if (!data.isActive) {
+            window.location.href = '/userLogin';
         } else {
             Swal.fire({
                 icon: 'error',
@@ -1310,12 +1312,13 @@ const updateCartSummary = (data) => {
                 },
                 body: JSON.stringify(orderData)
             });
-
             const result = await response.json();
-            console.log('Payment Method: ', result.paymentMethod);
             console.log('Result: ', result);
+            console.log('Payment Method: ', result.paymentMethod);
 
-            if (result.success) {
+            if (!result.isActive) {
+                window.location.href = '/userLogin';
+            } else if (result.success) {
                 if (result.paymentMethod === 'Razorpay') {
                     console.log('Initiating Razorpay payment...');
 

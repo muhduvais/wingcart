@@ -217,7 +217,7 @@
 
         <div class="container">
           <div class="page-inner">
-            <div class="page-header">
+            <div class="page-header" style="margin-bottom: 0;">
               <h4 class="page-title">Dashboard</h4>
               <ul class="breadcrumbs">
                 <li class="nav-home">
@@ -232,13 +232,13 @@
 
             <!-- //Tables -->
             <div class="container mt-4">
-              <div class="page-inner">
+              <div class="page-inner" style="padding-top: 0;">
 
                 <!-- /////////////// -->
                 <div class="charts my-3" style="width: 100%; ">
                   <div class="row d-flex align-items-center justify-content-between p-3">
                     <!-- Doughnut Chart -->
-                    <div class="col-md-6">
+                    <div class="col-md-6" style="width: 500px;">
                       <canvas id="salesReportDoughnut"></canvas>
                     </div>
                 
@@ -424,17 +424,16 @@
         salesReportBar.update();
       };
     
-      // Event listeners for buttons
       document.getElementById('weeklyBtn').addEventListener('click', () => {
-        updateBarChart(weeklyData); // Weekly Data
+        updateBarChart(weeklyData);
       });
     
       document.getElementById('monthlyBtn').addEventListener('click', () => {
-        updateBarChart(monthlyData); // Monthly Data
+        updateBarChart(monthlyData);
       });
     
       document.getElementById('yearlyBtn').addEventListener('click', () => {
-        updateBarChart(yearlyData); // Yearly Data
+        updateBarChart(yearlyData);
       });
     </script>
 

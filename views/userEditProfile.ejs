@@ -280,6 +280,9 @@ const isValidPhone = phone => {
             });
 
             const profileData = await response.json();
+            console.log('profileData: ', profileData);
+            console.log('profileData.isValid: ', profileData.isValid);
+            
 
             if(profileData.success) {
                 Swal.fire({
@@ -289,6 +292,8 @@ const isValidPhone = phone => {
                     }).then(() => {
                         window.location.href = '/userProfile';
                     });
+            } else if (!profileData.isActive) {
+                window.location.href = '/userLogin';
             }
             else if(response.ok) {
                 const profileMsg = document.querySelector('.profileMsg');

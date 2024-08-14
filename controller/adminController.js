@@ -126,7 +126,6 @@ const toAdminDash = async (req, res) => {
         const returned = returnedCount[0] ? returnedCount[0].returnedCount : 0;
         const cancelled = cancelledCount[0] ? cancelledCount[0].cancelledCount : 0;
 
-        // Weekly, Monthly, and Yearly Orders Count (Same as before)
         const weeklyOrders = await Order.aggregate([
             { $unwind: "$products" },
             {
@@ -806,14 +805,18 @@ const toOrderManagement = async (req, res) => {
         const search = req.query.search || '';
         const skip = (page - 1) * ITEMS_PER_PAGE;
 
+        // const orders = await Order.find({}).populate('payment');
+
         const query = {
             $or: [
-                { orderId: { $regex: search } },
+                { orderId: { $regex: search, $options: 'i' } },
+                { paymentStatus: { $regex: search, $options: 'i' } },
             ]
         };
 
         const orders = await Order.find(query).sort({ orderDate: -1 })
         .populate('user')
+        .populate('payment')
         // .skip(skip)
         // .limit(ITEMS_PER_PAGE);
 
