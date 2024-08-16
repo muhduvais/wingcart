@@ -292,7 +292,7 @@ const isValidPhone = phone => {
                     }).then(() => {
                         window.location.href = '/userProfile';
                     });
-            } else if (!profileData.isActive) {
+            } else if (profileData.isActive === false) {
                 window.location.href = '/userLogin';
             }
             else if(response.ok) {

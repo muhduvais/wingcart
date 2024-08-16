@@ -334,7 +334,7 @@ const isValidPhone = phone => {
                     }).then(() => {
                         window.location.href = '/addressManagement';
                     });
-            } else if (!editData.isActive) {
+            } else if (editData.isActive === false) {
                 window.location.href = '/userLogin';
             } else {
                     Swal.fire({

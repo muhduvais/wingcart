@@ -20,7 +20,7 @@ const isUserActiveJ = (req, res, next) => {
 }
 
 const isUserBlocked = async (req, res, next) => {
-    const user = await User.findOne({ _id: req.session.user._id });
+    const user = await User.findById(req.session.user);
     if(user.isBlocked) {
         delete req.session.user;
         res.redirect('/userLogin');

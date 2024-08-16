@@ -787,60 +787,60 @@
     <!-- Apply-Coupon -->
     <script>
         const couponCode = document.getElementById('checkout-discount-input');
-const couponForm = document.getElementById('applyCouponForm');
-const removeCouponBtn = document.getElementById('removeCouponBtn');
-const applyCouponBtns = document.querySelectorAll('.apply-coupon-btn');
-const appliedCouponCodeInput = document.getElementById('appliedCouponCode');
+        const couponForm = document.getElementById('applyCouponForm');
+        const removeCouponBtn = document.getElementById('removeCouponBtn');
+        const applyCouponBtns = document.querySelectorAll('.apply-coupon-btn');
+        const appliedCouponCodeInput = document.getElementById('appliedCouponCode');
 
-couponForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    validateCode(couponCode.value.trim());
-});
-
-// Apply coupon buttons event listeners
-applyCouponBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const code = btn.getAttribute('data-coupon-code');
-        couponCode.value = code;
-        validateCode(code);
-    });
-});
-
-// Function to validate and apply coupon
-const validateCode = async (code) => {
-    try {
-        const response = await fetch(`/applyCoupon/${code}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+        couponForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            validateCode(couponCode.value.trim());
         });
 
-        const data = await response.json();
+        // Apply coupon buttons event listeners
+        applyCouponBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const code = btn.getAttribute('data-coupon-code');
+                couponCode.value = code;
+                validateCode(code);
+            });
+        });
 
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Coupon applied successfully!'
-            }).then(() => {
-                appliedCouponCodeInput.value = code;
-                updateCartSummary(data);  // Pass entire data object
-                $('#availableCouponsModal').modal('hide');
-            });
-        } else if (!data.isActive) {
-            window.location.href = '/userLogin';
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message || 'Failed to apply the coupon.'
-            });
-        }
-    } catch (error) {
-        console.error('Error validating coupon code:', error);
-    }
-};
+        // Function to validate and apply coupon
+        const validateCode = async (code) => {
+            try {
+                const response = await fetch(`/applyCoupon/${code}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Coupon applied successfully!'
+                    }).then(() => {
+                        appliedCouponCodeInput.value = code;
+                        updateCartSummary(data);  // Pass entire data object
+                        $('#availableCouponsModal').modal('hide');
+                    });
+                } else if (data.isActive === false) {
+                    window.location.href = '/userLogin';
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to apply the coupon.'
+                    });
+                }
+            } catch (error) {
+                console.error('Error validating coupon code:', error);
+            }
+        };
 
 // Function to update cart summary
 const updateCartSummary = (data) => {
@@ -1283,8 +1283,13 @@ const updateCartSummary = (data) => {
         const cart = cartElement.getAttribute('data-cart');
 
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+
         if (!paymentMethod) {
-            alert('Please select a payment method.');
+            Swal.fire({
+                icon: 'info',
+                title: 'Alert',
+                text: 'Please select a payment method!'
+            })
             return;
         }
 
@@ -1302,7 +1307,7 @@ const updateCartSummary = (data) => {
             paymentMethodId: paymentMethodId,
             couponCode: couponCodeValue
         };
-
+        
         try {
             console.log('Going to fetch the order!');
             const response = await fetch('/createOrder', {
@@ -1313,12 +1318,8 @@ const updateCartSummary = (data) => {
                 body: JSON.stringify(orderData)
             });
             const result = await response.json();
-            console.log('Result: ', result);
-            console.log('Payment Method: ', result.paymentMethod);
-
-            if (!result.isActive) {
-                window.location.href = '/userLogin';
-            } else if (result.success) {
+            
+            if (result.success) {
                 if (result.paymentMethod === 'Razorpay') {
                     console.log('Initiating Razorpay payment...');
 
@@ -1365,13 +1366,26 @@ const updateCartSummary = (data) => {
 
                     console.log('Opening Razorpay...');
                     rzp1.open();
+                } else if (result.paymentType === 'Wallet') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Wallet payment is successful'
+                    }).then(() => {
+                        window.location.href = `/orderConfirmation/${result.orderId}?discount=${result.totalDiscountAmount}`;
+                    });
                 } else {
                     console.log('Non-Razorpay payment method. Redirecting...');
                     window.location.href = `/orderConfirmation/${result.orderId}?discount=${result.totalDiscountAmount}`;
                 }
+            } else if (result.isActive === false) {
+                window.location.href = '/userLogin';
             } else {
-                console.log('Order creation failed. Message: ', result.message);
-                alert(result.message);
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Alert',
+                    text: result.message
+                })
             }
         } catch (error) {
             console.error('Error creating order:', error);

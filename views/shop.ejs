@@ -960,7 +960,7 @@
                     }).then(() => {
                         window.location.reload();
                     });
-                } else if (!data.isActive) {
+                } else if (data.isActive === false) {
                     window.location.href = '/userLogin';
                 } else if (!data.success) {
                     Swal.fire({

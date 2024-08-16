@@ -148,23 +148,51 @@
                                                     <span id="username"><%= locals.user ? user.fname + ' ' + user.lname : '' %></span>
                                                 </div>
                                                 <div class="wallet-balance">
-                                                    ₹<span id="balance"><%= locals.wallet ? wallet.balance : '0' %></span>
+                                                    <span id="balance" class="text-success">₹<%= locals.wallet ? wallet.balance.toFixed(2) : '0' %></span>
                                                 </div>
                                             </div>
                                             <div class="wallet-details">
-                                                <p>Account Number: <span id="account-number">1234567890</span></p>
-                                                <p>Last Transaction: <span><%= lastTransaction.date.toISOString().split('T')[0] + ', ' %></span>
-                                                    <span class="<%= lastTransaction.type === 'credit' ? 'text-success' : 'text-danger' %>" id="last-transaction"><%= '₹' + lastTransaction.amount %></span>
-                                                    <span id="last-transaction"><%= lastTransaction.type === 'credit' ? '(Cr)' : '(Db)' %></span>
-                                                </p>
+                                                <p>Account Number: <span id="account-number">8345448890</span></p>
+                                                <% if (locals.lastTransaction) { %>
+                                                    <p>Last Transaction: <span><%= lastTransaction.date.toISOString().split('T')[0] + ', ' %></span>
+                                                        <span class="<%= lastTransaction.type === 'credit' ? 'text-success' : 'text-danger' %>" id="last-transaction"><%= '₹' + lastTransaction.amount %></span>
+                                                        <span id="last-transaction"><%= lastTransaction.type === 'credit' ? '(Cr)' : '(Db)' %></span>
+                                                    </p>
+                                                <% } else { %>
+                                                    <p class="text-danger"><strong>No transactions yet!</strong></p>
+                                                <% } %>
                                             </div>
                                             <div class="wallet-actions my-5">
-                                                <button class="btn btn-primary btn-sm flex-grow-1">Add Fund</button>
+                                                <button class="btn btn-primary btn-sm flex-grow-1" data-toggle="modal" data-target="#addFundModal">Add Fund</button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Add fund Modal -->
+                            <div class="modal fade" id="addFundModal" tabindex="-1" role="dialog" aria-labelledby="addFundModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="addFundModalLabel">Add fund</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="addFundForm" class="form-vertical p-5">
+                                                <div class="form-group">
+                                                    <label for="addAmount" class="errorMsg">Enter the amount</label>
+                                                    <input id="addAmount" name="addAmount" class="form-control" type="text">
+                                                </div>
+                                                <button type="submit" id="addFundBtn" class="btn btn-primary">Add</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Responsive Transactions Table -->
                             <h5 class="font-weight-bold">Transaction History</h5>
                             <table class="table table-striped mx-1 table-bordered table-rounded">
@@ -177,14 +205,18 @@
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  <% wallet.transactions.forEach(transaction => { %>
-                                    <tr>
-                                      <td class="text-center"><%= transaction.transactionId %></td>
-                                      <td class="text-center"><%= transaction.date.toISOString().split('T')[0] %></td>
-                                      <td class="text-center"><%= transaction.type %></td>
-                                      <td class="text-center <%= transaction.type === 'credit' ? 'text-success' : 'text-danger' %>">₹<%= transaction.amount %></td>
-                                    </tr>
-                                  <% }); %>
+                                  <% if (wallet.transactions.length > 0) { %>
+                                    <% wallet.transactions.forEach(transaction => { %>
+                                        <tr>
+                                          <td class="text-center"><%= transaction.transactionId %></td>
+                                          <td class="text-center"><%= transaction.date.toISOString().split('T')[0] %></td>
+                                          <td class="text-center"><%= transaction.type %></td>
+                                          <td class="text-center <%= transaction.type === 'credit' ? 'text-success' : 'text-danger' %>">₹<%= transaction.amount %></td>
+                                        </tr>
+                                      <% }); %>
+                                  <% } else { %>
+                                    <p class="text-danger p-3">No transactions!</p>
+                                  <% } %>
                                 </tbody>
                               </table>
                         </div>
@@ -194,6 +226,198 @@
         </div>
     </div>
 
+    <script>
+        const form = document.getElementById('addFundForm');
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            validateForm();
+        });
+
+        const setError = (element, message) => {
+          const formGroup = element.parentElement;
+          const errorDisplay = formGroup.querySelector('.errorMsg');
+      
+
+          errorDisplay.innerText = message;
+          element.classList.add('error');
+          errorDisplay.classList.add('error');
+          element.classList.remove('success');
+          errorDisplay.classList.remove('success');
+
+          }; 
+
+          const setSuccess = (element, message) => {
+              const formGroup = element.parentElement;
+              const errorDisplay = formGroup.querySelector('.errorMsg');
+
+          errorDisplay.innerText = message;
+          element.classList.add('success');
+          errorDisplay.classList.add('success');
+          element.classList.remove('error');
+          errorDisplay.classList.remove('error');
+
+          };
+
+          const validateForm = async () => {
+            const amount = document.getElementById('addAmount');
+            const amountValue = amount.value.trim();
+
+            let isValid = true;
+
+            try {
+                if(!amountValue) {
+                    setError(amount, "*Please enter the amount");
+                    isValid = false;
+                } else if (amountValue < 500) {
+                    setError(amount, "*You have to add minimum 500");
+                    isValid = false;
+                } else if (amountValue > 50000) {
+                    setError(amount, "*You cannot add more than 50000");
+                    isValid = false;
+                } else if (isNaN(amountValue)) {
+                    setError(amount, "*Enter a valid amount");
+                    isValid = false;
+                }
+                else {
+                    setSuccess(amount, "Discount");
+                }
+
+                if(!isValid) {
+                return;
+                }
+
+                const response = await fetch(`/addFund/${amountValue}`, {
+                    method: "POST",
+                        headers: {
+                            'content-type': 'application/json'
+                        },
+                        // body: JSON.stringify({
+                        // })
+                    });
+
+                    const data = await response.json();
+
+                    console.log('Initiating Razorpay payment...');
+
+                    const transactions = data.transactions;
+
+                    if (data.success) {
+                        const options = {
+                            key: data.key,
+                            amount: transactions.amount * 100,
+                            currency: 'INR',
+                            name: 'Wingcart',
+                            description: 'Test Transaction',
+                            image: 'https://your-logo-url.com',
+                            order_id: data.razorpayOrderId,
+                            handler: async function (response) {
+                                console.log('Payment successful. Redirecting...');
+
+                                try {
+                                    const successResponse = await fetch(`/addFundUpdate`, {
+                                        method: "PATCH",
+                                        headers: {
+                                            'content-type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            transactions: data.transactions
+                                        })
+                                    });
+
+                                    const successData = await successResponse.json();
+
+                                    if (successData.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Success',
+                                            text: 'Amount added successfully!',
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Error',
+                                            text: 'Error adding amount to the wallet!',
+                                        });
+                                    }
+                                } catch (error) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: 'Failed to update wallet!',
+                                    });
+                                    console.error('Error updating wallet:', error);
+                                }
+                            },
+
+                                prefill: {
+                                    name: data.user.name,
+                                    email: data.user.email,
+                                    contact: data.user.phone
+                                },
+                                notes: {
+                                    address: ''
+                                },
+                                theme: {
+                                    color: '#3399cc'
+                                }
+                        };
+
+                        const rzp1 = new Razorpay(options);
+
+                        // Payment failure
+                        rzp1.on('payment.failed', function (response) {
+                            console.error('Payment failed:', response.error);
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Alert',
+                                text: 'Payment has failed. Please try again!'
+                            })
+                            .then(() => {
+                                location.reload();
+                            })
+
+                        });
+
+                        console.log('Opening Razorpay...');
+                        rzp1.open();
+                    }
+
+                    // if (data.success) {
+                    //     Swal.fire({
+                    //         icon: 'success',
+                    //         title: 'Success',
+                    //         text: 'Amount added successfully!',
+                    //     }).then(() => {
+                    //         location.reload();
+                    //     });
+                    // } else if(data.isActive === false) {
+                    //     window.location.href = '/userLogin'
+                    // } else {
+                    //     Swal.fire({
+                    //         icon: 'error',
+                    //         title: 'Error',
+                    //         text: 'Error adding amount to the wallet!',
+                    //     });
+                    // }
+            } catch (error) {
+                console.log('Error adding fund', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error adding amount!',
+                });
+            }
+        }
+
+    </script>
+
+    <!-- Razorpay -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>

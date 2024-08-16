@@ -73,6 +73,8 @@ adminRouter.get('/salesReport', adminAuth, adminController.toSalesReport);
 adminRouter.post('/generateSalesReport', adminController.generateSalesReport);
 adminRouter.get('/downloadSalesReport', adminAuth, adminController.downloadSalesReport);
 
+
+
 // adminRouter.use((req, res, next) => {
 //   res.status(404).render('404');
 // });

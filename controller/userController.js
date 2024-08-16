@@ -23,7 +23,7 @@ const fs = require('fs');
 
 const downloadInvoice = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const { orderId } = req.body;
 
         const order = await Order.findById(orderId).populate('products.product');
@@ -90,7 +90,52 @@ const razorpay = new Razorpay({
 
 const userHome = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
+        console.log('User: ', user);
+        
+        if (user) {
+            let wishlist = await Wishlist.findOne({ user: user._id });
+            //Create a wishlist for the user if not already
+            if (!wishlist) {
+                wishlist = new Wishlist({
+                    user: user._id,
+                    products: []
+                });
+                await wishlist.save();
+            }
+
+            let wallet  = await Wallet.findOne({ user: user._id });
+            //Create a wallet for the user if not already
+            if (!wallet) {
+                const newWallet = new Wallet({
+                    user: user._id,
+                    balance: 0,
+                    transactions: []
+                });
+
+                await newWallet.save();
+
+                wallet = await Wallet.findOne({ user: user._id });
+            }
+
+            const paymentMethod = await Payment.find({ user: user._id });
+
+            const paymentTypes = ['Cash on delivery', 'Razorpay', 'Wallet'];
+
+            for (let type of paymentTypes) {
+                const existingMethod = paymentMethod.find(method => method.type === type);
+
+                if (!existingMethod) {
+                    const newMethod = new Payment({
+                        user: user._id,
+                        type: type,
+                        details: null
+                    });
+                    await newMethod.save();
+                }
+            }
+        }
+
         const products = await Product.find({ isListed: true })
             .populate({
                 path: 'category',
@@ -109,10 +154,10 @@ const userHome = async (req, res) => {
             { $sort: { count: -1 } },
             { $limit: 5 }
         ]);
-        const mostPurchasedProducts = await Product.find({ 
+        const mostPurchasedProducts = await Product.find({
             _id: { $in: mostPurchased.map(item => item._id) }
         });
-
+        
         const categories = await Category.find({});
         const menCategory = await Category.findOne({ name: 'Men' });
         const womenCategory = await Category.findOne({ name: 'Women' });
@@ -189,7 +234,7 @@ const verifyLogin = async (req, res) => {
                 res.status(200).json({ message: "*Invalid email or password!"});
                 return;
             }
-            req.session.user = user;
+            req.session.user = user._id;
             res.status(200).json({success: true});
         }
     }
@@ -357,7 +402,7 @@ const toshop = async (req, res) => {
     try {
         const sortBy = req.query.sortby || 'featured';
         const searchVal = req.query.searchVal || '';
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const offers = await Offer.find().populate('item');
 
         // Get listed categories and brands
@@ -544,7 +589,7 @@ const toshop = async (req, res) => {
 
 const toProdDetails = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const product = await Product.findOne({_id: req.params.product_id})
             .populate('category')
             .populate('offers');
@@ -562,6 +607,18 @@ const toProdDetails = async (req, res) => {
         const recomProducts = await Product.find({ category, _id: { $ne: req.params.product_id } });
 
         let subtotal = 0;
+
+        if (user) {
+            const wishlist = await Wishlist.findOne({ user: user._id });
+            const wishProductIds = wishlist.products.map(item => item.product.toString());
+
+            if (wishProductIds.includes(product._id.toString())) {
+                product.wished = true;
+            } else {
+                product.wished = false;
+            }
+            console.log(product.wished);
+        }
 
         if (!user) {
             res.render('prodDetails', { 
@@ -595,7 +652,7 @@ const toProdDetails = async (req, res) => {
 
 const toUserProfile = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
         res.render('userProfile', {user, userId});
     }
@@ -607,7 +664,7 @@ const toUserProfile = async (req, res) => {
 
 const toEditProfile = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
         res.render('userEditProfile', {user, userId});
     }
@@ -621,7 +678,7 @@ const editProfile = async (req, res) => {
     try {
         const { fname, lname, age, phone, email } = req.body;
         console.log(email)
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
 
         if (!user) {
@@ -659,7 +716,7 @@ const editProfile = async (req, res) => {
 
 const toChangePass = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
         res.render('userChangePassword', { user, userId });
     }
@@ -671,7 +728,7 @@ const toChangePass = async (req, res) => {
 
 const verifyChangePass = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const { password, newPassword } = req.body;
         const user = await User.findOne({ _id: userId });
         const comparePass = await bcrypt.compare(password, user.password);
@@ -697,7 +754,7 @@ const verifyChangePass = async (req, res) => {
 
 const toAddr = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
         const addresses = await Address.find({user: userId});
         console.log(addresses);
@@ -711,7 +768,7 @@ const toAddr = async (req, res) => {
 
 const toAddAddr = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
         res.render('userAddAddress', {user, userId});
     }
@@ -723,7 +780,7 @@ const toAddAddr = async (req, res) => {
 
 const verifyAddAddr = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const { fname, lname, country, city, state, pincode, phone } = req.body;
 
         const newAddress = new Address ({
@@ -762,7 +819,7 @@ const deleteAddress = async (req, res) => {
 
 const toEditAddress = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const addressId = req.params.address_id;
         const address = await Address.findById(addressId);
         const user = await User.findById(userId);
@@ -776,7 +833,7 @@ const toEditAddress = async (req, res) => {
 
 const verifyEditAddress = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const addressId = req.params.address_id;
         const { fname, lname, country, city, state, pincode, phone } = req.body;
 
@@ -793,7 +850,7 @@ const verifyEditAddress = async (req, res) => {
 
 const toCart = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
         const cart = await Cart.findOne({ user: userId }).populate('products.product');
 
@@ -875,7 +932,7 @@ const toCart = async (req, res) => {
 const addToCart = async (req, res) => {
     try {
         console.log('Request received:', req.body);
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const { productId, quantity } = req.body;
 
         if (!user || user.isBlocked) {
@@ -906,7 +963,7 @@ const addToCart = async (req, res) => {
 
 const deleteCartItem = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const productId = req.params.product_id;
         const cart = await Cart.findOne({user: userId});
         
@@ -929,7 +986,7 @@ const deleteCartItem = async (req, res) => {
 const updateCart = async (req, res) => {
     try {
         const { productId, quantity } = req.body;
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         
         const cart = await Cart.findOne({ user: userId }).populate('products.product');
 
@@ -980,7 +1037,7 @@ const updateCart = async (req, res) => {
 
 const toCheckout = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
         const cart = await Cart.findOne({ user: userId }).populate({
             path: 'products.product',
@@ -1000,15 +1057,6 @@ const toCheckout = async (req, res) => {
 
         const coupons = await Coupon.find({});
         let paymentMethod = await Payment.find({ user: userId });
-
-        if (paymentMethod.length === 0) {
-            const newMethod = new Payment({
-                user: user._id,
-                type: 'Cash on delivery',
-                details: null
-            });
-            await newMethod.save();
-        }
 
         paymentMethod = await Payment.find({ user: userId });
 
@@ -1053,6 +1101,8 @@ const toCheckout = async (req, res) => {
             const shipping = subtotal < 500 ? 40 : 0;
             const total = subtotal + shipping;
 
+            const wallet = await Wallet.findOne({ user: user._id });
+
             res.render('checkout', {
                 user,
                 userId,
@@ -1063,9 +1113,10 @@ const toCheckout = async (req, res) => {
                 coupons,
                 addresses,
                 paymentMethod,
-                subtotal,  // Pass subtotal to the template
-                totalOfferDiscount,  // Pass totalOfferDiscount to the template
-                totalAmount: total  // Pass totalAmount to the template
+                subtotal,
+                totalOfferDiscount,
+                totalAmount: total,
+                wallet
             });
         } else {
             res.render('checkout', {
@@ -1137,7 +1188,7 @@ const updateProductQuantities = async (orderId) => {
 
 const createOrder = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const { addressId, paymentMethodId, couponCode } = req.body;
         
         const paymentMethod = await Payment.findById(paymentMethodId);
@@ -1250,15 +1301,32 @@ const createOrder = async (req, res) => {
 
         const gst = subtotal * 0.18;
         subtotal -= couponDiscount;
-        const shipping = subtotal < 500 ? 40 : 0;
+        const shipping = subtotal < 500 ? 40 : 0; 
         let totalAmount = subtotal + shipping;
 
         if (totalAmount > 1000 && paymentMethod.type === 'Cash on delivery') {
             return res.json({ message: 'Cash on delivery is applicable only for orders less than Rs. 1000!' });
         }
 
-        console.log('totalAmount: ', totalAmount);
-        
+        if (paymentMethod.type === 'Wallet') {
+            const wallet = await Wallet.findOne({ user: user._id });
+            if (wallet.balance < totalAmount) {
+                return res.json({ message: 'Not enough balance in your wallet!' });
+            }
+
+            const transactionId = generateTransactionId();
+
+            const transactions = {
+                transactionId: transactionId,
+                amount: totalAmount,
+                date: new Date(),
+                type: 'debit'
+            }
+
+            wallet.balance -= totalAmount;
+            wallet.transactions.push(transactions);
+            await wallet.save();
+        }
 
         const paymentStatus = 'Completed';
 
@@ -1321,7 +1389,7 @@ const createOrder = async (req, res) => {
         await Cart.deleteOne({ user: userId });
         updateProductQuantities(createdOrder._id);
 
-        res.status(200).json({ success: 'Order placed successfully', orderId, totalDiscountAmount });
+        res.status(200).json({ success: 'Order placed successfully', orderId, totalDiscountAmount, paymentType: paymentMethod.type });
     } catch (err) {
         console.error('Error creating order', err);
         res.status(500).send('Internal server error');
@@ -1330,7 +1398,7 @@ const createOrder = async (req, res) => {
 
 const retryPayment = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const orderId = req.body.orderId;
         const order = await Order.findOne({ orderId: orderId });
         const totalAmount = order.totalAmount;
@@ -1363,7 +1431,7 @@ const retryPayment = async (req, res) => {
 
 const toOrderConf = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const paymentStatus = req.query.payment;
         console.log('paymentStatus: ', paymentStatus);
         
@@ -1416,7 +1484,7 @@ const toOrderConf = async (req, res) => {
 
 const toOrderHistory = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const orders = await Order.find({ user: user._id }).sort({ orderDate: -1 });
 
         // //Update payment status
@@ -1450,7 +1518,7 @@ const updatePaymentStatus = async (req, res) => {
 
 const toOrderDetails = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const orderId = req.params.order_id;
         const order = await Order.findById(orderId).populate('products.product');
 
@@ -1487,7 +1555,7 @@ const cancelProduct = async (req, res) => {
 
         const { orderId, productId } = req.params;
         const reason = req.body.reason;
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
 
     try {
         const order = await Order.findById(orderId).populate('payment');
@@ -1556,7 +1624,7 @@ const cancelProduct = async (req, res) => {
 
 const returnProduct = async (req, res) => {
     
-    const user = req.session.user;
+    const user = await User.findById(req.session.user);
     const { orderId, productId } = req.params;
     const reason = req.body.reason;
 
@@ -1701,7 +1769,7 @@ const verifyResetPass = async (req, res) => {
 const applyCoupon = async (req, res) => {
     try {
         const code = req.params.couponCode;
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const cart = await Cart.findOne({ user: user._id }).populate({
             path: 'products.product',
             populate: {
@@ -1796,19 +1864,11 @@ const applyCoupon = async (req, res) => {
 
 const toWishlist = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const user = await User.findById(userId);
 
         // Retrieve the user's wishlist and populate products
         let wishlist = await Wishlist.findOne({ user: userId }).populate('products.product');
-
-        if (!wishlist) {
-            wishlist = new Wishlist({
-                user: userId,
-                products: []
-            });
-            await wishlist.save();
-        }
 
         const cart = await Cart.findOne({ user: userId }).populate('products.product');
         let subtotal = 0;
@@ -1853,7 +1913,7 @@ const toWishlist = async (req, res) => {
 
 const addToWishlist = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const productId = req.params.product_id;
 
         const cart = await Cart.findOne({ user: user._id });
@@ -1889,7 +1949,7 @@ const addToWishlist = async (req, res) => {
 
 const removeFromWishlist = async (req, res) => {
     try {
-        const userId = req.session.user._id;
+        const userId = req.session.user;
         const productId = req.params.product_id;
 
         const wishlist = await Wishlist.findOne({ user: userId });
@@ -1911,14 +1971,83 @@ const removeFromWishlist = async (req, res) => {
 
 const toWallet = async (req, res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(req.session.user);
         const wallet = await Wallet.findOne({ user: user._id });
 
+        if (wallet.transactions.length === 0) {
+            return res.render('wallet', { user, wallet });
+        }
+        
         wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         const lastTransaction = wallet.transactions[0];
         
         res.render('wallet', { user, wallet, lastTransaction });
+    } catch (err) {
+        console.error('Error fetching wallet: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const addFund = async (req, res) => {
+    try {
+        const user = await User.findById(req.session.user);
+        const wallet = await Wallet.findOne({ user: user._id });
+        const amount = parseFloat(req.params.amount);
+        console.log('Wallet amount: ', amount);
+        
+        const transactionId = generateTransactionId();
+
+        const transactions = {
+            transactionId: transactionId,
+            amount: amount,
+            date: new Date(),
+            type: 'credit'
+        }
+
+        const razorpayOrder = await razorpay.orders.create({
+            amount: amount * 100,
+            currency: 'INR',
+            receipt: transactionId,
+            payment_capture: 1
+        });
+
+        return res.status(200).json({
+            success: true,
+            transactions: transactions,
+            razorpayOrderId: razorpayOrder.id,
+            key: process.env.KEY_ID,
+            user: {
+                name: user.fname,
+                email: user.email,
+                phone: user.phone
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching wallet: ', err);
+        res.status(500).send('Internal server error');
+    }
+}
+
+const addFundUpdate = async (req, res) => {
+    try {
+        const user = await User.findById(req.session.user);
+        const wallet = await Wallet.findOne({ user: user._id });
+        const { transactions } = req.body;
+
+        // const transactions = {
+        //     transactionId: transactionId,
+        //     amount: amount,
+        //     date: new Date(),
+        //     type: 'credit'
+        // }
+
+        wallet.balance += transactions.amount;
+        wallet.transactions.push(transactions);
+        await wallet.save();
+        
+        res.json({ success: true });
+
     } catch (err) {
         console.error('Error fetching wallet: ', err);
         res.status(500).send('Internal server error');
@@ -1972,6 +2101,8 @@ module.exports = {
     addToWishlist,
     removeFromWishlist,
     toWallet,
+    addFund,
+    addFundUpdate,
     retryPayment,
     updatePaymentStatus
 }

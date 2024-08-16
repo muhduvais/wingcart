@@ -22,6 +22,9 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="/static/css/skins/skin-demo-2.css">
     <link rel="stylesheet" href="/static/css/demos/demo-2.css">
+    <!-- Font-awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <style>
     .card-text {
         display: -webkit-box;
@@ -324,9 +327,17 @@
                                             <button type="submit" class="btn btn-primary btn-block w-100" 
                                             <% if (product.stock === 0) { %>disabled<% } %>>Add to Cart</button>
                                         </form>
-                            
+
                                         <div class="details-action-wrapper">
-                                            <a class="btn-product btn-wishlist" title="Wishlist"><span>Add to Wishlist</span></a>
+                                            <form class="<%= product.wished === true ? '' : 'add-to-whishlist' %>">
+                                                <input type="hidden" class="wishlist-product-id" value="<%= product._id %>">
+                                                <% if (product.wished === true) { %>
+                                                    <a href="/wishlist" class="fa-solid fa-heart" title="Wishlist" style="color: #a6c76c;"><span></span></a>
+                                                    <!-- <a href="/wishlist"><i class="fa-solid fa-heart" style="color: #a6c76c;"></i></a> -->
+                                                <% } else { %>
+                                                    <button type="submit" class="btn-product btn-wishlist" style="border: none;"><span>Add to wishlist</span></button>
+                                                <% } %>
+                                            </form>
                                         </div><!-- End .details-action-wrapper -->
                                     </div><!-- End .product-details-action -->
                             
@@ -1143,6 +1154,59 @@
                         icon: 'error',
                         title: 'Error',
                         text: 'Failed to add the product.'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An unexpected error occurred. Please try again later.'
+                });
+            }
+        });
+    });
+    </script>
+
+    <script>
+        document.querySelectorAll('.add-to-whishlist').forEach(form => {
+        form.addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const productId = form.querySelector('.wishlist-product-id').value;
+
+            try {
+                const response = await fetch(`/addToWishlist/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Added to wishlist'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else if (data.isActive === false) {
+                    window.location.href = '/userLogin';
+                } else if (!data.success) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Info',
+                        text: data.message
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to add to wishlist.'
                     });
                 }
             } catch (error) {

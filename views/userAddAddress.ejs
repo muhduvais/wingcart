@@ -333,7 +333,7 @@ const isValidPhone = phone => {
                     }).then(() => {
                         window.location.href = '/addressManagement';
                     });
-            } else if (!addressData.isActive) {
+            } else if (addressData.isActive === false) {
                 window.location.href = '/userLogin';
             } else {
                     Swal.fire({

@@ -12,15 +12,22 @@ async (accessToken, refreshToken, profile, done) => {
     try {
         let user = await User.findOne({ googleId: profile.id });
 
+        const splitName = profile.displayName.split(' ');
+        
+
         if (user) {
             user.email = profile.emails[0].value;
-            user.fname = profile.displayName;
+            user.fname = splitName[0];
+            user.lname = splitName[1];
+
+            await user.save();
         }
         else {
             user = new User({
                 googleId: profile.id,
                 email: profile.emails[0].value,
-                fname: profile.displayName,
+                fname: splitName[0],
+                lname: splitName[1]
             });
             await user.save();
         }

@@ -226,7 +226,7 @@
                     }).then(() => {
                         window.location.reload();
                     });
-            } else if (!deleteData.isActive) {
+            } else if (deleteData.isActive === false) {
                 window.location.href = '/userLogin';
             } else {
                     Swal.fire({

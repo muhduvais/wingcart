@@ -730,7 +730,7 @@
                             }).then(() => {
                                 window.location.reload();
                             });
-                        } else if (!result.isActive) {
+                        } else if (result.isActive === false) {
                             window.location.href = '/userLogin';
                         } else {
                             Swal.fire({

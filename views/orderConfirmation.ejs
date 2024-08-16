@@ -645,15 +645,23 @@
 
                         console.log('Opening Razorpay...');
                         rzp1.open();
-                } else if (!result.isActive) {
+                } else if (result.isActive === false) {
                     window.location.href = '/userLogin';
                 } else {
                     console.log('Order creation failed. Message: ', result.message);
-                    alert(result.message);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: result.message
+                    })
                 }
             } catch (error) {
-                console.error('Error creating order:', error);
-                alert('An error occurred while creating the order.');
+                console.error('Error retrying payment:', error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: result.message
+                })
             }
         }
     </script>

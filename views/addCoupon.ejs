@@ -460,8 +460,8 @@
       } else if (discountValue < 1 || discountValue > 100) {
         setError(discount, "*Enter a discount rate between 1-100");
           isValid = false;
-      }else if (isNaN(discountValue)) {
-        setError(discount, "*Please enter a valid discount rate");
+      } else if (isNaN(discountValue)) {
+        setError(discount, "*Enter a valid discount rate");
           isValid = false;
       }
       else {
@@ -479,13 +479,18 @@
       if(!minPurchaseValue) {
           setError(minPurchase, "*Enter the minimum purchase");
           isValid = false;
-      }
-      else {
+      } else if (isNaN(minPurchaseValue) || minPurchaseValue < 0) {
+        setError(minPurchase, "*Enter a valid minimum purchase amount");
+          isValid = false;
+      } else {
           setSuccess(minPurchase, "Minimum Purchase");
       }
 
       if(!maxAmountValue) {
           setError(maxAmount, "*Enter the maximum discount");
+          isValid = false;
+      } else if(isNaN(maxAmountValue) || maxAmountValue < 0) {
+          setError(maxAmount, "*Enter a valid maximum amount");
           isValid = false;
       }
       else {

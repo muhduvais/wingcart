@@ -3,6 +3,8 @@ const userRoutes = express.Router();
 const nocache = require("nocache");
 const userController = require("../controller/userController");
 const userAuth = require("../middlewares/userAuth");
+const passport = require("../model/passport");
+const User = require("../model/usersModel");
 
 userRoutes.use(nocache());
 
@@ -54,6 +56,7 @@ userRoutes.post('/addToCart', userController.addToCart);
 userRoutes.delete('/deleteCartItem/:product_id', userAuth.isUserActiveJ, userController.deleteCartItem);//
 userRoutes.patch('/updateCart', userAuth.isUserActiveJ, userController.updateCart);
 
+//Checkout
 userRoutes.get('/checkout', userAuth.isUserActive, userAuth.isUserBlocked, userController.toCheckout);
 userRoutes.post('/applyCoupon/:couponCode', userAuth.isUserActiveJ, userController.applyCoupon);
 userRoutes.post('/createOrder', userAuth.isUserActiveJ, userController.createOrder);
@@ -62,16 +65,33 @@ userRoutes.get('/orderHistory', userAuth.isUserActive, userAuth.isUserBlocked, u
 userRoutes.get('/orderDetails/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderDetails);
 userRoutes.post('/downloadInvoice', userAuth.isUserActiveJ, userController.downloadInvoice);
 
+//Cancel and return product
 userRoutes.post('/cancelProduct/:orderId/:productId', userAuth.isUserActiveJ, userController.cancelProduct);
 userRoutes.post('/returnProduct/:orderId/:productId', userAuth.isUserActiveJ, userController.returnProduct);
 
+//Wishlist
 userRoutes.get('/wishlist', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWishlist);
 userRoutes.post('/addToWishlist/:product_id', userAuth.isUserActiveJ, userController.addToWishlist);
 userRoutes.delete('/removeFromWishlist/:product_id', userAuth.isUserActiveJ, userController.removeFromWishlist);
 
+//Wallet
 userRoutes.get('/wallet', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWallet);
+userRoutes.post('/addFund/:amount', userAuth.isUserActiveJ, userController.addFund);
+userRoutes.patch('/addFundUpdate', userAuth.isUserActiveJ, userController.addFundUpdate);
 
+//Retry payment
 userRoutes.post('/retryPayment', userAuth.isUserActiveJ, userController.retryPayment);
 userRoutes.patch('/updatePaymentStatus', userAuth.isUserActiveJ, userController.updatePaymentStatus);
+
+// Google auth routes
+userRoutes.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+userRoutes.get('/googleAuth',
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    async (req, res) => {
+        req.session.user = req.session.passport.user;
+        
+        res.redirect("/");
+    }
+);
 
 module.exports = userRoutes;

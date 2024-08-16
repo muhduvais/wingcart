@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateTimer();
 
-    resendBtn.addEventListener('click', () => {
-        fetch('/resendOtp', {
+    resendBtn.addEventListener('click', async () => {
+        await fetch('/resendOtp', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

@@ -282,7 +282,7 @@
                 a.remove();
             } else if (response.status === 404) {
                 const data = await response.json();
-                if (!data.isActive) {
+                if (data.isActive === false) {
                     window.location.href = '/userLogin';
                 } else {
                     console.error('Order not found or other error occurred');
@@ -333,7 +333,7 @@
                         window.location.reload();
                         location.reload();
                     });
-                    } else if (!data.isActive) {
+                    } else if (data.isActive === false) {
                         window.location.href = '/userLogin';
                     } else {
                         Swal.fire({
@@ -394,7 +394,7 @@
                     window.location.reload();
                     location.reload();
                 });
-                } else if (!data.isActive) {
+                } else if (data.isActive === false) {
                     window.location.href = '/userLogin';
                 } else {
                     Swal.fire({
