@@ -236,7 +236,7 @@
 
                 <!-- /////////////// -->
                 <div class="charts my-3" style="width: 100%; ">
-                  <div class="row d-flex align-items-center justify-content-between p-3">
+                  <div class="row d-flex align-items-start justify-content-between p-3">
                     <!-- Doughnut Chart -->
                     <div class="col-md-6" style="width: 500px;">
                       <canvas id="salesReportDoughnut"></canvas>
@@ -362,7 +362,7 @@
         labels: ['Delivered', 'Cancelled', 'Returned'],
         datasets: [{
           data: [<%= delivered %>, <%= cancelled %>, <%= returned %>],
-          backgroundColor: ['#1A2035', '#505775', '#878ca0'],
+          backgroundColor: ['#66BB6A', '#505775', '#878ca0'],
           hoverBackgroundColor: ['#66BB6A', '#EF5350', '#FFD54F']
         }]
       };

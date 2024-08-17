@@ -37,13 +37,16 @@ const downloadInvoice = async (req, res) => {
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
         const shipping = subtotal < 500 ? 40 : 0;
-        const totalAmount = order.totalAmount;
         if (!isNaN(order.coupon)) {
             const couponDiscount = subtotal * order.coupon.discount / 100;
             discount = couponDiscount <= order.coupon.maxAmount ? couponDiscount: order.coupon.maxAmount;
         }
 
         console.log('order.coupon: ', isNaN(order.coupon));
+
+        const totalAmount = products.reduce((acc, item) => {
+            return acc += (item.price * item.quantity);
+        }, 0);
         
         const summary = {
             subtotal: subtotal,
@@ -1282,27 +1285,28 @@ const createOrder = async (req, res) => {
                     validity: couponDoc.validity
                 };
                 couponDiscount = subtotal * coupon.discount / 100;
-                couponDiscount = couponDiscount <= coupon.maxAmount ? couponCode : coupon.maxAmount;
+                couponDiscount = couponDiscount <= coupon.maxAmount ? couponDiscount : coupon.maxAmount;
             }
         }
 
-        //Coupon discount per product
-        console.log('couponDiscount: ', couponDiscount);
-        console.log('cart.products.length: ', cart.products.length);
-        const couponDiscountPerProduct = couponDiscount/cart.products.length;
-        console.log('couponDiscountPerProduct: ', couponDiscountPerProduct);
-
-        //Add the final price to all products
-        for (const item of cart.products) {
-            const finalProdPrice = item.price - couponDiscountPerProduct;
-            console.log('finalProdPrice: ', finalProdPrice);
-            item.finalPrice = finalProdPrice;
-        }
+        const subtotalBeforeCouponDiscount = subtotal;
 
         const gst = subtotal * 0.18;
         subtotal -= couponDiscount;
         const shipping = subtotal < 500 ? 40 : 0; 
         let totalAmount = subtotal + shipping;
+
+        //Add the final price to all products
+        for (const item of orderProducts) {
+            const totalProductPrice = item.price * item.quantity;
+            const proportion = totalProductPrice / subtotalBeforeCouponDiscount;
+            const productDiscount = couponDiscount * proportion;
+            item.finalPrice = parseFloat(item.price - productDiscount.toFixed(2));
+            console.log('totalProductPrice: ', totalProductPrice);
+            console.log('proportion: ', proportion);
+            console.log('productDiscount: ', productDiscount);
+            console.log('item.finalPrice: ', item.finalPrice);
+        }
 
         if (totalAmount > 1000 && paymentMethod.type === 'Cash on delivery') {
             return res.json({ message: 'Cash on delivery is applicable only for orders less than Rs. 1000!' });
@@ -1401,10 +1405,40 @@ const retryPayment = async (req, res) => {
         const user = await User.findById(req.session.user);
         const orderId = req.body.orderId;
         const order = await Order.findOne({ orderId: orderId });
-        const totalAmount = order.totalAmount;
+
+        const subtotal = order.products.reduce((acc, item) => {
+            return acc += item.price * item.quantity;
+        }, 0);
+
+        const pendingSubtotal = order.products.reduce((acc, item) => {
+            if (item.status !== 'cancelled') {
+                acc += item.price * item.quantity;
+            }
+            return acc;
+        }, 0);
+
+        const proportion = pendingSubtotal / subtotal;
+        let productsDiscount = 0;
+
+        console.log('order: ', order);
+        
+        if (order.coupon !== null) {
+            let totalDiscount = subtotal * order.coupon.discount / 100;
+            totalDiscount = isNaN(totalDiscount) ? 0 : totalDiscount;
+            console.log('totalDiscount: ', totalDiscount);
+            productsDiscount = totalDiscount * proportion;
+        }
+
+        const payableAmount = pendingSubtotal - productsDiscount;
+
+        console.log('subtotal: ', subtotal);
+        console.log('pendingSubtotal: ', pendingSubtotal);
+        console.log('proportion: ', proportion);
+        console.log('productsDiscount: ', productsDiscount);
+        console.log('payableAmount: ', payableAmount);
 
         const razorpayOrder = await razorpay.orders.create({
-            amount: parseInt(totalAmount * 100),
+            amount: parseInt(payableAmount * 100),
             currency: 'INR',
             receipt: orderId,
             payment_capture: 1
@@ -1412,7 +1446,7 @@ const retryPayment = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            totalAmount: parseInt(totalAmount * 100),
+            totalAmount: parseInt(payableAmount * 100),
             orderId: orderId,
             razorpayOrderId: razorpayOrder.id,
             key: process.env.KEY_ID,
@@ -1527,7 +1561,7 @@ const toOrderDetails = async (req, res) => {
         }
 
         //Checks if there is products which are delivered
-        const hasDeliveredProduct = order.products.some(product => product.status === 'delivered' || product.status === 'return requested' || product.status === 'return accepted');
+        const hasDeliveredProduct = order.products.some(product => ['delivered', 'return requested', 'return rejected'].includes(product.status));
 
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
@@ -1569,15 +1603,12 @@ const cancelProduct = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Product not found in order' });
         }
 
-        product.status = 'cancelled';
+        const productCancelPrice = product.finalPrice;
+
         product.cancellationDate = Date.now();
         product.cancellationReason = reason;
 
-        const productPurchasePrice = product.price;
-        
-        const totalProductPrice = productPurchasePrice * product.quantity;
-
-        if (order.payment.type === 'Razorpay') {
+        if (order.payment.type !== 'Cash on delivery' && order.paymentStatus !== 'Pending' ) {
             let wallet  = await Wallet.findOne({ user: user._id });
 
             if (!wallet) {
@@ -1596,17 +1627,19 @@ const cancelProduct = async (req, res) => {
             
 
             const transactions = {
-                amount: totalProductPrice,
+                amount: productCancelPrice,
                 date: new Date(),
                 type: 'credit',
                 transactionId: transactionId
             }
             
-            wallet.balance += totalProductPrice;
+            wallet.balance += productCancelPrice;
             wallet.transactions.push(transactions);
 
             await wallet.save();
         }
+
+        product.status = 'cancelled';
 
         const updateProduct = await Product.findOne({ _id: productId });
 

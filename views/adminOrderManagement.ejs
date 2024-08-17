@@ -301,6 +301,7 @@
                       <th>Total</th>
                       <th>Payment Method</th>
                       <th>Payment Status</th>
+                      <th>Order Status</th>
                       <th></th>
                       <th></th>
                     </tr>
@@ -315,6 +316,7 @@
                               <td>₹<%= order.totalAmount.toFixed(2) %></td>
                               <td><%= order.payment.type %></td>
                               <td class="<%= order.paymentStatus === 'Pending' ? 'text-danger' : 'text-success' %>"><%= order.paymentStatus %></td>
+                              <td class="<%= order.status === 'Pending' ? 'text-danger' : 'text-success' %>"><%= order.status %></td>
                               <td><th><a href="/admin/orderDetails/<%= order._id %>"><button class="btn btn-primary">Details</button></a></th></td>
                             </tr>
                           <% }) %>

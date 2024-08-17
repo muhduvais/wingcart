@@ -820,6 +820,17 @@ const toOrderManagement = async (req, res) => {
         // .skip(skip)
         // .limit(ITEMS_PER_PAGE);
 
+        orders.forEach((order) => {
+
+            const pendingOrder = order.products.forEach(item => ['pending', 'dispatched'].includes(item.status))
+
+            if (!pendingOrder) {
+                order.status = 'Completed'
+            } else {
+                order.status = 'Pending'
+            }
+        })
+
         const totalOrders = await User.countDocuments(query) - 1;
 
         const totalPages = Math.ceil(totalOrders / ITEMS_PER_PAGE);
