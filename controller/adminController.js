@@ -103,10 +103,10 @@ const toAdminDash = async (req, res) => {
         const admin = req.session.admin;
         const users = await User.find();
 
-        // Delivered, Returned, and Cancelled Counts (Same as before)
+        // Delivered, Returned, and Cancelled Counts
         const deliveredCount = await Order.aggregate([
             { $unwind: "$products" },
-            { $match: { "products.status": { $in: ["delivered", "return requested"] } } },
+            { $match: { "products.status": { $in: ["delivered", "return requested", 'return rejected'] } } },
             { $count: "deliveredCount" }
         ]);
 
@@ -159,7 +159,7 @@ const toAdminDash = async (req, res) => {
                     orderDate: {
                         $gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
                     },
-                    "products.status": "delivered"
+                    "products.status": {$in: ["delivered","return rejected"]}
                 }
             },
             { $count: "yearlyCount" }
@@ -820,14 +820,19 @@ const toOrderManagement = async (req, res) => {
         // .skip(skip)
         // .limit(ITEMS_PER_PAGE);
 
+        console.log('Orders.length: ', orders.length);
+        
+
         orders.forEach((order) => {
 
-            const pendingOrder = order.products.forEach(item => ['pending', 'dispatched'].includes(item.status))
+            const pendingOrder = order.products.filter(item => ['pending', 'dispatched', 'return requested'].includes(item.status))
+            console.log('Pending Order: ', pendingOrder);
+            
 
-            if (!pendingOrder) {
-                order.status = 'Completed'
-            } else {
+            if (pendingOrder.length > 0) {
                 order.status = 'Pending'
+            } else {
+                order.status = 'Completed'
             }
         })
 
@@ -893,7 +898,7 @@ const updateOrderStatus = async (req, res) => {
         const { orderId, productId } = req.params;
         const { status } = req.body;
 
-        const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId).populate('payment');
 
         const product = order.products.find(item => item.product.toString() === productId);
 
@@ -943,6 +948,15 @@ const updateOrderStatus = async (req, res) => {
         if (statusOrder.includes(product.status)) {
             if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
                 product.status = status;
+                if (order.payment.type === 'Cash on delivery') {
+                    const notDelivered = order.products.filter(item => ['pending', 'dispatched'].includes(item.status));
+                    console.log('notDelivered: ', notDelivered);
+                    console.log('notDelivered.length: ', notDelivered.length);
+                    
+                    if (notDelivered.length === 0) {
+                        order.paymentStatus = 'Completed';
+                    }
+                }
                 await order.save();
                 return res.json({ success: true });
             }
