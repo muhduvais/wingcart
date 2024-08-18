@@ -94,122 +94,89 @@ const razorpay = new Razorpay({
 const userHome = async (req, res) => {
     try {
         const user = await User.findById(req.session.user);
-        console.log('User: ', user);
+        if (!user) {
+            console.error('User not found');
+        }
         
-        if (user) {
-            let wishlist = await Wishlist.findOne({ user: user._id });
-            //Create a wishlist for the user if not already
-            if (!wishlist) {
-                wishlist = new Wishlist({
-                    user: user._id,
-                    products: []
-                });
-                await wishlist.save();
-            }
+        let wishlist = await Wishlist.findOne({ user: user?._id });
+        if (!wishlist && user) {
+            wishlist = new Wishlist({ user: user._id, products: [] });
+            await wishlist.save();
+        }
 
-            let wallet  = await Wallet.findOne({ user: user._id });
-            //Create a wallet for the user if not already
-            if (!wallet) {
-                const newWallet = new Wallet({
-                    user: user._id,
-                    balance: 0,
-                    transactions: []
-                });
+        let wallet = await Wallet.findOne({ user: user?._id });
+        if (!wallet && user) {
+            wallet = new Wallet({ user: user._id, balance: 0, transactions: [] });
+            await wallet.save();
+        }
 
-                await newWallet.save();
+        const paymentMethod = await Payment.find({ user: user?._id });
+        const paymentTypes = ['Cash on delivery', 'Razorpay', 'Wallet'];
 
-                wallet = await Wallet.findOne({ user: user._id });
-            }
-
-            const paymentMethod = await Payment.find({ user: user._id });
-
-            const paymentTypes = ['Cash on delivery', 'Razorpay', 'Wallet'];
-
-            for (let type of paymentTypes) {
-                const existingMethod = paymentMethod.find(method => method.type === type);
-
-                if (!existingMethod) {
-                    const newMethod = new Payment({
-                        user: user._id,
-                        type: type,
-                        details: null
-                    });
-                    await newMethod.save();
-                }
+        for (let type of paymentTypes) {
+            const existingMethod = paymentMethod.find(method => method.type === type);
+            if (!existingMethod && user) {
+                await new Payment({ user: user._id, type: type, details: null }).save();
             }
         }
 
         const products = await Product.find({ isListed: true })
-            .populate({
-                path: 'category',
-                match: { isListed: true }
-            })
-            .populate({
-                path: 'brand',
-                match: { isListed: true }
-            });
+            .populate('category', null, { isListed: true })
+            .populate('brand', null, { isListed: true });
 
         const filteredProducts = products.filter(product => product.category && product.brand);
         const newArrivals = await Product.find().sort({ addedDate: -1 }).limit(10);
+        
         const mostPurchased = await Order.aggregate([
             { $unwind: '$products' },
             { $group: { _id: '$products.product', count: { $sum: '$products.quantity' } } },
             { $sort: { count: -1 } },
             { $limit: 5 }
         ]);
-        const mostPurchasedProducts = await Product.find({
-            _id: { $in: mostPurchased.map(item => item._id) }
-        });
+        
+        const mostPurchasedProducts = await Product.find({ _id: { $in: mostPurchased.map(item => item._id) } });
         
         const categories = await Category.find({});
         const menCategory = await Category.findOne({ name: 'Men' });
         const womenCategory = await Category.findOne({ name: 'Women' });
+
+        if (!menCategory || !womenCategory) {
+            console.error('Men or Women category not found');
+        }
+
         const mostPurchasedMen = await Product.find({ 
             _id: { $in: mostPurchased.map(item => item._id) },
-            category: menCategory._id
+            category: menCategory?._id
         });
+
         const mostPurchasedWomen = await Product.find({ 
             _id: { $in: mostPurchased.map(item => item._id) },
-            category: womenCategory._id
+            category: womenCategory?._id
         });
 
-        if (!user) {
-            res.render('home' , {
-                products: filteredProducts,
-                newArrivals,
-                mostPurchasedProducts,
-                mostPurchasedMen,
-                mostPurchasedWomen,
-                categories
-            });
-        }
-        else {
+        const response = {
+            products: filteredProducts,
+            newArrivals,
+            mostPurchasedProducts,
+            mostPurchasedMen,
+            mostPurchasedWomen,
+            categories
+        };
 
-            const cart = await Cart.findOne({user: user._id}).populate('products.product');
-            let subtotal = 0;
-
-            if (cart) {
-                subtotal = cart.products.reduce((sum, item) => {
-                return sum + (item.product.price * item.quantity);
-                }, 0);
-            }
-            
-            res.render('home', {
-                user,
-                products: filteredProducts,
-                cart,
-                subtotal,
-                newArrivals,
-                mostPurchasedProducts,
-                mostPurchasedMen,
-                mostPurchasedWomen,
-                categories
-            });
+        if (user) {
+            const cart = await Cart.findOne({ user: user._id }).populate('products.product');
+            response.user = user;
+            response.cart = cart;
+            response.subtotal = cart ? cart.products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) : 0;
         }
+
+        res.render('home', response);
+
     } catch (err) {
-        console.error(err, "Error rendering home");
+        console.error('Error rendering home:', err);
+        res.status(500).send('Internal Server Error');
     }
-}
+};
 
 const userLogin = (req, res) => {
     if (req.session.user) {

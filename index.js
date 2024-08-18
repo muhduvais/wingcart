@@ -48,19 +48,8 @@ app.use((req, res, next) => {
     }
 });
 
-// // Google auth routes
-// app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-// app.get('/googleAuth',
-//     passport.authenticate('google', { failureRedirect: '/login' }),
-//     async (req, res) => {
-//         req.session.user = req.session.passport.user;
-//         res.redirect("/");
-//     }
-// );
-
 //database-connection
-mongoose.connect("mongodb://localhost:27017/WingCart") //env
+mongoose.connect(process.env.MONGO_DB)
 .then(() => console.log("successfully connected to database"))
 .catch((err) => console.log("Error connecting to database"));
 

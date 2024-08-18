@@ -1333,7 +1333,7 @@ const updateCartSummary = (data) => {
                         order_id: result.razorpayOrderId,
                         handler: function (response) {
                             console.log('Payment successful. Redirecting...');
-                            window.location.href = `/orderConfirmation/${result.orderId}?discount=${result.totalDiscountAmount}`;
+                            window.location.href = `/orderConfirmation/${result.orderId}?discount=${result.totalDiscountAmount}&payment=success`;
                         },
                         prefill: {
                             name: result.user.name,
