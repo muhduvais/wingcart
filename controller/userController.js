@@ -1332,7 +1332,11 @@ const createOrder = async (req, res) => {
             await wallet.save();
         }
 
-        const paymentStatus = 'Completed';
+        let paymentStatus = 'Completed';
+
+        if (paymentMethod.type === 'Cash on delivery') {
+            paymentStatus = 'Pending';
+        }
 
         const newOrder = new Order({
             orderId: orderId,
@@ -1474,11 +1478,11 @@ const toOrderConf = async (req, res) => {
         const order = await Order.findOne({ orderId })
             .populate('products.product');
 
-        if (paymentStatus === 'failed') {
-            order.paymentStatus = 'Pending'
+        if (paymentStatus && paymentStatus === 'success') {
+            order.paymentStatus = 'Completed'
             await order.save();
         } else {
-            order.paymentStatus = 'Completed'
+            order.paymentStatus = 'Pending'
             await order.save();
         }
             
@@ -1519,7 +1523,7 @@ const toOrderConf = async (req, res) => {
 const toOrderHistory = async (req, res) => {
     try {
         const user = await User.findById(req.session.user);
-        const orders = await Order.find({ user: user._id }).sort({ orderDate: -1 });
+        const orders = await Order.find({ user: user._id }).populate('payment').sort({ orderDate: -1 });
 
         // //Update payment status
         // const orderId = req.query.orderId;
