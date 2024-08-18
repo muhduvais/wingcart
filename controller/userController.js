@@ -1338,9 +1338,6 @@ const createOrder = async (req, res) => {
             paymentStatus = 'Pending';
         }
 
-        console.log('paymentStatus: ', paymentStatus);
-        
-
         const newOrder = new Order({
             orderId: orderId,
             user: user._id,
