@@ -25,7 +25,7 @@ let transporter = nodemailer.createTransport({
             from: process.env.SMTP_MAIL,
             to: email,
             subject: 'Password Reset',
-            text: `http://localhost:3001/resetForgotPass?token=${token}`
+            text: `http://wingcart.online:3000/resetForgotPass?token=${token}`
         };
 
         await transporter.sendMail(mailOptions);
