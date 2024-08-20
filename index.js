@@ -47,11 +47,11 @@ app.use((req, res, next) => {
         res.status(404).render('user404');
     }
 });
-process.env.MONGO_DB
+
 //database-connection
-mongoose.connect('mongodb://localhost:27017/WingCart')
+mongoose.connect(process.env.MONGO_DB)
 .then(() => console.log("successfully connected to database"))
 .catch((err) => console.log("Error connecting to database"));
 
 const PORT = process.env.PORT || 3000;
-app.listen(3001, () => console.log(`server started listening on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`server started listening on http://localhost:${PORT}`));
