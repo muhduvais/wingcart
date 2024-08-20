@@ -434,7 +434,10 @@
 
           const categoryData = await response.json();
 
-          if(categoryData.success) {
+          if (categoryData.isActive === false) {
+            window.location.href = '/admin/login';
+          }
+          else if(categoryData.success) {
                   window.location.href = "/admin/categoryManagement?message=Category updated successfully...";
           }
           else if(response.ok) {

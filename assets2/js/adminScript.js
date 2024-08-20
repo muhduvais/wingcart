@@ -42,8 +42,14 @@ async function updateBlockStatus(userId, isBlocked) {
       body: JSON.stringify({ userId, isBlocked })
     });
     const data = await response.json();
+
+    console.log('data.isActive: ', data.isActive);
     
-    if (response.ok) {
+    
+    if (data.isActive === false) {
+      window.location.href = '/admin/login';
+    }
+    else if (response.ok) {
       // Sweet Alert
       Swal.fire({
         icon: 'success',
@@ -95,7 +101,11 @@ async function updateListStatus(categoryId, isListed) {
       body: JSON.stringify({ categoryId, isListed })
     });
     const data = await response.json();
-    if (response.ok) {
+
+    if (data.isActive === false) {
+      window.location.href = '/admin/login';
+    }
+    else if (response.ok) {
       Swal.fire({
         icon: 'success',
         title: 'Success',

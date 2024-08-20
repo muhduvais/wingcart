@@ -37,16 +37,22 @@ const downloadInvoice = async (req, res) => {
         const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const gst = subtotal * 0.18;
         const shipping = subtotal < 500 ? 40 : 0;
-        if (!isNaN(order.coupon)) {
-            const couponDiscount = subtotal * order.coupon.discount / 100;
-            discount = couponDiscount <= order.coupon.maxAmount ? couponDiscount: order.coupon.maxAmount;
-        }
+        console.log('order.coupon.discount', order.coupon.discount);
 
-        console.log('order.coupon: ', isNaN(order.coupon));
+        const couponLength = Object.keys(order.coupon).length;
+        console.log('couponLength: ', couponLength);
 
-        const totalAmount = products.reduce((acc, item) => {
+        let totalAmount = products.reduce((acc, item) => {
             return acc += (item.price * item.quantity);
         }, 0);
+        
+        if (couponLength > 0) {
+            const couponDiscount = products.reduce((acc, item) => {
+                return acc += (item.price - item.finalPrice);
+            }, 0);
+            discount = Math.round(couponDiscount);
+            totalAmount -= discount
+        }
         
         const summary = {
             subtotal: subtotal,
@@ -455,14 +461,12 @@ const toshop = async (req, res) => {
             products = [...popularProducts, ...otherProducts].slice(0, limit);
         } else if (sortBy === 'highToLow') {
             products = await Product.find(filter)
-                .sort({ price: -1 })
                 .populate('category')
                 .populate('brand')
                 .skip(skip)
                 .limit(limit);
         } else if (sortBy === 'lowToHigh') {
             products = await Product.find(filter)
-                .sort({ price: 1 })
                 .populate('category')
                 .populate('brand')
                 .skip(skip)
@@ -489,6 +493,23 @@ const toshop = async (req, res) => {
                 .populate('brand')
                 .skip(skip)
                 .limit(limit);
+        }
+
+        // Offer price for each product after applying the best offer
+        products.forEach(product => {
+            const bestOffer = getBestOffer(product, offers);
+            if (bestOffer) {
+                const discount = bestOffer.discount || 0;
+                product.finalPrice = product.price - (product.price * (discount / 100));
+            } else {
+                product.finalPrice = product.price;
+            }
+        });
+
+        if (sortBy === 'highToLow') {
+            products = products.sort((a, b) => b.finalPrice - a.finalPrice);
+        } else if (sortBy === 'lowToHigh') {
+            products = products.sort((a, b) => a.finalPrice - b.finalPrice);
         }
 
         if (user) {
@@ -1490,7 +1511,7 @@ const toOrderConf = async (req, res) => {
 const toOrderHistory = async (req, res) => {
     try {
         const user = await User.findById(req.session.user);
-        const orders = await Order.find({ user: user._id }).populate('payment').sort({ orderDate: -1 });
+        const orders = await Order.find({ user: user._id }).populate('products').populate('payment').sort({ orderDate: -1 });
 
         // //Update payment status
         // const orderId = req.query.orderId;
@@ -1499,6 +1520,18 @@ const toOrderHistory = async (req, res) => {
         //     updateOrder.paymentStatus = 'Completed';
         //     await updateOrder.save();
         // }
+
+        orders.forEach(order => {
+            const isAllCancelled = order.products.reduce((allCancelled, product) => {
+                return allCancelled && product.status === 'cancelled';
+            }, true);
+
+            if (isAllCancelled) {
+                order.isAllCancelled = true;
+            } else {
+                order.isAllCancelled = false;
+            }
+        })
 
         res.render('orderHistory', { user, orders });
     }

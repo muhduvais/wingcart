@@ -859,6 +859,12 @@
               if (!discountValue) {
                   setError(document.getElementById('editOfferDiscount'), "*Please enter the discount rate");
                   isValid = false;
+              } else if (discountValue < 1 || discountValue > 100) {
+                setError(document.getElementById('editOfferDiscount'), "*Enter a discount rate between 1-100");
+                  isValid = false;
+              } else if (isNaN(discountValue)) {
+                setError(document.getElementById('editOfferDiscount'), "*Enter a valid discount rate");
+                  isValid = false;
               } else {
                   setSuccess(document.getElementById('editOfferDiscount'), "Discount");
               }
@@ -880,7 +886,10 @@
       
                       const data = await response.json();
       
-                      if (data.success) {
+                      if (data.isActive === false) {
+                        window.location.href = '/admin/login';
+                      }
+                      else if (data.success) {
                           Swal.fire({
                               icon: 'success',
                               title: 'Success',
@@ -927,7 +936,10 @@
 
               const toggleData = response.json();
       
-              if (response.ok) {
+              if (toggleData.isActive === false) {
+                window.location.href = '/admin/login';
+              }
+              else if (response.ok) {
                 Swal.fire({
                   icon: 'success',
                   title: 'Success',
@@ -965,7 +977,10 @@
 
             const data = await response.json();
 
-            if (data.success) {
+            if (data.isActive === false) {
+                  window.location.href = '/admin/login';
+                }
+            else if (data.success) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Success',
@@ -1050,7 +1065,10 @@
             if(!couponCodeValue) {
                 setError(couponCode, "*Please enter the coupon code");
                 isValid = false;
-            }
+            } else if (/\s/.test(couponCodeValue)) {
+              setError(couponCode, "*Spaces are not allowed in coupon code");
+              isValid = false;
+            } 
             else {
                 setSuccess(couponCode, "Coupon Code");
             }
@@ -1127,7 +1145,10 @@
 
                 const data = await response.json();
 
-                if(data.success) {
+                if (data.isActive === false) {
+                  window.location.href = '/admin/login';
+                }
+                else if(data.success) {
                   const formGroup = couponCode.parentElement;
                   const errorDisplay = formGroup.querySelector('.errorMsg');
 
