@@ -632,6 +632,12 @@
             return regex.test(categoryValue);
         }
 
+        const isValidImageFile = (file) => {
+          const validTypes = ['image/jpeg', 'image/png'];
+          const maxSize = 5 * 1024 * 1024;
+          return validTypes.includes(file.type) && file.size <= maxSize;
+        };
+
 
         async function validateProduct () {
 
@@ -736,6 +742,43 @@
         }
         else {
             setEditProdSuccess(price, "Price");
+        }
+
+        if(!image1Value) {
+            setEditProdError(imageInput1, "*Please select an image");
+            isValid = false;
+        }
+        else if (!isValidImageFile(image1Value)) {
+          setEditProdError(imageInput1, "*Please select a valid image (jpeg/png) under 5 mb");
+          isValid = false;
+        }
+        else {
+            setEditProdSuccess(imageInput1, "Image 1");
+        }
+
+        if(!image2Value) {
+            setEditProdError(imageInput2, "*Please select an image");
+            isValid = false;
+        }
+        else if (!isValidImageFile(image2Value)) {
+          setEditProdError(imageInput2, "*Please select a valid image (jpeg/png) under 5 mb");
+          isValid = false;
+        }
+        else {
+            setEditProdSuccess(imageInput2, "Image 2");
+        }
+
+
+        if(!image3Value) {
+            setEditProdError(imageInput3, "*Please select an image");
+            isValid = false;
+        }
+        else if (!isValidImageFile(image3Value)) {
+          setEditProdError(imageInput3, "*Please select a valid image (jpeg/png) under 5 mb");
+          isValid = false;
+        }
+        else {
+            setEditProdSuccess(imageInput3, "Image 3");
         }
 
         if(!isValid) {
