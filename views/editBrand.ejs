@@ -442,7 +442,10 @@
 
           const brandData = await response.json();
 
-          if(brandData.success) {
+          if (brandData.isActive === false) {
+            window.location.href = '/admin/login';
+          }
+          else if(brandData.success) {
                   window.location.href = "/admin/brandList?message=Brand updated successfully...";
           }
           else if(response.ok) {

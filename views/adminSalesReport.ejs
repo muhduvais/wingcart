@@ -414,6 +414,11 @@
       });
 
       const report = await response.json();
+
+      if (report.isActive === false) {
+        window.location.href = '/admin/login';
+      }
+
       document.getElementById('totalOrders').textContent = report.totalOrders;
       document.getElementById('totalSales').textContent = `₹${report.totalSales.toFixed(2)}`;
       document.getElementById('totalDiscounts').textContent = `₹${report.totalDiscounts.toFixed(2)}`;

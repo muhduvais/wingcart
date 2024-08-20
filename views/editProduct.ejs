@@ -767,7 +767,10 @@
 
             const productData = await response.json();
 
-            if(productData.success) {
+            if (productData.isActive === false) {
+              window.location.href = '/admin/login';
+            }
+            else if(productData.success) {
                     window.location.href = "/admin/productManagement?message=Product added successfully...";
             }
             else if(response.ok) {

@@ -449,7 +449,10 @@
       if(!couponCodeValue) {
           setError(couponCode, "*Please enter the coupon code");
           isValid = false;
-      } 
+      } else if (/\s/.test(couponCodeValue)) {
+          setError(couponCode, "*Spaces are not allowed in coupon code");
+          isValid = false;
+      }
       else {
           setSuccess(couponCode, "Coupon Code");
       }
@@ -526,7 +529,10 @@
 
           const data = await response.json();
 
-          if(data.success) {
+          if (data.isActive === false) {
+            window.location.href = '/admin/login';
+          }
+          else if(data.success) {
             const formGroup = couponCode.parentElement;
             const errorDisplay = formGroup.querySelector('.errorMsg');
 

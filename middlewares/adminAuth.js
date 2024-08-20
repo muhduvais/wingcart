@@ -7,4 +7,16 @@ const isAdminActive = (req, res, next) => {
     }
 }
 
-module.exports = isAdminActive;
+const isAdminActiveJ = (req, res, next) => {
+    if(req.session.admin) {
+        next();
+    }
+    else {
+        res.json({ isActive: false });
+    }
+}
+
+module.exports = { 
+    isAdminActive,
+    isAdminActiveJ
+};

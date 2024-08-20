@@ -803,7 +803,7 @@ const toOrderManagement = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const search = req.query.search || '';
-        const skip = (page - 1) * ITEMS_PER_PAGE;
+        const skip = (page - 1) * 10;
 
         // const orders = await Order.find({}).populate('payment');
 
@@ -817,8 +817,8 @@ const toOrderManagement = async (req, res) => {
         const orders = await Order.find(query).sort({ orderDate: -1 })
         .populate('user')
         .populate('payment')
-        // .skip(skip)
-        // .limit(ITEMS_PER_PAGE);
+        .skip(skip)
+        .limit(10);
 
         console.log('Orders.length: ', orders.length);
         
@@ -836,12 +836,13 @@ const toOrderManagement = async (req, res) => {
             }
         })
 
-        const totalOrders = await User.countDocuments(query) - 1;
+        const totalOrders = await Order.countDocuments(query);
 
-        const totalPages = Math.ceil(totalOrders / ITEMS_PER_PAGE);
+        const totalPages = Math.ceil(totalOrders / 10);
 
         res.render('adminOrderManagement', { 
             orders,
+            totalOrders,
             pagination: {
                 currentPage: page,
                 pages: totalPages
@@ -926,7 +927,7 @@ const updateOrderStatus = async (req, res) => {
             const transactionId = generateTransactionId();
 
             const transactions = {
-                amount: totalProductPrice,
+                amount: totalProductPrice.toFixed(2),
                 date: new Date(),
                 type: 'credit',
                 transactionId: transactionId

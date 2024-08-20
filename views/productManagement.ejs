@@ -429,7 +429,11 @@ async function updateProdListStatus(productId, isListed) {
       body: JSON.stringify({ productId, isListed })
     });
     const data = await response.json();
-    if (response.ok) {
+   
+    if (data.isActive === false) {
+      window.location.href = '/admin/login';
+    }
+    else if (response.ok) {
       Swal.fire({
         icon: 'success',
         title: 'Success',

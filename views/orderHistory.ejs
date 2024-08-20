@@ -144,7 +144,7 @@
                                                                     Total Amount: <strong>₹<%= order.totalAmount.toFixed(2) %></strong><br>
                                                                     Order Date: <%= order.orderDate.toDateString() %><br>
                                                                 </div>
-                                                                <% if (order.payment.type === 'Razorpay' && order.paymentStatus === 'Pending') { %>
+                                                                <% if (order.payment.type === 'Razorpay' && order.paymentStatus === 'Pending' && !order.isAllCancelled) { %>
                                                                     <button type="button" class="badge badge-danger retryBtn" data-order-id="<%= order.orderId %>" style="padding: 10px; border: none;"><strong>Payment Pending</strong></span><i class="fa-solid fa-rotate-right px-2"></i></button>
                                                                 <% } %>
                                                             </div>

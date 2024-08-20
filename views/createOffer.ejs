@@ -505,7 +505,10 @@
 
           const data = await response.json();
 
-          if(data.success) {
+          if (data.isActive === false) {
+            window.location.href = '/admin/login';
+          }
+          else if(data.success) {
             Swal.fire({
               icon: 'success',
               title: 'Success',

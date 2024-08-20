@@ -259,12 +259,11 @@
                                     <div class="row">
                                         <figure class="product-main-image">
                                             <img id="zoom-main-image" src="/assets2/img/<%= product.images[0] %>" data-zoom-image="/assets2/img/<%= product.images[0] %>" alt="product image">
-                            
                                             <a href="#" id="btn-product-gallery" class="btn-product-gallery">
                                                 <i class="icon-arrows"></i>
                                             </a>
                                         </figure><!-- End .product-main-image -->
-                            
+                    
                                         <div id="zoom-image-gallery" class="product-image-gallery">
                                             <% product.images.forEach((image, index) => { %>
                                             <a class="gallery-item <%= index === 0 ? 'active' : '' %>" href="#" 
@@ -277,18 +276,18 @@
                                     </div><!-- End .row -->
                                 </div><!-- End .product-gallery -->
                             </div><!-- End .col-md-6 -->
-                            
+                    
                             <div class="col-md-6">
                                 <div class="product-details">
                                     <h1 class="product-title"><%= product.name %></h1><!-- End .product-title -->
-                            
+                    
                                     <div class="ratings-container">
                                         <div class="ratings">
                                             <div class="ratings-val" style="width: 80%;"></div><!-- End .ratings-val -->
                                         </div><!-- End .ratings -->
                                         <a class="ratings-text" href="#product-review-link" id="review-link">( 2 Reviews )</a>
                                     </div><!-- End .rating-container -->
-                            
+                    
                                     <div class="product-price <%= product.stock === 0 ? 'text-danger' : '' %>">
                                         <% if (product.stock === 0) { %>
                                             Out of stock
@@ -303,50 +302,49 @@
                                             <% } %>
                                         <% } %>
                                     </div><!-- End .product-price -->
-                            
+                    
                                     <div class="product-content">
                                         <p><%= product.description %></p>
                                     </div><!-- End .product-content -->
-                            
+                    
                                     <div class="details-filter-row details-row-size">
                                         <label for="qty">Qty:</label>
                                         <div class="product-details-quantity">
                                             <input type="number" id="qty" class="form-control" value="1" min="1" max="<%= product.stock < 10 ? product.stock : 10 %>" step="1" data-decimals="0" required>
                                         </div><!-- End .product-details-quantity -->
                                     </div><!-- End .details-filter-row -->
-                            
+                    
                                     <% if (product.stock < 4 && product.stock > 0 ) { %>
                                         <div class="stock-left pb-2">
                                             <p class="text-danger">Only <%= product.stock %> <%= product.stock === 1 ? 'stock' : 'stocks' %> left</p>
                                         </div>
                                     <% } %>
-                            
+                    
                                     <div class="product-details-action">
                                         <form class="add-to-cart-main">
                                             <input type="hidden" class="product-id-main" name="productId" value="<%= product._id %>">
                                             <button type="submit" class="btn btn-primary btn-block w-100" 
                                             <% if (product.stock === 0) { %>disabled<% } %>>Add to Cart</button>
                                         </form>
-
+                    
                                         <div class="details-action-wrapper">
                                             <form class="<%= product.wished === true ? '' : 'add-to-whishlist' %>">
                                                 <input type="hidden" class="wishlist-product-id" value="<%= product._id %>">
                                                 <% if (product.wished === true) { %>
                                                     <a href="/wishlist" class="fa-solid fa-heart" title="Wishlist" style="color: #a6c76c;"><span></span></a>
-                                                    <!-- <a href="/wishlist"><i class="fa-solid fa-heart" style="color: #a6c76c;"></i></a> -->
                                                 <% } else { %>
                                                     <button type="submit" class="btn-product btn-wishlist" style="border: none;"><span>Add to wishlist</span></button>
                                                 <% } %>
                                             </form>
                                         </div><!-- End .details-action-wrapper -->
                                     </div><!-- End .product-details-action -->
-                            
+                    
                                     <div class="product-details-footer">
                                         <div class="product-cat">
                                             <span>Category:</span>
                                             <a><%= product.category ? product.category.name : '' %></a>
                                         </div><!-- End .product-cat -->
-                            
+                    
                                         <div class="social-icons social-icons-sm">
                                             <span class="social-label">Share:</span>
                                             <a class="social-icon" title="Facebook" target="_blank"><i class="icon-facebook-f"></i></a>
@@ -357,7 +355,6 @@
                                     </div><!-- End .product-details-footer -->
                                 </div><!-- End .product-details -->
                             </div><!-- End .col-md-6 -->
-
                         </div><!-- End .row -->
                     </div><!-- End .product-details-top -->
 
@@ -942,46 +939,52 @@
     </div><!-- End .modal -->
 
     <script>
-        //Images-change
+        // Image change functionality
         const mainImage = document.getElementById('zoom-main-image');
         const galleryItems = document.querySelectorAll('.gallery-item');
-
+    
         galleryItems.forEach(item => {
             item.addEventListener('click', function(event) {
                 event.preventDefault();
-
+    
                 const newImage = this.getAttribute('data-image');
                 const newZoomImage = this.getAttribute('data-zoom-image');
+                
+                // Update main image and zoom image
                 mainImage.src = newImage;
                 mainImage.setAttribute('data-zoom-image', newZoomImage);
-
+    
+                // Remove the active class from all gallery items and add it to the clicked one
                 galleryItems.forEach(el => el.classList.remove('active'));
                 this.classList.add('active');
-            });
-        });
-
-            $('.zoomContainer').remove();
-                $('#zoom-main-image').removeData('elevateZoom').elevateZoom({
+    
+                // Destroy existing zoom instance completely
+                if ($.removeData) {
+                    $.removeData(mainImage, 'elevateZoom'); // Using jQuery removeData
+                } else {
+                    $(mainImage).removeData('elevateZoom'); // Fallback for older jQuery
+                }
+                $('.zoomContainer').remove(); // Remove zoom container
+    
+                // Reinitialize zoom with the updated image source
+                $('#zoom-main-image').elevateZoom({
                     zoomType: "lens",
                     lensShape: "round",
                     lensSize: 300,
                     containLensZoom: true,
                     cursor: "crosshair"
                 });
-
-    function incrementQuantity() {
-        var quantityInput = document.getElementById('quantityInput');
-        var currentQuantity = parseInt(quantityInput.value);
-        quantityInput.value = currentQuantity + 1;
-    }
-
-    function decrementQuantity() {
-        var quantityInput = document.getElementById('quantityInput');
-        var currentQuantity = parseInt(quantityInput.value);
-        if (currentQuantity > 1) {
-            quantityInput.value = currentQuantity - 1;
-        }
-    }
+            });
+        });
+    
+        // Initial zoom setup
+        $('#zoom-main-image').elevateZoom({
+            zoomType: "lens",
+            lensShape: "round",
+            lensSize: 300,
+            containLensZoom: true,
+            cursor: "crosshair"
+        });
     </script>
 
 <script>
@@ -1242,6 +1245,7 @@
     <script src="/static/js/demos/demo-3.js"></script>
 
     <!-- Zoom-plugin -->
+    <!-- <script src="path/to/jquery.elevatezoom.js"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevatezoom.min.js"></script>
 </body>
 

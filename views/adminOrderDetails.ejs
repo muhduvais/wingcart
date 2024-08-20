@@ -436,7 +436,10 @@
             body: JSON.stringify({ status })
             }).then(response => response.json())
               .then(data => {
-                if (!data.success) {
+                if (data.isActive === false) {
+                  window.location.href = '/admin/login';
+                }
+                else if (!data.success) {
                   Swal.fire({
                   icon: 'error',
                   title: 'Error',
