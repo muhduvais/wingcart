@@ -744,11 +744,11 @@
             setEditProdSuccess(price, "Price");
         }
 
-        if(!image1Value) {
+        if(!image1Value && !existingImage1Value) {
             setEditProdError(imageInput1, "*Please select an image");
             isValid = false;
         }
-        else if (!isValidImageFile(image1Value)) {
+        else if (image1Value && !isValidImageFile(image1Value)) {
           setEditProdError(imageInput1, "*Please select a valid image (jpeg/png) under 5 mb");
           isValid = false;
         }
@@ -756,11 +756,11 @@
             setEditProdSuccess(imageInput1, "Image 1");
         }
 
-        if(!image2Value) {
+        if(!image2Value && !existingImage2Value) {
             setEditProdError(imageInput2, "*Please select an image");
             isValid = false;
         }
-        else if (!isValidImageFile(image2Value)) {
+        else if (image2Value && !isValidImageFile(image2Value)) {
           setEditProdError(imageInput2, "*Please select a valid image (jpeg/png) under 5 mb");
           isValid = false;
         }
@@ -769,11 +769,11 @@
         }
 
 
-        if(!image3Value) {
+        if(!image3Value && !existingImage3Value) {
             setEditProdError(imageInput3, "*Please select an image");
             isValid = false;
         }
-        else if (!isValidImageFile(image3Value)) {
+        else if (image3Value && !isValidImageFile(image3Value)) {
           setEditProdError(imageInput3, "*Please select a valid image (jpeg/png) under 5 mb");
           isValid = false;
         }
