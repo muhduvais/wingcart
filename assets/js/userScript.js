@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (ageValue === '') {
             setError(age, 'Please enter your age');
-        } else if (isNaN(ageValue) || ageValue <= 0 || ageValue > 100) {
+        } else if (isNaN(ageValue) || ageValue <= 15 || ageValue > 100) {
             setError(age, 'Please enter a valid age');
         } else {
             setSuccess(age, "Age");

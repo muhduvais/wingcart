@@ -1356,6 +1356,8 @@ const createOrder = async (req, res) => {
         await newOrder.save();
         const createdOrder = await Order.findOne({ orderId });
 
+        updateProductQuantities(createdOrder._id);
+
         if (paymentMethod.type === 'Razorpay') {
             const razorpayOrder = await razorpay.orders.create({
                 amount: parseInt(totalAmount * 100),
@@ -1381,9 +1383,6 @@ const createOrder = async (req, res) => {
                 }
             });
         }
-
-        await Cart.deleteOne({ user: userId });
-        updateProductQuantities(createdOrder._id);
 
         res.status(200).json({ success: 'Order placed successfully', orderId, totalDiscountAmount, paymentType: paymentMethod.type });
     } catch (err) {
@@ -1607,7 +1606,7 @@ const cancelProduct = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Product not found in order' });
         }
 
-        const productCancelPrice = product.finalPrice;
+        const productCancelPrice = product.finalPrice * product.quantity;
 
         product.cancellationDate = Date.now();
         product.cancellationReason = reason;
