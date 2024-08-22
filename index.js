@@ -47,9 +47,9 @@ app.use((req, res, next) => {
         res.status(404).render('user404');
     }
 });
-process.env.MONGO_DB
+
 //database-connection
-mongoose.connect('mongodb://localhost:27017/WingCart')
+mongoose.connect(process.env.MONGO_DB)
 .then(() => console.log("successfully connected to database"))
 .catch((err) => console.log("Error connecting to database"));
 
