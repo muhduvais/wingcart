@@ -612,7 +612,7 @@
                             order_id: result.razorpayOrderId,
                             handler: function (response) {
                                 console.log('Payment successful. Redirecting...');
-                                window.location.href = `/orderConfirmation/${result.orderId}?payment=success`;
+                                window.location.href = `/orderConfirmation/${result.orderId}?payment=success&retry=true`;
                             },
                             prefill: {
                                 name: result.user.name,
@@ -638,7 +638,7 @@
                                 text: 'Payment has failed. Please try again!'
                             })
                             .then(() => {
-                                window.location.href = `/orderConfirmation/${result.orderId}?payment=failed`;
+                                window.location.href = `/orderConfirmation/${result.orderId}?payment=failed&retry=true`;
                             })
 
                         });

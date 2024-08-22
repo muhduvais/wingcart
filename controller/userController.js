@@ -1458,6 +1458,7 @@ const toOrderConf = async (req, res) => {
     try {
         const user = await User.findById(req.session.user);
         const paymentStatus = req.query.payment;
+        const isRetry = req.query.retry;
         console.log('paymentStatus: ', paymentStatus);
         
         const orderId = req.params.order_id;
@@ -1465,12 +1466,14 @@ const toOrderConf = async (req, res) => {
         const order = await Order.findOne({ orderId })
             .populate('products.product');
 
-        if (paymentStatus && paymentStatus === 'success') {
-            order.paymentStatus = 'Completed'
-            await order.save();
-        } else {
-            order.paymentStatus = 'Pending'
-            await order.save();
+        if (isRetry === 'true') {
+            if (paymentStatus && paymentStatus === 'success') {
+                order.paymentStatus = 'Completed'
+                await order.save();
+            } else {
+                order.paymentStatus = 'Pending'
+                await order.save();
+            }
         }
             
         const orderDate = new Date(order.orderDate);
