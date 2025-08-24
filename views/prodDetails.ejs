@@ -165,7 +165,7 @@
                                                 <div class="product">
                                                     <div class="product-cart-details">
                                                         <h4 class="product-title">
-                                                            <a href="product.html"><%= item.product.name %></a>
+                                                            <a href="/prodDetails/<%= item.product._id%>"><%= item.product.name %></a>
                                                         </h4>
             
                                                         <span class="cart-product-info">
@@ -175,7 +175,7 @@
                                                     </div><!-- End .product-cart-details -->
             
                                                     <figure class="product-image-container">
-                                                        <a href="product.html" class="product-image">
+                                                        <a href="/prodDetails/<%= item.product._id%>" class="product-image">
                                                             <img src="/assets2/img/<%= item.product.images[0] %>" alt="product">
                                                         </a>
                                                     </figure>
@@ -292,7 +292,6 @@
                                             Out of stock
                                         <% } else { %>
                                             <% if (product.bestOffer) { %>
-                                                <!-- Display original price crossed out and offer price -->
                                                 <span class="original-price">₹<%= product.price %></span>
                                                 <span class="offer-price">₹<%= (product.price * (1 - (product.bestOffer.discount / 100))).toFixed(2) %></span>
                                                 <span class="product-label label-offer">Offer: <%= product.bestOffer.discount %>% Off</span>
@@ -614,44 +613,6 @@
         </footer><!-- End .footer -->
     </div><!-- End .page-wrapper -->
     <button id="scroll-top" title="Back to Top"><i class="icon-arrow-up"></i></button>
-
-    <!-- Sticky Bar -->
-    <div class="sticky-bar">
-        <div class="container">
-            <div class="row">
-                <div class="col-6">
-                    <figure class="product-media">
-                        <a href="product.html">
-                            <img src="/assets2/img/<%= product.images[0] %>" alt="Product image">
-                        </a>
-                    </figure><!-- End .product-media -->
-                    <h4 class="product-title"><a href="product.html"><%= product.name %></a></h4><!-- End .product-title -->
-                </div><!-- End .col-6 -->
-
-                <div class="col-6 justify-content-end">
-                    <div class="product-price <%= product.stock === 0 ? 'text-danger' : '' %>">
-                        <% if (product.stock === 0) { %>
-                            Out of stock
-                        <% } else { %>
-                            ₹<%= product.price %>
-                        <% } %>
-                    </div><!-- End .product-price -->
-                    <div class="product-details-quantity">
-                        <input type="number" id="qty-sub" class="form-control" value="1" min="1" max="<%= product.stock < 10 ? product.stock : 10 %>" step="1" data-decimals="0" required>
-                    </div><!-- End .product-details-quantity -->
-
-                    <div class="product-details-action">
-                        <form class="add-to-cart-sub">
-                            <input type="hidden" class="product-id-sub" name="productId" value="<%= product._id %>">
-                            <button type="submit" class="btn btn-primary btn-block w-100" 
-                            <% if (product.stock === 0) { %>disabled<% } else { %><% } %> >Add to Cart</button>
-                        </form>
-                        <a class="btn-product btn-wishlist pl-2" title="Wishlist"><span>Add to Wishlist</span></a>
-                    </div><!-- End .product-details-action -->
-                </div><!-- End .col-6 -->
-            </div><!-- End .row -->
-        </div><!-- End .container -->
-    </div><!-- End .sticky-bar -->
 
     <!-- Mobile Menu -->
     <div class="mobile-menu-overlay"></div><!-- End .mobil-menu-overlay -->

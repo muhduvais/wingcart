@@ -132,7 +132,7 @@
                                                 <div class="product">
                                                     <div class="product-cart-details">
                                                         <h4 class="product-title">
-                                                            <a href="product.html"><%= item.product.name %></a>
+                                                            <a href="/prodDetails/<%= item.product._id%>"><%= item.product.name %></a>
                                                         </h4>
             
                                                         <span class="cart-product-info">
@@ -142,7 +142,7 @@
                                                     </div><!-- End .product-cart-details -->
             
                                                     <figure class="product-image-container">
-                                                        <a href="product.html" class="product-image">
+                                                        <a href="/prodDetails/<%= item.product._id%>" class="product-image">
                                                             <img src="/assets2/img/<%= item.product.images[0] %>" alt="product">
                                                         </a>
                                                     </figure>
