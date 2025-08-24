@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 timer = 60;
                 updateTimer();
                 resendBtn.disabled = true;
+                resendBtn.classList.add('cursor: ')
                 timerText.style.display = 'block';
 
                 const countdown = setInterval(() => {

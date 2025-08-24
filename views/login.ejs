@@ -551,16 +551,18 @@
             });
 
             const loginData = await response.json();
+            const errorDisplay = document.querySelector('.main-error');
 
             if (loginData.success) {
                 window.location.href = "/";
             } else if (response.ok) {
-                const errorDisplay = document.querySelector('.main-error');
                 errorDisplay.innerText = loginData.message;
                 loginEmail.classList.add('error');
                 loginEmail.classList.remove('success');
                 loginPass.classList.add('error');
                 loginPass.classList.remove('success');
+            } else {
+                errorDisplay.innerText = loginData.message;
             }
         }
     </script>

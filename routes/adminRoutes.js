@@ -73,16 +73,4 @@ adminRouter.get('/salesReport', adminAuth.isAdminActive, adminController.toSales
 adminRouter.post('/generateSalesReport', adminAuth.isAdminActiveJ, adminController.generateSalesReport);
 adminRouter.get('/downloadSalesReport', adminAuth.isAdminActive, adminController.downloadSalesReport);
 
-
-
-// adminRouter.use((req, res, next) => {
-//   res.status(404).render('404');
-// });
-
-//Test Route
-adminRouter.get('/ddd', (req, res) => {
-  res.render('ddddddddddddd');
-});
-
-
 module.exports = adminRouter;

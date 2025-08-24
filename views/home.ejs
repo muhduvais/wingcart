@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-
-<!-- molla/index-1.html  22 Nov 2019 09:55:06 GMT -->
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,7 +8,7 @@
     <title>wingCart | Luxury Wathes</title>
     <meta name="keywords" content="watches">
     <meta name="description" content="Wingcart E-commerce website">
-    <meta name="author" content="p-themes">
+    <meta name="author" content="wingcart">
     <!-- Favicon -->
     
     <!-- Plugins CSS File -->
@@ -42,7 +40,7 @@
                         <ul class="top-menu top-link-menu d-none d-md-block">
                             <li>
                                 <ul>
-                                    <li><a href="tel:#"><i class="icon-phone"></i>Call: +91 9746483041</a></li>
+                                    <li><a href="tel:+919746483041"><i class="icon-phone"></i>Call: +91 9746483041</a></li>
                                 </ul>
                             </li>
                         </ul><!-- End .top-menu -->
@@ -54,10 +52,14 @@
                             <li>
                                 <ul>
                                     <% if (locals.user) {%>
-                                        <li><a href="/logout">Logout</a></li>
-                                        <li><a href="/userProfile"><i class="icon-user"></i><%= user.fname %></a></li>
+                                        <li title="Logout"><b><a href="/logout">Logout</a></b></li>
+                                        <li title="Profile"><a href="/userProfile">
+                                            <i class="icon-user"></i>
+                                            <b><%= user.fname %></b></a></li>
                                     <% } else {%>
-                                        <li><a href="/userLogin"><i class="icon-user"></i>Sign In / Sign Up</a></li>
+                                        <li title="Sign in"><a href="/userLogin">
+                                            <i class="icon-user"></i>
+                                            <b>Sign In</b></a></li>
                                     <% }%>
                                 </ul>
                             </li>
@@ -108,7 +110,6 @@
                             <a href="/wishlist" title="Wishlist">
                                 <div class="icon">
                                     <i class="icon-heart-o"></i>
-                                    <span class="wishlist-count badge">0</span>
                                 </div>
                                 <p>Wishlist</p>
                             </a>
@@ -585,9 +586,6 @@
                                                         <img src="/assets2/img/<%= product.images[1] %>" alt="Product image" class="product-image-hover">
                                                     </a>
         
-                                                    <div class="product-action-vertical">
-                                                        <a class="btn-product-icon btn-wishlist "><span>add to wishlist</span></a>
-                                                    </div><!-- End .product-action-vertical -->
                                                 </figure><!-- End .product-media -->
         
                                                 <div class="product-body">
@@ -606,11 +604,12 @@
                                                     </div><!-- End .product-price -->
                                                 </div><!-- End .product-body -->
                                                 <div class="product-action">
-                                                    <form class="add-to-cart w-100">
+                                                    <% if (product.stock !== 0) { %>
+                                                        <form class="add-to-cart w-100">
                                                         <input type="hidden" class="product-id" name="productId" value="<%= product._id %>">
-                                                        <a class="btn-product btn-cart" <% if (product.stock === 0) { %>onmouseover="this.style.opacity=0;"
-                                                            onmouseout="this.style.opacity=1;"<% } %>><button type="submit" <% if (product.stock === 0) { %>disabled<% } %> style="outline: none; border: none; background: none;"><span>add to cart</span></button></a>
+                                                        <a class="btn-product btn-cart"><button type="submit" style="outline: none; border: none; background: none;"><span>add to cart</span></button></a>
                                                     </form>
+                                                    <% } %>
                                                 </div><!-- End .product-action -->
                                             </div><!-- End .product -->
                                         </div><!-- End .col-sm-6 col-md-4 col-lg-3 -->
@@ -1361,6 +1360,4 @@
     <script src="/static/js/demos/demo-2.js"></script>
 </body>
 
-
-<!-- molla/index-1.html  22 Nov 2019 09:55:32 GMT -->
 </html>

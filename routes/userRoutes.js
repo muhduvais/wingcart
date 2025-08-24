@@ -4,7 +4,6 @@ const nocache = require("nocache");
 const userController = require("../controller/userController");
 const userAuth = require("../middlewares/userAuth");
 const passport = require("../model/passport");
-const User = require("../model/usersModel");
 
 userRoutes.use(nocache());
 
@@ -12,6 +11,9 @@ userRoutes.use(nocache());
 userRoutes.get('/', userController.userHome);
 userRoutes.get('/userLogin', userController.userLogin);
 userRoutes.post('/userLogin', userController.verifyLogin);
+
+userRoutes.get('/about', userController.userAbout);
+userRoutes.get('/contact', userController.userContact);
 
 //Forgot password
 userRoutes.get('/forgotPass', userController.forgotPass);
@@ -60,6 +62,7 @@ userRoutes.patch('/updateCart', userAuth.isUserActiveJ, userController.updateCar
 userRoutes.get('/checkout', userAuth.isUserActive, userAuth.isUserBlocked, userController.toCheckout);
 userRoutes.post('/applyCoupon/:couponCode', userAuth.isUserActiveJ, userController.applyCoupon);
 userRoutes.post('/createOrder', userAuth.isUserActiveJ, userController.createOrder);
+userRoutes.patch('/paymentFailure/:id', userAuth.isUserActiveJ, userController.updatePaymentFailure);
 userRoutes.get('/orderConfirmation/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderConf);
 userRoutes.get('/orderHistory', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderHistory);
 userRoutes.get('/orderDetails/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderDetails);

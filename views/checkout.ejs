@@ -117,7 +117,6 @@
                             <a href="/wishlist" title="Wishlist">
                                 <div class="icon">
                                     <i class="icon-heart-o"></i>
-                                    <span class="wishlist-count badge">0</span>
                                 </div>
                                 <p>Wishlist</p>
                             </a>
@@ -1351,7 +1350,10 @@ const updateCartSummary = (data) => {
                     const rzp1 = new Razorpay(options);
 
                     // Payment failure
-                    rzp1.on('payment.failed', function (response) {
+                    rzp1.on('payment.failed', async function(response) {
+                        await fetch(`/paymentFailure/${result.orderId}`, {
+                            method: 'PATCH'
+                        });
                         console.error('Payment failed:', response.error);
                         Swal.fire({
                             icon: 'info',
