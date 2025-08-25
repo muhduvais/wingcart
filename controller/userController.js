@@ -1025,10 +1025,15 @@ const toCart = async (req, res) => {
     }).lean();
 
     const offersByItemId = offers.reduce((acc, o) => {
-      const k = String(o.item);
-      (acc[k] ||= []).push(o);
+      const items = Array.isArray(o.item) ? o.item : [o.item];
+      items.forEach((it) => {
+        const k = String(it);
+        (acc[k] ||= []).push(o);
+      });
       return acc;
     }, {});
+
+    console.log("OffersByItemId: ", offersByItemId);
 
     let realSubtotal = 0;
     let discountTotal = 0;
@@ -1038,9 +1043,14 @@ const toCart = async (req, res) => {
       const product = item.product;
       const qty = item.quantity;
 
+      console.log("ProductId: ", String(product._id));
+      console.log("Category: ", String(product.category));
+
       const pOffers = offersByItemId[String(product._id)] || [];
       const cOffers = offersByItemId[String(product.category)] || [];
       const allOffers = [...pOffers, ...cOffers];
+
+      console.log("allOffers: ", allOffers);
 
       const bestOffer = allOffers.reduce(
         (best, cur) => (cur.discount > (best.discount || 0) ? cur : best),
@@ -1074,6 +1084,8 @@ const toCart = async (req, res) => {
     const total = Number((subtotal + shipping).toFixed(2));
 
     cart.products = cartItems;
+
+    console.log("cart: ", cart);
 
     return res.render("cart", {
       user,
@@ -1178,8 +1190,11 @@ const updateCart = async (req, res) => {
     }).lean();
 
     const offersByItemId = offers.reduce((acc, o) => {
-      const k = String(o.item);
-      (acc[k] ||= []).push(o);
+      const items = Array.isArray(o.item) ? o.item : [o.item];
+      items.forEach((id) => {
+        const k = String(id);
+        (acc[k] ||= []).push(o);
+      });
       return acc;
     }, {});
 
@@ -1777,32 +1792,37 @@ const toOrderConf = async (req, res) => {
 const toOrderHistory = async (req, res) => {
   try {
     const user = await User.findById(req.session.user);
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments({ user: user._id });
+
     const orders = await Order.find({ user: user._id })
       .populate("products")
       .populate("payment")
-      .sort({ orderDate: -1 });
-
-    // //Update payment status
-    // const orderId = req.query.orderId;
-    // const updateOrder = await Order.findOne({ orderId: orderId });
-    // if (updateOrder) {
-    //     updateOrder.paymentStatus = 'Completed';
-    //     await updateOrder.save();
-    // }
+      .sort({ orderDate: -1 })
+      .skip(skip)
+      .limit(limit);
 
     orders.forEach((order) => {
       const isAllCancelled = order.products.reduce((allCancelled, product) => {
         return allCancelled && product.status === "cancelled";
       }, true);
-
-      if (isAllCancelled) {
-        order.isAllCancelled = true;
-      } else {
-        order.isAllCancelled = false;
-      }
+      order.isAllCancelled = isAllCancelled;
     });
 
-    res.render("orderHistory", { user, orders });
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    res.render("orderHistory", {
+      user,
+      orders,
+      currentPage: page,
+      totalPages,
+      totalOrders,
+      limit,
+    });
   } catch (err) {
     console.error("Error fetching order History", err);
     res.status(500).send("Internal server error");
@@ -2311,20 +2331,91 @@ const removeFromWishlist = async (req, res) => {
 const toWallet = async (req, res) => {
   try {
     const user = await User.findById(req.session.user);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const wallet = await Wallet.findOne({ user: user._id });
 
-    if (wallet.transactions.length === 0) {
-      return res.render("wallet", { user, wallet });
+    if (!wallet || wallet.transactions.length === 0) {
+      return res.render("wallet", {
+        user,
+        wallet: wallet || { transactions: [], balance: 0 },
+      });
     }
 
     wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    const paginatedTransactions = wallet.transactions.slice(skip, skip + limit);
+    const totalTransactions = wallet.transactions.length;
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+    const walletWithPaginatedTransactions = {
+      ...wallet.toObject(),
+      transactions: paginatedTransactions,
+    };
+
     const lastTransaction = wallet.transactions[0];
 
-    res.render("wallet", { user, wallet, lastTransaction });
+    if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+      return res.json({
+        success: true,
+        transactions: paginatedTransactions,
+        currentPage: page,
+        totalPages,
+        totalTransactions,
+      });
+    }
+
+    res.render("wallet", {
+      user,
+      wallet: walletWithPaginatedTransactions,
+      lastTransaction,
+      currentPage: page,
+      totalPages,
+      totalTransactions,
+    });
   } catch (err) {
     console.error("Error fetching wallet: ", err);
     res.status(500).send("Internal server error");
+  }
+};
+
+const getWalletTransactions = async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const wallet = await Wallet.findOne({ user: user._id });
+
+    if (!wallet || wallet.transactions.length === 0) {
+      return res.json({
+        success: true,
+        transactions: [],
+        currentPage: 1,
+        totalPages: 1,
+        totalTransactions: 0,
+      });
+    }
+
+    wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const paginatedTransactions = wallet.transactions.slice(skip, skip + limit);
+    const totalTransactions = wallet.transactions.length;
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+    res.json({
+      success: true,
+      transactions: paginatedTransactions,
+      currentPage: page,
+      totalPages,
+      totalTransactions,
+    });
+  } catch (err) {
+    console.error("Error fetching transactions: ", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -2440,6 +2531,7 @@ module.exports = {
   addToWishlist,
   removeFromWishlist,
   toWallet,
+  getWalletTransactions,
   addFund,
   addFundUpdate,
   retryPayment,

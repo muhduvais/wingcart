@@ -98,22 +98,22 @@
 
 
     <div class="container light-style flex-grow-1 container-p-y">
-        <h4 class="font-weight-bold py-3 mb-4">
-            Account settings
-        </h4>
         <div class="user-header py-3">
-            <h5><span><i class="fa-solid fa-user pr-2"></i></span> <%= user.fname %> <%= user.lname %></h5>
+            <h5>
+          <span><i class="fa-solid fa-user pr-2 pt-3"></i></span> <%= user.fname
+          %> <%= user.lname %> / Settings / <b>Addresses</b>
+        </h5>
         </div>
         <div class="card overflow-hidden">
             <div class="row no-gutters row-bordered row-border-light">
                 <div class="col-md-3 pt-0">
                     <div class="list-group list-group-flush account-settings-links">
-                        <a class="list-group-item list-group-item-action active"
-                            href="/userProfile">General</a>
+                        <a class="list-group-item list-group-item-action"
+                            href="/userProfile">Personal Details</a>
                         <a class="list-group-item list-group-item-action"
                             href="/changePassword">Change password</a>
                         <a class="list-group-item list-group-item-action"
-                            href="/addressManagement">Manage Addresses</a>
+                            href="/addressManagement"><b>Manage Addresses</b></a>
                         <a class="list-group-item list-group-item-action"
                             href="/wishlist">Wishlist</a>
                         <a class="list-group-item list-group-item-action"
@@ -142,8 +142,7 @@
 
                             <!-- ///////address-container////////// -->
                             <div class="container-addr m-3">
-                                <div class="top-div d-md-flex align-items-center justify-content-between py-4">
-                                    <h3 class="text-muted px-3">Addresses</h3>
+                                <div class="top-div d-md-flex align-items-center justify-content-end py-4">
                                     <a href="/addAddress"><button class="btn btn-primary mr-4 my-2 ml-md-2 px-3">Add Address</button></a>
                                 </div>
     

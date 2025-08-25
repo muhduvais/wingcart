@@ -79,6 +79,7 @@ userRoutes.delete('/removeFromWishlist/:product_id', userAuth.isUserActiveJ, use
 
 //Wallet
 userRoutes.get('/wallet', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWallet);
+userRoutes.get('/wallet/transactions', userAuth.isUserActive, userAuth.isUserBlocked, userController.getWalletTransactions);
 userRoutes.post('/addFund/:amount', userAuth.isUserActiveJ, userController.addFund);
 userRoutes.patch('/addFundUpdate', userAuth.isUserActiveJ, userController.addFundUpdate);
 
