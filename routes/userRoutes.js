@@ -2,6 +2,8 @@ const express = require("express");
 const userRoutes = express.Router();
 const nocache = require("nocache");
 const userController = require("../controller/userController");
+const addressController = require("../controller/addressController");
+const cartController = require("../controller/cartController");
 const userAuth = require("../middlewares/userAuth");
 const passport = require("../model/passport");
 
@@ -45,18 +47,18 @@ userRoutes.get('/changePassword', userAuth.isUserActive, userAuth.isUserBlocked,
 userRoutes.patch('/changePassword', userAuth.isUserActiveJ, userController.verifyChangePass);
 
 //Address management
-userRoutes.get('/addressManagement', userAuth.isUserActive, userAuth.isUserBlocked, userController.toAddr);
-userRoutes.get('/addAddress', userAuth.isUserActive, userAuth.isUserBlocked, userController.toAddAddr);
-userRoutes.post('/addAddress', userAuth.isUserActiveJ, userController.verifyAddAddr);
-userRoutes.get('/editAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toEditAddress);
-userRoutes.put('/editAddress/:address_id', userAuth.isUserActiveJ, userController.verifyEditAddress);
-userRoutes.delete('/deleteAddress/:address_id', userAuth.isUserActiveJ, userController.deleteAddress);
+userRoutes.get('/addressManagement', userAuth.isUserActive, userAuth.isUserBlocked, addressController.toAddr);
+userRoutes.get('/addAddress', userAuth.isUserActive, userAuth.isUserBlocked, addressController.toAddAddr);
+userRoutes.post('/addAddress', userAuth.isUserActiveJ, addressController.verifyAddAddr);
+userRoutes.get('/editAddress/:address_id', userAuth.isUserActive, userAuth.isUserBlocked, addressController.toEditAddress);
+userRoutes.put('/editAddress/:address_id', userAuth.isUserActiveJ, addressController.verifyEditAddress);
+userRoutes.delete('/deleteAddress/:address_id', userAuth.isUserActiveJ, addressController.deleteAddress);
 
 //Cart management
-userRoutes.get('/cartManagement', userAuth.isUserActive, userAuth.isUserBlocked, userController.toCart);
-userRoutes.post('/addToCart', userController.addToCart);
-userRoutes.delete('/deleteCartItem/:product_id', userAuth.isUserActiveJ, userController.deleteCartItem);//
-userRoutes.patch('/updateCart', userAuth.isUserActiveJ, userController.updateCart);
+userRoutes.get('/cartManagement', userAuth.isUserActive, userAuth.isUserBlocked, cartController.toCart);
+userRoutes.post('/addToCart', cartController.addToCart);
+userRoutes.delete('/deleteCartItem/:product_id', userAuth.isUserActiveJ, cartController.deleteCartItem);//
+userRoutes.patch('/updateCart', userAuth.isUserActiveJ, cartController.updateCart);
 
 //Checkout
 userRoutes.get('/checkout', userAuth.isUserActive, userAuth.isUserBlocked, userController.toCheckout);

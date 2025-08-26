@@ -17,7 +17,7 @@ const sendForgotEmail = require("../model/sendForgotEmail");
 const generateOtp = require("../model/generateOtp");
 require("dotenv").config();
 const Razorpay = require("razorpay");
-const pdf = require("html-pdf"); // - need to be changed!
+const pdf = require("html-pdf");
 
 const downloadInvoice = async (req, res) => {
   try {
