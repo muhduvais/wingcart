@@ -1,9 +1,13 @@
 const express = require("express");
 const userRoutes = express.Router();
 const nocache = require("nocache");
+const authController = require("../controller/authController");
 const userController = require("../controller/userController");
 const addressController = require("../controller/addressController");
 const cartController = require("../controller/cartController");
+const orderController = require("../controller/orderController");
+const walletController = require("../controller/walletController");
+const wishlistController = require("../controller/wishlistController");
 const userAuth = require("../middlewares/userAuth");
 const passport = require("../model/passport");
 
@@ -11,29 +15,29 @@ userRoutes.use(nocache());
 
 //UserHome / userLogin
 userRoutes.get('/', userController.userHome);
-userRoutes.get('/userLogin', userController.userLogin);
-userRoutes.post('/userLogin', userController.verifyLogin);
+userRoutes.get('/userLogin', authController.userLogin);
+userRoutes.post('/userLogin', authController.verifyLogin);
 
 userRoutes.get('/about', userController.userAbout);
 userRoutes.get('/contact', userController.userContact);
 
 //Forgot password
-userRoutes.get('/forgotPass', userController.forgotPass);
-userRoutes.post('/forgotPass', userController.verifyForgotPass);
+userRoutes.get('/forgotPass', authController.forgotPass);
+userRoutes.post('/forgotPass', authController.verifyForgotPass);
 
 //Reset password
-userRoutes.get('/resetForgotPass', userController.resetForgotPass);
-userRoutes.patch('/resetForgotPass', userController.verifyResetPass);
+userRoutes.get('/resetForgotPass', authController.resetForgotPass);
+userRoutes.patch('/resetForgotPass', authController.verifyResetPass);
 
 //Signup and otp verification
-userRoutes.get('/signup', userController.signup);
-userRoutes.post('/signup', userController.verifySignup);
-userRoutes.get('/verifyOtp', userController.getVerifyOtp);
-userRoutes.post('/verifyOtp', userController.verifyOtp);
-userRoutes.post('/resendOtp', userController.resendOtp);
+userRoutes.get('/signup', authController.signup);
+userRoutes.post('/signup', authController.verifySignup);
+userRoutes.get('/verifyOtp', authController.getVerifyOtp);
+userRoutes.post('/verifyOtp', authController.verifyOtp);
+userRoutes.post('/resendOtp', authController.resendOtp);
 
 //Logout / shop / product details
-userRoutes.get('/logout', userController.userLogout);
+userRoutes.get('/logout', authController.userLogout);
 userRoutes.get('/shop', userController.toshop);
 userRoutes.get('/prodDetails/:product_id', userController.toProdDetails);
 
@@ -43,8 +47,8 @@ userRoutes.get('/editProfile', userAuth.isUserActive, userAuth.isUserBlocked, us
 userRoutes.patch('/editProfile', userAuth.isUserActiveJ, userController.editProfile);
 
 //Change password
-userRoutes.get('/changePassword', userAuth.isUserActive, userAuth.isUserBlocked, userController.toChangePass);
-userRoutes.patch('/changePassword', userAuth.isUserActiveJ, userController.verifyChangePass);
+userRoutes.get('/changePassword', userAuth.isUserActive, userAuth.isUserBlocked, authController.toChangePass);
+userRoutes.patch('/changePassword', userAuth.isUserActiveJ, authController.verifyChangePass);
 
 //Address management
 userRoutes.get('/addressManagement', userAuth.isUserActive, userAuth.isUserBlocked, addressController.toAddr);
@@ -63,31 +67,31 @@ userRoutes.patch('/updateCart', userAuth.isUserActiveJ, cartController.updateCar
 //Checkout
 userRoutes.get('/checkout', userAuth.isUserActive, userAuth.isUserBlocked, userController.toCheckout);
 userRoutes.post('/applyCoupon/:couponCode', userAuth.isUserActiveJ, userController.applyCoupon);
-userRoutes.post('/createOrder', userAuth.isUserActiveJ, userController.createOrder);
-userRoutes.patch('/paymentFailure/:id', userAuth.isUserActiveJ, userController.updatePaymentFailure);
-userRoutes.get('/orderConfirmation/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderConf);
-userRoutes.get('/orderHistory', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderHistory);
-userRoutes.get('/orderDetails/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, userController.toOrderDetails);
-userRoutes.post('/downloadInvoice', userAuth.isUserActiveJ, userController.downloadInvoice);
 
-//Cancel and return product
-userRoutes.post('/cancelProduct/:orderId/:productId', userAuth.isUserActiveJ, userController.cancelProduct);
-userRoutes.post('/returnProduct/:orderId/:productId', userAuth.isUserActiveJ, userController.returnProduct);
+userRoutes.post('/createOrder', userAuth.isUserActiveJ, orderController.createOrder);
+
+userRoutes.patch('/paymentFailure/:id', userAuth.isUserActiveJ, orderController.updatePaymentFailure);
+userRoutes.get('/orderConfirmation/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, orderController.toOrderConf);
+userRoutes.get('/orderHistory', userAuth.isUserActive, userAuth.isUserBlocked, orderController.toOrderHistory);
+userRoutes.get('/orderDetails/:order_id', userAuth.isUserActive, userAuth.isUserBlocked, orderController.toOrderDetails);
+userRoutes.post('/downloadInvoice', userAuth.isUserActiveJ, orderController.downloadInvoice);
+
+userRoutes.post('/cancelProduct/:orderId/:productId', userAuth.isUserActiveJ, orderController.cancelProduct);
+userRoutes.post('/returnProduct/:orderId/:productId', userAuth.isUserActiveJ, orderController.returnProduct);
+
+userRoutes.post('/retryPayment', userAuth.isUserActiveJ, orderController.retryPayment);
+userRoutes.patch('/updatePaymentStatus', userAuth.isUserActiveJ, orderController.updatePaymentStatus);
 
 //Wishlist
-userRoutes.get('/wishlist', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWishlist);
-userRoutes.post('/addToWishlist/:product_id', userAuth.isUserActiveJ, userController.addToWishlist);
-userRoutes.delete('/removeFromWishlist/:product_id', userAuth.isUserActiveJ, userController.removeFromWishlist);
+userRoutes.get('/wishlist', userAuth.isUserActive, userAuth.isUserBlocked, wishlistController.toWishlist);
+userRoutes.post('/addToWishlist/:product_id', userAuth.isUserActiveJ, wishlistController.addToWishlist);
+userRoutes.delete('/removeFromWishlist/:product_id', userAuth.isUserActiveJ, wishlistController.removeFromWishlist);
 
 //Wallet
-userRoutes.get('/wallet', userAuth.isUserActive, userAuth.isUserBlocked, userController.toWallet);
-userRoutes.get('/wallet/transactions', userAuth.isUserActive, userAuth.isUserBlocked, userController.getWalletTransactions);
-userRoutes.post('/addFund/:amount', userAuth.isUserActiveJ, userController.addFund);
-userRoutes.patch('/addFundUpdate', userAuth.isUserActiveJ, userController.addFundUpdate);
-
-//Retry payment
-userRoutes.post('/retryPayment', userAuth.isUserActiveJ, userController.retryPayment);
-userRoutes.patch('/updatePaymentStatus', userAuth.isUserActiveJ, userController.updatePaymentStatus);
+userRoutes.get('/wallet', userAuth.isUserActive, userAuth.isUserBlocked, walletController.toWallet);
+userRoutes.get('/wallet/transactions', userAuth.isUserActive, userAuth.isUserBlocked, walletController.getWalletTransactions);
+userRoutes.post('/addFund/:amount', userAuth.isUserActiveJ, walletController.addFund);
+userRoutes.patch('/addFundUpdate', userAuth.isUserActiveJ, walletController.addFundUpdate);
 
 // Google auth routes
 userRoutes.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

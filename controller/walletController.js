@@ -1,0 +1,164 @@
+const User = require("../model/usersModel");
+const Wallet = require("../model/walletsModel");
+const Razorpay = require("razorpay");
+require("dotenv").config();
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const toWallet = async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const wallet = await Wallet.findOne({ user: user._id });
+
+    if (!wallet || wallet.transactions.length === 0) {
+      return res.render("wallet", {
+        user,
+        wallet: wallet || { transactions: [], balance: 0 },
+      });
+    }
+
+    wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const paginatedTransactions = wallet.transactions.slice(skip, skip + limit);
+    const totalTransactions = wallet.transactions.length;
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+    const walletWithPaginatedTransactions = {
+      ...wallet.toObject(),
+      transactions: paginatedTransactions,
+    };
+
+    const lastTransaction = wallet.transactions[0];
+
+    if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+      return res.json({
+        success: true,
+        transactions: paginatedTransactions,
+        currentPage: page,
+        totalPages,
+        totalTransactions,
+      });
+    }
+
+    res.render("wallet", {
+      user,
+      wallet: walletWithPaginatedTransactions,
+      lastTransaction,
+      currentPage: page,
+      totalPages,
+      totalTransactions,
+    });
+  } catch (err) {
+    console.error("Error fetching wallet: ", err);
+    res.status(500).send("Internal server error");
+  }
+};
+
+const getWalletTransactions = async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const wallet = await Wallet.findOne({ user: user._id });
+
+    if (!wallet || wallet.transactions.length === 0) {
+      return res.json({
+        success: true,
+        transactions: [],
+        currentPage: 1,
+        totalPages: 1,
+        totalTransactions: 0,
+      });
+    }
+
+    wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const paginatedTransactions = wallet.transactions.slice(skip, skip + limit);
+    const totalTransactions = wallet.transactions.length;
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+    res.json({
+      success: true,
+      transactions: paginatedTransactions,
+      currentPage: page,
+      totalPages,
+      totalTransactions,
+    });
+  } catch (err) {
+    console.error("Error fetching transactions: ", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const addFund = async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user);
+    const wallet = await Wallet.findOne({ user: user._id });
+    const amount = parseFloat(req.params.amount);
+    console.log("Wallet amount: ", amount);
+
+    const transactionId = generateTransactionId();
+
+    const transactions = {
+      transactionId: transactionId,
+      amount: amount,
+      date: new Date(),
+      type: "credit",
+    };
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: "INR",
+      receipt: transactionId,
+      payment_capture: 1,
+    });
+
+    return res.status(200).json({
+      success: true,
+      transactions: transactions,
+      razorpayOrderId: razorpayOrder.id,
+      key: process.env.RAZORPAY_KEY_ID,
+      user: {
+        name: user.fname,
+        email: user.email,
+        phone: user.phone,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching wallet: ", err);
+    res.status(500).send("Internal server error");
+  }
+};
+
+const addFundUpdate = async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user);
+    const wallet = await Wallet.findOne({ user: user._id });
+    const { transactions } = req.body;
+
+    wallet.balance += transactions.amount;
+    wallet.transactions.push(transactions);
+    await wallet.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error fetching wallet: ", err);
+    res.status(500).send("Internal server error");
+  }
+};
+
+module.exports = {
+  toWallet,
+  getWalletTransactions,
+  addFund,
+  addFundUpdate,
+};
