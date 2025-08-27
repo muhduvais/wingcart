@@ -2,6 +2,9 @@ const express = require("express");
 const adminRouter = express.Router();
 const nocache = require("nocache");
 const adminController = require("../controller/adminController");
+const brandController = require("../controller/brandController");
+const offerController = require("../controller/offerController");
+const orderController = require("../controller/orderController");
 const adminAuth = require("../middlewares/adminAuth");
 
 adminRouter.use(nocache());
@@ -24,12 +27,12 @@ adminRouter.post('/editCategory/:category_id', adminAuth.isAdminActiveJ, adminCo
 adminRouter.post('/categoryListed/:category_id', adminAuth.isAdminActiveJ, adminController.categoryListToggle);
 
 //Brand Management
-adminRouter.get('/brandList', adminAuth.isAdminActive, adminController.toBrandList);
-adminRouter.get('/addBrand', adminAuth.isAdminActive, adminController.toAddBrand);
-adminRouter.post('/addBrand', adminAuth.isAdminActiveJ, adminController.verifyAddBrand);
-adminRouter.get('/editBrand/:brand_id', adminAuth.isAdminActive, adminController.toEditBrand);
-adminRouter.post('/editBrand/:brand_id', adminAuth.isAdminActiveJ, adminController.verifyEditBrand);
-adminRouter.post('/brandListed/:brandId', adminAuth.isAdminActiveJ, adminController.brandListToggle);
+adminRouter.get('/brandList', adminAuth.isAdminActive, brandController.toBrandList);
+adminRouter.get('/addBrand', adminAuth.isAdminActive, brandController.toAddBrand);
+adminRouter.post('/addBrand', adminAuth.isAdminActiveJ, brandController.verifyAddBrand);
+adminRouter.get('/editBrand/:brand_id', adminAuth.isAdminActive, brandController.toEditBrand);
+adminRouter.post('/editBrand/:brand_id', adminAuth.isAdminActiveJ, brandController.verifyEditBrand);
+adminRouter.post('/brandListed/:brandId', adminAuth.isAdminActiveJ, brandController.brandListToggle);
 
 //Product Management
 adminRouter.get('/productManagement', adminAuth.isAdminActive, adminController.toProductMgmt);
@@ -48,9 +51,9 @@ adminRouter.post('/editProduct/:product_id', adminAuth.isAdminActiveJ, adminCont
 adminRouter.post('/productListed/:product_id', adminAuth.isAdminActiveJ, adminController.productListToggle);
 
 //Order Management
-adminRouter.get('/orderManagement', adminAuth.isAdminActive, adminController.toOrderManagement);
-adminRouter.get('/orderDetails/:order_id', adminAuth.isAdminActive, adminController.toOrderDetails);
-adminRouter.post('/updateOrderStatus/:orderId/:productId', adminAuth.isAdminActiveJ, adminController.updateOrderStatus);
+adminRouter.get('/orderManagement', adminAuth.isAdminActive, orderController.toOrderManagement);
+adminRouter.get('/orderDetails/:order_id', adminAuth.isAdminActive, orderController.toOrderDetails);
+adminRouter.post('/updateOrderStatus/:orderId/:productId', adminAuth.isAdminActiveJ, orderController.updateOrderStatus);
 
 // Offers N Coupons - Coupons
 adminRouter.get('/offersAndCoupons', adminAuth.isAdminActive, adminController.toOffersAndCoupons);
@@ -60,12 +63,12 @@ adminRouter.put('/editCoupon/:coupon_id', adminAuth.isAdminActiveJ, adminControl
 adminRouter.delete('/deleteCoupon/:coupon_id', adminAuth.isAdminActiveJ, adminController.deleteCoupon);
 
 // Offers N Coupons - Offers
-adminRouter.get('/createProductOffer', adminAuth.isAdminActive, adminController.toCreateOffer);
-adminRouter.post('/createProductOffer', adminAuth.isAdminActiveJ, adminController.verifyProductOffer);
-adminRouter.get('/createCategoryOffer', adminAuth.isAdminActive, adminController.toCreateCategoryOffer);
-adminRouter.post('/createCategoryOffer', adminAuth.isAdminActiveJ, adminController.verifyCategoryOffer);
-adminRouter.put('/editOffer/:offer_id', adminAuth.isAdminActiveJ, adminController.verifyEditOffer);
-adminRouter.post('/offerStatusToggle/:offer_id', adminAuth.isAdminActiveJ, adminController.toggleOfferStatus);
+adminRouter.get('/createProductOffer', adminAuth.isAdminActive, offerController.toCreateOffer);
+adminRouter.post('/createProductOffer', adminAuth.isAdminActiveJ, offerController.verifyProductOffer);
+adminRouter.get('/createCategoryOffer', adminAuth.isAdminActive, offerController.toCreateCategoryOffer);
+adminRouter.post('/createCategoryOffer', adminAuth.isAdminActiveJ, offerController.verifyCategoryOffer);
+adminRouter.put('/editOffer/:offer_id', adminAuth.isAdminActiveJ, offerController.verifyEditOffer);
+adminRouter.post('/offerStatusToggle/:offer_id', adminAuth.isAdminActiveJ, offerController.toggleOfferStatus);
 
 
 //Sales Report

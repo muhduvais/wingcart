@@ -542,97 +542,6 @@ const toProductMgmt = async (req, res) => {
   }
 };
 
-const toBrandList = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const skip = (page - 1) * ITEMS_PER_PAGE;
-
-    const brands = await Brand.find({}).skip(skip).limit(ITEMS_PER_PAGE);
-
-    const totalBrands = await Brand.countDocuments({});
-
-    const totalPages = Math.ceil(totalBrands / ITEMS_PER_PAGE);
-
-    res.render("brandList", {
-      brands: brands,
-      pagination: {
-        currentPage: page,
-        pages: totalPages,
-      },
-    });
-  } catch (err) {
-    console.error("Error fetching brands:", err);
-    res.status(500).send("Internal Server Error");
-  }
-};
-
-const toAddBrand = (req, res) => {
-  res.render("addBrand");
-};
-
-const verifyAddBrand = async (req, res) => {
-  try {
-    const { brandName, brandDesc } = req.body;
-    const regName = new RegExp(brandName, "i");
-    console.log(regName);
-    const isPresentBrand = await Brand.findOne({ name: { $regex: regName } });
-
-    if (!isPresentBrand) {
-      const brand = new Brand({
-        name: brandName,
-        description: brandDesc,
-      });
-
-      await brand.save();
-      console.log("Brand saved");
-      res.status(200).json({ success: true });
-    } else {
-      res.status(200).json({ message: "Brand already exists!" });
-    }
-  } catch (err) {
-    console.error("Error adding brand", err);
-    res.status(500).send("Internal server error");
-  }
-};
-
-const toEditBrand = async (req, res) => {
-  try {
-    const brandId = req.params.brand_id;
-    const brand = await Brand.findOne({ _id: brandId });
-    res.render("editBrand", { brand, brandId });
-  } catch (err) {
-    console.error("Error fetching edit brand:", err);
-    res.status(500).send("Internal Server Error");
-  }
-};
-
-const verifyEditBrand = async (req, res) => {
-  try {
-    const { name, description } = req.body;
-    const regName = new RegExp(name, "i");
-    console.log(req.params.brand_id);
-    const existingBrand = await Brand.findOne({
-      name: { $regex: regName },
-      _id: { $ne: req.params.brand_id },
-    });
-
-    if (existingBrand) {
-      return res.status(200).json({ message: "Brand already exists!" });
-    }
-
-    await Brand.updateOne(
-      { _id: req.params.brand_id },
-      { $set: { name, description } }
-    );
-
-    console.log("Brand updated");
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error("Error editing brand!", err);
-    res.status(500).send("Internal Server Error");
-  }
-};
-
 const toAddProduct = async (req, res) => {
   try {
     const categories = await Category.find({});
@@ -885,216 +794,6 @@ const productListToggle = async (req, res) => {
   } catch (err) {
     console.error("Error on product list toggle:", err);
     res.status(500).send("Internal Server Error");
-  }
-};
-const brandListToggle = async (req, res) => {
-  try {
-    const { brandId, isListed } = req.body;
-    console.log(brandId, isListed);
-    if (isListed === true) {
-      await Brand.updateOne({ _id: brandId }, { $set: { isListed: false } });
-      res.status(200).json({ message: "Brand Unlisted" });
-    } else {
-      await Brand.updateOne({ _id: brandId }, { $set: { isListed: true } });
-      res.status(200).json({ message: "Brand Listed" });
-    }
-  } catch (err) {
-    console.error("Error on brand list toggle:", err);
-    res.status(500).send("Internal Server Error");
-  }
-};
-
-const toOrderManagement = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const search = req.query.search || "";
-    const skip = (page - 1) * 10;
-
-    // const orders = await Order.find({}).populate('payment');
-
-    const query = {
-      $or: [
-        { orderId: { $regex: search, $options: "i" } },
-        { paymentStatus: { $regex: search, $options: "i" } },
-      ],
-    };
-
-    const orders = await Order.find(query)
-      .sort({ orderDate: -1 })
-      .populate("user")
-      .populate("payment")
-      .skip(skip)
-      .limit(10);
-
-    console.log("Orders.length: ", orders.length);
-
-    orders.forEach((order) => {
-      const pendingOrder = order.products.filter((item) =>
-        ["pending", "dispatched", "return requested"].includes(item.status)
-      );
-      console.log("Pending Order: ", pendingOrder);
-
-      if (pendingOrder.length > 0) {
-        order.status = "Pending";
-      } else {
-        order.status = "Completed";
-      }
-    });
-
-    const totalOrders = await Order.countDocuments(query);
-
-    const totalPages = Math.ceil(totalOrders / 10);
-
-    res.render("adminOrderManagement", {
-      orders,
-      totalOrders,
-      pagination: {
-        currentPage: page,
-        pages: totalPages,
-      },
-      search: search,
-    });
-  } catch (err) {
-    console.error("Error fetching order Management", err);
-    res.status(500).send("Internal server error");
-  }
-};
-
-const toOrderDetails = async (req, res) => {
-  try {
-    const orderId = req.params.order_id;
-
-    const order = await Order.findById(orderId)
-      .populate("products.product")
-      .populate("payment");
-
-    const subtotal = order.products.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    const gst = subtotal * 0.18;
-    const subtotalBefore = order.products.reduce(
-      (sum, item) => sum + item.product.price * item.quantity,
-      0
-    );
-    const shipping = subtotal < 500 ? 40 : 0;
-    const totalAmount = order.totalAmount;
-    const offerDiscount = subtotalBefore - subtotal;
-    const couponDiscount = (subtotal * order.coupon.discount) / 100;
-    const totalDiscount = offerDiscount + couponDiscount;
-
-    res.render("adminOrderDetails", {
-      order,
-      subtotal,
-      gst,
-      shipping,
-      totalAmount,
-      subtotalBefore,
-      totalDiscount,
-    });
-  } catch (err) {
-    console.error("Error fetching order details", err);
-    res.status(500).send("Internal server error");
-  }
-};
-
-function generateTransactionId() {
-  const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).substr(2, 4);
-  return `TXN-${timestamp}-${randomPart}`;
-}
-
-const updateOrderStatus = async (req, res) => {
-  try {
-    const { orderId, productId } = req.params;
-    const { status } = req.body;
-
-    const order = await Order.findById(orderId).populate("payment");
-
-    const product = order.products.find(
-      (item) => item.product.toString() === productId
-    );
-
-    const user = await User.findOne({ _id: order.user });
-
-    //Wallet update
-    if (status === "accept") {
-      const productPurchasePrice = product.price;
-      const totalProductPrice = productPurchasePrice * product.quantity;
-
-      let wallet = await Wallet.findOne({ user: user._id });
-
-      if (!wallet) {
-        const newWallet = new Wallet({
-          user: user._id,
-          balance: 0,
-          transactions: [],
-        });
-
-        await newWallet.save();
-
-        wallet = await Wallet.findOne({ user: user._id });
-      }
-
-      const transactionId = generateTransactionId();
-
-      const transactions = {
-        amount: totalProductPrice.toFixed(2),
-        date: new Date(),
-        type: "credit",
-        transactionId: transactionId,
-      };
-
-      console.log("updateOrderStatus.transactions: ", transactions);
-
-      wallet.balance += totalProductPrice;
-      wallet.transactions.push(transactions);
-
-      await wallet.save();
-    }
-    //////////
-
-    const statusOrder = ["pending", "dispatched", "delivered"];
-    const returnRequestStatus = ["accept", "reject"];
-
-    if (statusOrder.includes(product.status)) {
-      if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
-        product.status = status;
-        if (order.payment.type === "Cash on delivery") {
-          const notDelivered = order.products.filter((item) =>
-            ["pending", "dispatched"].includes(item.status)
-          );
-          console.log("notDelivered: ", notDelivered);
-          console.log("notDelivered.length: ", notDelivered.length);
-
-          if (notDelivered.length === 0) {
-            order.paymentStatus = "Completed";
-          }
-        }
-        await order.save();
-        return res.json({ success: true });
-      }
-    } else if (
-      product.status === "return requested" &&
-      returnRequestStatus.includes(status)
-    ) {
-      if (status === "accept") {
-        product.status = "return accepted";
-        product.returnDate = new Date();
-      } else if (status === "reject") {
-        product.status = "return rejected";
-      } else {
-        product.status = status;
-      }
-
-      await order.save();
-      return res.json({ success: true });
-    }
-
-    res.json({ success: false });
-  } catch (err) {
-    console.error("Error updating order status", err);
-    res.status(500).json({ success: false });
   }
 };
 
@@ -1574,39 +1273,28 @@ module.exports = {
   adminLogout,
   toUserMgmt,
   userBlockToggle,
+
   toCategoryMgmt,
   toAddCategory,
   verifyAddCategory,
   toEditCategory,
   verifyEditCategory,
   categoryListToggle,
+
   toProductMgmt,
-  toBrandList,
-  toAddBrand,
-  verifyAddBrand,
-  toEditBrand,
-  verifyEditBrand,
   toAddProduct,
   verifyAddProduct,
   toEditProduct,
   verifyEditProduct,
   productListToggle,
-  brandListToggle,
-  toOrderManagement,
-  toOrderDetails,
-  updateOrderStatus,
+
   toOffersAndCoupons,
   toCreateCoupon,
   verifyCreateCoupon,
   verifyEditCoupon,
   deleteCoupon,
-  toCreateOffer,
-  toCreateCategoryOffer,
-  verifyProductOffer,
-  verifyCategoryOffer,
-  toggleOfferStatus,
+
   toSalesReport,
   downloadSalesReport,
   generateSalesReport,
-  verifyEditOffer,
 };

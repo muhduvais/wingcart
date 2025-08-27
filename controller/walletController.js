@@ -8,6 +8,12 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+function generateTransactionId() {
+  const timestamp = Date.now().toString(36);
+  const randomPart = Math.random().toString(36).substr(2, 4);
+  return `TXN-${timestamp}-${randomPart}`;
+}
+
 const toWallet = async (req, res) => {
   try {
     const user = await User.findById(req.session.user);

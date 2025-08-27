@@ -16,6 +16,62 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const generateOrderId = () => {
+  const date = new Date();
+  const components = [
+    date.getFullYear(),
+    ("0" + (date.getMonth() + 1)).slice(-2),
+    ("0" + date.getDate()).slice(-2),
+    ("0" + date.getHours()).slice(-2),
+    ("0" + date.getMinutes()).slice(-2),
+    ("0" + date.getSeconds()).slice(-2),
+  ];
+
+  const dateString = components.join("");
+  const randomNumber = Math.floor(Math.random() * 10000);
+
+  return `ORD-${dateString}-${randomNumber}`;
+};
+
+function generateTransactionId() {
+  const timestamp = Date.now().toString(36);
+  const randomPart = Math.random().toString(36).substr(2, 4);
+  return `TXN-${timestamp}-${randomPart}`;
+}
+
+const updateProductQuantities = async (orderId) => {
+  try {
+    const order = await Order.findById(orderId).populate("products.product");
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    for (const item of order.products) {
+      const productId = item.product._id;
+      const orderedQuantity = item.quantity;
+
+      const product = await Product.findById(productId);
+
+      if (product) {
+        console.log(product.name);
+        console.log(product.stock);
+        product.stock -= orderedQuantity;
+        console.log(product.stock);
+        if (product.stock < 0) {
+          product.stock = 0;
+        }
+
+        await product.save();
+      }
+    }
+
+    console.log("Product quantities updated successfully");
+  } catch (err) {
+    console.error("Error updating product quantities:", err);
+  }
+};
+
 const createOrder = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -699,6 +755,154 @@ const downloadInvoice = async (req, res) => {
   }
 };
 
+const toOrderManagement = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const search = req.query.search || "";
+    const skip = (page - 1) * 10;
+
+    const query = {
+      $or: [
+        { orderId: { $regex: search, $options: "i" } },
+        { paymentStatus: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    const orders = await Order.find(query)
+      .sort({ orderDate: -1 })
+      .populate("user")
+      .populate("payment")
+      .skip(skip)
+      .limit(10);
+
+    console.log("Orders.length: ", orders.length);
+
+    orders.forEach((order) => {
+      const pendingOrder = order.products.filter((item) =>
+        ["pending", "dispatched", "return requested"].includes(item.status)
+      );
+      console.log("Pending Order: ", pendingOrder);
+
+      if (pendingOrder.length > 0) {
+        order.status = "Pending";
+      } else {
+        order.status = "Completed";
+      }
+    });
+
+    const totalOrders = await Order.countDocuments(query);
+
+    const totalPages = Math.ceil(totalOrders / 10);
+
+    res.render("adminOrderManagement", {
+      orders,
+      totalOrders,
+      pagination: {
+        currentPage: page,
+        pages: totalPages,
+      },
+      search: search,
+    });
+  } catch (err) {
+    console.error("Error fetching order Management", err);
+    res.status(500).send("Internal server error");
+  }
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId, productId } = req.params;
+    const { status } = req.body;
+
+    const order = await Order.findById(orderId).populate("payment");
+
+    const product = order.products.find(
+      (item) => item.product.toString() === productId
+    );
+
+    const user = await User.findOne({ _id: order.user });
+
+    //Wallet update
+    if (status === "accept") {
+      const productPurchasePrice = product.price;
+      const totalProductPrice = productPurchasePrice * product.quantity;
+
+      let wallet = await Wallet.findOne({ user: user._id });
+
+      if (!wallet) {
+        const newWallet = new Wallet({
+          user: user._id,
+          balance: 0,
+          transactions: [],
+        });
+
+        await newWallet.save();
+
+        wallet = await Wallet.findOne({ user: user._id });
+      }
+
+      const transactionId = generateTransactionId();
+
+      const transactions = {
+        amount: totalProductPrice.toFixed(2),
+        date: new Date(),
+        type: "credit",
+        transactionId: transactionId,
+      };
+
+      console.log("updateOrderStatus.transactions: ", transactions);
+
+      wallet.balance += totalProductPrice;
+      wallet.transactions.push(transactions);
+
+      await wallet.save();
+    }
+    //////////
+
+    const statusOrder = ["pending", "dispatched", "delivered"];
+    const returnRequestStatus = ["accept", "reject"];
+
+    if (statusOrder.includes(product.status)) {
+      if (statusOrder.indexOf(status) > statusOrder.indexOf(product.status)) {
+        product.status = status;
+        if (order.payment.type === "Cash on delivery") {
+          const notDelivered = order.products.filter((item) =>
+            ["pending", "dispatched"].includes(item.status)
+          );
+          console.log("notDelivered: ", notDelivered);
+          console.log("notDelivered.length: ", notDelivered.length);
+
+          if (notDelivered.length === 0) {
+            order.paymentStatus = "Completed";
+          }
+        }
+        await order.save();
+        return res.json({ success: true });
+      }
+    } else if (
+      product.status === "return requested" &&
+      returnRequestStatus.includes(status)
+    ) {
+      if (status === "accept") {
+        product.status = "return accepted";
+        product.returnDate = new Date();
+      } else if (status === "reject") {
+        product.status = "return rejected";
+      } else {
+        product.status = status;
+      }
+
+      await order.save();
+      return res.json({ success: true });
+    }
+
+    res.json({ success: false });
+  } catch (err) {
+    console.error("Error updating order status", err);
+    res.status(500).json({ success: false });
+  }
+};
+
 module.exports = {
   createOrder,
   toOrderConf,
@@ -710,4 +914,6 @@ module.exports = {
   retryPayment,
   updatePaymentStatus,
   updatePaymentFailure,
+  toOrderManagement,
+  updateOrderStatus,
 };

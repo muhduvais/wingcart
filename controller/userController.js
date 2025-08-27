@@ -684,62 +684,6 @@ const toCheckout = async (req, res) => {
   }
 };
 
-const generateOrderId = () => {
-  const date = new Date();
-  const components = [
-    date.getFullYear(),
-    ("0" + (date.getMonth() + 1)).slice(-2),
-    ("0" + date.getDate()).slice(-2),
-    ("0" + date.getHours()).slice(-2),
-    ("0" + date.getMinutes()).slice(-2),
-    ("0" + date.getSeconds()).slice(-2),
-  ];
-
-  const dateString = components.join("");
-  const randomNumber = Math.floor(Math.random() * 10000);
-
-  return `ORD-${dateString}-${randomNumber}`;
-};
-
-const updateProductQuantities = async (orderId) => {
-  try {
-    const order = await Order.findById(orderId).populate("products.product");
-
-    if (!order) {
-      throw new Error("Order not found");
-    }
-
-    for (const item of order.products) {
-      const productId = item.product._id;
-      const orderedQuantity = item.quantity;
-
-      const product = await Product.findById(productId);
-
-      if (product) {
-        console.log(product.name);
-        console.log(product.stock);
-        product.stock -= orderedQuantity;
-        console.log(product.stock);
-        if (product.stock < 0) {
-          product.stock = 0;
-        }
-
-        await product.save();
-      }
-    }
-
-    console.log("Product quantities updated successfully");
-  } catch (err) {
-    console.error("Error updating product quantities:", err);
-  }
-};
-
-function generateTransactionId() {
-  const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).substr(2, 4);
-  return `TXN-${timestamp}-${randomPart}`;
-}
-
 const applyCoupon = async (req, res) => {
   try {
     const code = req.params.couponCode;
