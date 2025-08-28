@@ -1,11 +1,14 @@
 const express = require("express");
 const adminRouter = express.Router();
-const nocache = require("nocache");
 const adminController = require("../controller/adminController");
 const brandController = require("../controller/brandController");
 const offerController = require("../controller/offerController");
+const couponController = require("../controller/couponController");
+const categoryController = require("../controller/categoryController");
+const productController = require("../controller/productController");
 const orderController = require("../controller/orderController");
 const adminAuth = require("../middlewares/adminAuth");
+const nocache = require("nocache");
 
 adminRouter.use(nocache());
 
@@ -19,12 +22,12 @@ adminRouter.get('/userManagement', adminAuth.isAdminActive,  adminController.toU
 adminRouter.post('/userListed/:user_id', adminAuth.isAdminActiveJ, adminController.userBlockToggle);
 
 //Categoy Management
-adminRouter.get('/categoryManagement', adminAuth.isAdminActive, adminController.toCategoryMgmt);
-adminRouter.get('/addCategory', adminAuth.isAdminActive, adminController.toAddCategory);
-adminRouter.post('/addCategory', adminAuth.isAdminActiveJ, adminController.verifyAddCategory);
-adminRouter.get('/editCategory/:category_id', adminAuth.isAdminActive, adminController.toEditCategory);
-adminRouter.post('/editCategory/:category_id', adminAuth.isAdminActiveJ, adminController.verifyEditCategory);
-adminRouter.post('/categoryListed/:category_id', adminAuth.isAdminActiveJ, adminController.categoryListToggle);
+adminRouter.get('/categoryManagement', adminAuth.isAdminActive, categoryController.toCategoryMgmt);
+adminRouter.get('/addCategory', adminAuth.isAdminActive, categoryController.toAddCategory);
+adminRouter.post('/addCategory', adminAuth.isAdminActiveJ, categoryController.verifyAddCategory);
+adminRouter.get('/editCategory/:category_id', adminAuth.isAdminActive, categoryController.toEditCategory);
+adminRouter.post('/editCategory/:category_id', adminAuth.isAdminActiveJ, categoryController.verifyEditCategory);
+adminRouter.post('/categoryListed/:category_id', adminAuth.isAdminActiveJ, categoryController.categoryListToggle);
 
 //Brand Management
 adminRouter.get('/brandList', adminAuth.isAdminActive, brandController.toBrandList);
@@ -35,20 +38,20 @@ adminRouter.post('/editBrand/:brand_id', adminAuth.isAdminActiveJ, brandControll
 adminRouter.post('/brandListed/:brandId', adminAuth.isAdminActiveJ, brandController.brandListToggle);
 
 //Product Management
-adminRouter.get('/productManagement', adminAuth.isAdminActive, adminController.toProductMgmt);
-adminRouter.get('/addproduct', adminAuth.isAdminActive, adminController.toAddProduct);
-adminRouter.post('/addProduct', adminAuth.isAdminActiveJ, adminController.upload.fields([
+adminRouter.get('/productManagement', adminAuth.isAdminActive, productController.toProductMgmt);
+adminRouter.get('/addproduct', adminAuth.isAdminActive, productController.toAddProduct);
+adminRouter.post('/addProduct', adminAuth.isAdminActiveJ, productController.upload.fields([
     { name: 'image1', maxCount: 1 },
     { name: 'image2', maxCount: 1 },
     { name: 'image3', maxCount: 1 }
-  ]), adminController.verifyAddProduct);
-adminRouter.get('/editProduct/:product_id', adminAuth.isAdminActive, adminController.toEditProduct);
-adminRouter.post('/editProduct/:product_id', adminAuth.isAdminActiveJ, adminController.upload.fields([
+  ]), productController.verifyAddProduct);
+adminRouter.get('/editProduct/:product_id', adminAuth.isAdminActive, productController.toEditProduct);
+adminRouter.post('/editProduct/:product_id', adminAuth.isAdminActiveJ, productController.upload.fields([
     { name: 'image1', maxCount: 1 },
     { name: 'image2', maxCount: 1 },
     { name: 'image3', maxCount: 1 }
-  ]), adminController.verifyEditProduct);
-adminRouter.post('/productListed/:product_id', adminAuth.isAdminActiveJ, adminController.productListToggle);
+  ]), productController.verifyEditProduct);
+adminRouter.post('/productListed/:product_id', adminAuth.isAdminActiveJ, productController.productListToggle);
 
 //Order Management
 adminRouter.get('/orderManagement', adminAuth.isAdminActive, orderController.toOrderManagement);
@@ -56,11 +59,11 @@ adminRouter.get('/orderDetails/:order_id', adminAuth.isAdminActive, orderControl
 adminRouter.post('/updateOrderStatus/:orderId/:productId', adminAuth.isAdminActiveJ, orderController.updateOrderStatus);
 
 // Offers N Coupons - Coupons
-adminRouter.get('/offersAndCoupons', adminAuth.isAdminActive, adminController.toOffersAndCoupons);
-adminRouter.get('/createCoupon', adminAuth.isAdminActive, adminController.toCreateCoupon);
-adminRouter.post('/createCoupon', adminAuth.isAdminActiveJ, adminController.verifyCreateCoupon);
-adminRouter.put('/editCoupon/:coupon_id', adminAuth.isAdminActiveJ, adminController.verifyEditCoupon);
-adminRouter.delete('/deleteCoupon/:coupon_id', adminAuth.isAdminActiveJ, adminController.deleteCoupon);
+adminRouter.get('/offersAndCoupons', adminAuth.isAdminActive, couponController.toOffersAndCoupons);
+adminRouter.get('/createCoupon', adminAuth.isAdminActive, couponController.toCreateCoupon);
+adminRouter.post('/createCoupon', adminAuth.isAdminActiveJ, couponController.verifyCreateCoupon);
+adminRouter.put('/editCoupon/:coupon_id', adminAuth.isAdminActiveJ, couponController.verifyEditCoupon);
+adminRouter.delete('/deleteCoupon/:coupon_id', adminAuth.isAdminActiveJ, couponController.deleteCoupon);
 
 // Offers N Coupons - Offers
 adminRouter.get('/createProductOffer', adminAuth.isAdminActive, offerController.toCreateOffer);

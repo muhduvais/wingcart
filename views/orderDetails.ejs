@@ -108,7 +108,7 @@
             <div class="row no-gutters row-bordered row-border-light">
                 <div class="col-md-3 pt-0">
                     <div class="list-group list-group-flush account-settings-links">
-                        <a class="list-group-item list-group-item-action active"
+                        <a class="list-group-item list-group-item-action"
                             href="/userProfile">General</a>
                         <a class="list-group-item list-group-item-action"
                             href="/changePassword">Change password</a>
@@ -116,7 +116,7 @@
                             href="/addressManagement">Manage Addresses</a>
                         <a class="list-group-item list-group-item-action"
                             href="#account-social-links">Wishlist</a>
-                        <a class="list-group-item list-group-item-action"
+                        <a class="list-group-item list-group-item-action active"
                             href="/orderHistory">Order History</a>
                         <a class="list-group-item list-group-item-action"
                             href="/wallet">Wallet</a>
@@ -247,6 +247,7 @@
                                         </div>
                                     <% }); %>
                                 </div>
+                                
                             </div>
                             <!-- ///////////////////// -->
 
@@ -279,6 +280,7 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `Invoice_${orderId}.pdf`;
+                a.target = "_blank";
                 document.body.appendChild(a);
                 a.click();
                 a.remove();

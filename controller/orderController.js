@@ -9,6 +9,7 @@ const Offer = require("../model/offersModel");
 const Wallet = require("../model/walletsModel");
 const Razorpay = require("razorpay");
 const pdf = require("html-pdf");
+const puppeteer = require("puppeteer");
 require("dotenv").config();
 
 const razorpay = new Razorpay({
@@ -760,7 +761,6 @@ const toOrderManagement = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const search = req.query.search || "";
     const skip = (page - 1) * 10;
-
     const query = {
       $or: [
         { orderId: { $regex: search, $options: "i" } },

@@ -33,6 +33,8 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pdfkit": "^0.15.0",
+    "phantomjs-prebuilt": "^2.1.16",
+    "puppeteer": "^24.17.0",
     "razorpay": "^2.9.4",
     "sharp": "^0.33.4",
     "uuid": "^10.0.0"
