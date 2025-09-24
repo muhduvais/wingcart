@@ -19,6 +19,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+const ITEMS_PER_PAGE = 5;
+
 const toProductMgmt = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

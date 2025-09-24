@@ -55,7 +55,7 @@ adminRouter.post('/productListed/:product_id', adminAuth.isAdminActiveJ, product
 
 //Order Management
 adminRouter.get('/orderManagement', adminAuth.isAdminActive, orderController.toOrderManagement);
-adminRouter.get('/orderDetails/:order_id', adminAuth.isAdminActive, orderController.toOrderDetails);
+adminRouter.get('/orderDetails/:order_id', adminAuth.isAdminActive, orderController.toAdminOrderDetails);
 adminRouter.post('/updateOrderStatus/:orderId/:productId', adminAuth.isAdminActiveJ, orderController.updateOrderStatus);
 
 // Offers N Coupons - Coupons

@@ -1,6 +1,8 @@
 const User = require("../model/usersModel");
 const Category = require("../model/categoriesModel");
 
+const ITEMS_PER_PAGE = 5;
+
 const toCategoryMgmt = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

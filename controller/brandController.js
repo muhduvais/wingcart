@@ -78,21 +78,8 @@ const generateExcel = async (reportData) => {
   const buffer = await workbook.xlsx.writeBuffer();
   return buffer;
 };
-
-const multer = require("multer");
+const ITEMS_PER_PAGE = 5;
 const path = require("path");
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../assets2/img"));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
 
 const toBrandList = async (req, res) => {
   try {

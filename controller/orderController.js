@@ -507,6 +507,44 @@ const updatePaymentStatus = async (req, res) => {
   }
 };
 
+const toAdminOrderDetails = async (req, res) => {
+  try {
+    const orderId = req.params.order_id;
+
+    const order = await Order.findById(orderId)
+      .populate("products.product")
+      .populate("payment");
+
+    const subtotal = order.products.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+    const gst = subtotal * 0.18;
+    const subtotalBefore = order.products.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0
+    );
+    const shipping = subtotal < 500 ? 40 : 0;
+    const totalAmount = order.totalAmount;
+    const offerDiscount = subtotalBefore - subtotal;
+    const couponDiscount = (subtotal * order.coupon.discount) / 100;
+    const totalDiscount = offerDiscount + couponDiscount;
+
+    res.render("adminOrderDetails", {
+      order,
+      subtotal,
+      gst,
+      shipping,
+      totalAmount,
+      subtotalBefore,
+      totalDiscount,
+    });
+  } catch (err) {
+    console.error("Error fetching order details", err);
+    res.status(500).send("Internal server error");
+  }
+};
+
 const toOrderDetails = async (req, res) => {
   try {
     const user = await User.findById(req.session.user);
@@ -907,6 +945,7 @@ module.exports = {
   createOrder,
   toOrderConf,
   toOrderHistory,
+  toAdminOrderDetails,
   toOrderDetails,
   downloadInvoice,
   cancelProduct,
