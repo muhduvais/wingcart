@@ -1,6 +1,8 @@
 const User = require("../model/usersModel");
 const Cart = require("../model/cartModel");
 const Offer = require("../model/offersModel");
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
 require("dotenv").config();
 
 const toCart = async (req, res) => {
@@ -46,8 +48,6 @@ const toCart = async (req, res) => {
       return acc;
     }, {});
 
-    console.log("OffersByItemId: ", offersByItemId);
-
     let realSubtotal = 0;
     let discountTotal = 0;
     let subtotal = 0;
@@ -56,14 +56,9 @@ const toCart = async (req, res) => {
       const product = item.product;
       const qty = item.quantity;
 
-      console.log("ProductId: ", String(product._id));
-      console.log("Category: ", String(product.category));
-
       const pOffers = offersByItemId[String(product._id)] || [];
       const cOffers = offersByItemId[String(product.category)] || [];
       const allOffers = [...pOffers, ...cOffers];
-
-      console.log("allOffers: ", allOffers);
 
       const bestOffer = allOffers.reduce(
         (best, cur) => (cur.discount > (best.discount || 0) ? cur : best),
@@ -98,8 +93,6 @@ const toCart = async (req, res) => {
 
     cart.products = cartItems;
 
-    console.log("cart: ", cart);
-
     return res.render("cart", {
       user,
       userId,
@@ -111,8 +104,8 @@ const toCart = async (req, res) => {
       total,
     });
   } catch (err) {
-    console.error("Error fetching cart", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.CART_FETCH, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -123,7 +116,7 @@ const addToCart = async (req, res) => {
     const { productId, quantity } = req.body;
 
     if (!user || user.isBlocked) {
-      return res.status(200).json({ user: false });
+      return res.status(STATUS.OK).json({ user: false });
     }
 
     const userId = user._id;
@@ -139,19 +132,19 @@ const addToCart = async (req, res) => {
 
     if (productIndex > -1) {
       return res
-        .status(200)
-        .json({ message: "Already added to cart!", user: true });
+        .status(STATUS.OK)
+        .json({ message: MESSAGES.CART.ALREADY_ADDED, user: true });
     } else {
       cart.products.push({
         product: productId,
         quantity: parseInt(quantity, 10) || 1,
       });
       await cart.save();
-      return res.status(200).json({ success: true, user: true });
+      return res.status(STATUS.OK).json({ success: true, user: true });
     }
   } catch (err) {
-    console.error("Error adding product to cart:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error(MESSAGES.ERRORS.CART_ADD, err);
+    return res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -167,13 +160,13 @@ const deleteCartItem = async (req, res) => {
       );
       await cart.save();
       console.log("Product removed from cart:", cart);
-      return res.status(200).json({ success: true });
+      return res.status(STATUS.OK).json({ success: true, message: MESSAGES.CART.ITEM_REMOVED });
     } else {
-      return res.status(404).json({ message: "Cart not found" });
+      return res.status(STATUS.NOT_FOUND).json({ message: MESSAGES.CART.NOT_FOUND });
     }
   } catch (err) {
-    console.error("Error deleting cart item", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.CART_DELETE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -187,7 +180,7 @@ const updateCart = async (req, res) => {
       .lean();
 
     if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
+      return res.status(STATUS.NOT_FOUND).json({ message: MESSAGES.CART.NOT_FOUND });
     }
 
     cart.products = cart.products.map((item) =>
@@ -264,8 +257,8 @@ const updateCart = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error updating cart", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.CART_UPDATE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 

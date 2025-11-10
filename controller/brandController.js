@@ -10,6 +10,10 @@ const Wallet = require("../model/walletsModel");
 const sharp = require("sharp");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs");
+const path = require("path");
+
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
 
 const generatePDF = (reportData) => {
   return new Promise((resolve, reject) => {
@@ -79,7 +83,6 @@ const generateExcel = async (reportData) => {
   return buffer;
 };
 const ITEMS_PER_PAGE = 5;
-const path = require("path");
 
 const toBrandList = async (req, res) => {
   try {
@@ -100,8 +103,8 @@ const toBrandList = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error fetching brands:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_BRANDS, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -124,13 +127,13 @@ const verifyAddBrand = async (req, res) => {
 
       await brand.save();
       console.log("Brand saved");
-      res.status(200).json({ success: true });
+      res.status(STATUS.OK).json({ success: true, message: MESSAGES.BRAND.ADD_SUCCESS });
     } else {
-      res.status(200).json({ message: "Brand already exists!" });
+      res.status(STATUS.OK).json({ message: MESSAGES.BRAND.ALREADY_EXISTS });
     }
   } catch (err) {
-    console.error("Error adding brand", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.ADD_BRAND, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -140,8 +143,8 @@ const toEditBrand = async (req, res) => {
     const brand = await Brand.findOne({ _id: brandId });
     res.render("editBrand", { brand, brandId });
   } catch (err) {
-    console.error("Error fetching edit brand:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_EDIT_BRAND, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -156,7 +159,7 @@ const verifyEditBrand = async (req, res) => {
     });
 
     if (existingBrand) {
-      return res.status(200).json({ message: "Brand already exists!" });
+      return res.status(STATUS.OK).json({ message: MESSAGES.BRAND.ALREADY_EXISTS });
     }
 
     await Brand.updateOne(
@@ -165,10 +168,10 @@ const verifyEditBrand = async (req, res) => {
     );
 
     console.log("Brand updated");
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true, message: MESSAGES.BRAND.UPDATE_SUCCESS });
   } catch (err) {
-    console.error("Error editing brand!", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.EDIT_BRAND, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -182,8 +185,8 @@ const processImage = async (file, width, height) => {
     await sharp(file.path).toFile(outputPath);
     return `cropped-${file.filename}`;
   } catch (err) {
-    console.error("Error processing image:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.PROCESS_IMAGE, err);
+    throw err;
   }
 };
 
@@ -195,8 +198,8 @@ const toEditProduct = async (req, res) => {
     const product = await Product.findOne({ _id: productId });
     res.render("editProduct", { product, categories, brands, productId });
   } catch (err) {
-    console.error("Error fetching edit product:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_EDIT_PRODUCT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -206,14 +209,14 @@ const brandListToggle = async (req, res) => {
     console.log(brandId, isListed);
     if (isListed === true) {
       await Brand.updateOne({ _id: brandId }, { $set: { isListed: false } });
-      res.status(200).json({ message: "Brand Unlisted" });
+      res.status(STATUS.OK).json({ message: MESSAGES.BRAND.UNLISTED });
     } else {
       await Brand.updateOne({ _id: brandId }, { $set: { isListed: true } });
-      res.status(200).json({ message: "Brand Listed" });
+      res.status(STATUS.OK).json({ message: MESSAGES.BRAND.LISTED });
     }
   } catch (err) {
-    console.error("Error on brand list toggle:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.BRAND_LIST_TOGGLE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 

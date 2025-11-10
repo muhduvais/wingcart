@@ -3,6 +3,9 @@ const Wallet = require("../model/walletsModel");
 const Razorpay = require("razorpay");
 require("dotenv").config();
 
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
+
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -44,7 +47,7 @@ const toWallet = async (req, res) => {
     const lastTransaction = wallet.transactions[0];
 
     if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-      return res.json({
+      return res.status(STATUS.OK).json({
         success: true,
         transactions: paginatedTransactions,
         currentPage: page,
@@ -62,8 +65,8 @@ const toWallet = async (req, res) => {
       totalTransactions,
     });
   } catch (err) {
-    console.error("Error fetching wallet: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_WALLET, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -77,7 +80,7 @@ const getWalletTransactions = async (req, res) => {
     const wallet = await Wallet.findOne({ user: user._id });
 
     if (!wallet || wallet.transactions.length === 0) {
-      return res.json({
+      return res.status(STATUS.OK).json({
         success: true,
         transactions: [],
         currentPage: 1,
@@ -92,7 +95,7 @@ const getWalletTransactions = async (req, res) => {
     const totalTransactions = wallet.transactions.length;
     const totalPages = Math.ceil(totalTransactions / limit);
 
-    res.json({
+    res.status(STATUS.OK).json({
       success: true,
       transactions: paginatedTransactions,
       currentPage: page,
@@ -100,8 +103,8 @@ const getWalletTransactions = async (req, res) => {
       totalTransactions,
     });
   } catch (err) {
-    console.error("Error fetching transactions: ", err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error(MESSAGES.ERRORS.FETCH_TRANSACTIONS, err);
+    res.status(STATUS.SERVER_ERROR).json({ success: false, message: MESSAGES.COMMON.SERVER_ERROR });
   }
 };
 
@@ -128,7 +131,7 @@ const addFund = async (req, res) => {
       payment_capture: 1,
     });
 
-    return res.status(200).json({
+    return res.status(STATUS.OK).json({
       success: true,
       transactions: transactions,
       razorpayOrderId: razorpayOrder.id,
@@ -140,8 +143,8 @@ const addFund = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error fetching wallet: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.ADD_FUND, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -155,10 +158,10 @@ const addFundUpdate = async (req, res) => {
     wallet.transactions.push(transactions);
     await wallet.save();
 
-    res.json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (err) {
-    console.error("Error fetching wallet: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.ADD_FUND_UPDATE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 

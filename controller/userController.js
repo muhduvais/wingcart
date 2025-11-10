@@ -12,11 +12,14 @@ const Wishlist = require("../model/wishlistModel");
 const Wallet = require("../model/walletsModel");
 require("dotenv").config();
 
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
+
 const userHome = async (req, res) => {
   try {
     const user = await User.findById(req.session.user);
     if (!user) {
-      console.error("User not found");
+      console.warn(MESSAGES.USER.NOT_FOUND);
     }
 
     let wishlist = await Wishlist.findOne({ user: user?._id });
@@ -80,7 +83,7 @@ const userHome = async (req, res) => {
     const womenCategory = await Category.findOne({ name: "Women" });
 
     if (!menCategory || !womenCategory) {
-      console.error("Men or Women category not found");
+      console.warn("Men or Women category not found");
     }
 
     const mostPurchasedMen = await Product.find({
@@ -128,8 +131,8 @@ const userHome = async (req, res) => {
 
     res.render("home", response);
   } catch (err) {
-    console.error("Error rendering home:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_HOME, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -143,8 +146,8 @@ const userAbout = async (req, res) => {
       res.render("login", { successMsg });
     }
   } catch (err) {
-    console.error("Error rendering about page", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_ABOUT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -158,8 +161,8 @@ const userContact = async (req, res) => {
       res.render("login", { successMsg });
     }
   } catch (err) {
-    console.error("Error rendering contact page", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_CONTACT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -540,12 +543,11 @@ const toEditProfile = async (req, res) => {
 const editProfile = async (req, res) => {
   try {
     const { fname, lname, age, phone, email } = req.body;
-    console.log(email);
     const userId = req.session.user;
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(200).json({ message: "User not found" });
+      return res.status(STATUS.NOT_FOUND).json({ message: MESSAGES.USER.NOT_FOUND });
     } else if (
       fname === user.fname &&
       lname === user.lname &&
@@ -553,18 +555,18 @@ const editProfile = async (req, res) => {
       phone === user.phone &&
       email === user.email
     ) {
-      res.status(200).json({ message: "No changes to save" });
+      return res.status(STATUS.OK).json({ message: MESSAGES.USER.NO_CHANGES });
     }
 
     if (email) {
       if (typeof email !== "string" || !email.trim()) {
-        return res.status(400).json({ message: "Invalid email format" });
+        return res.status(STATUS.BAD_REQUEST).json({ message: MESSAGES.USER.INVALID_EMAIL });
       }
       const existingUser = await User.findOne({ email, _id: { $ne: userId } });
       if (existingUser) {
         return res
-          .status(409)
-          .json({ message: "A user with this email already exists!" });
+          .status(STATUS.CONFLICT)
+          .json({ message: MESSAGES.USER.EMAIL_EXISTS });
       }
     }
 
@@ -576,10 +578,10 @@ const editProfile = async (req, res) => {
     if (email && email !== user.email) updates.email = email;
 
     await User.findByIdAndUpdate(userId, { $set: updates });
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (err) {
-    console.error("Error editing user profile:", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.EDIT_PROFILE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -597,11 +599,6 @@ const toCheckout = async (req, res) => {
     const addresses = await Address.find({ user: userId });
 
     const orders = await Order.find({ user: userId }, { "coupon.code": 1 });
-    // let  couponCodes = new Set();
-    // orders.forEach(order => {
-    //     couponCodes.add(order.coupon.code);
-    // });
-    // couponCodes = Array.from(couponCodes);
 
     const coupons = await Coupon.find({});
     let paymentMethod = await Payment.find({ user: userId });
@@ -619,17 +616,14 @@ const toCheckout = async (req, res) => {
         let discountedPrice = productPrice;
         let bestOfferDiscount = 0;
 
-        // Fetch product and category offers
         const productOffers = item.product.offers || [];
         const categoryOffers = await Offer.find({
           item: item.product.category,
           isActive: true,
         });
 
-        // Combine all offers
         const allOffers = [...productOffers, ...categoryOffers];
 
-        // Determine the best offer
         for (const offer of allOffers) {
           if (offer.isActive) {
             const offerDiscount = (discountedPrice * offer.discount) / 100;
@@ -675,12 +669,12 @@ const toCheckout = async (req, res) => {
         addresses,
         paymentMethod,
         totalOfferDiscount: 0,
-        totalAmount: 0, // Default totalAmount to 0 when cart is empty
+        totalAmount: 0,
       });
     }
   } catch (err) {
-    console.error("Error fetching checkout", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_CHECKOUT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -703,20 +697,21 @@ const applyCoupon = async (req, res) => {
     });
 
     if (usedCoupon) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already used this coupon.",
-      });
+      return res
+        .status(STATUS.BAD_REQUEST)
+        .json({ success: false, message: MESSAGES.COUPON.ALREADY_USED });
     }
 
     if (!coupon) {
-      res.json({ success: false, message: "The coupon is not valid!" });
-      return;
+      return res
+        .status(STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.COUPON.INVALID });
     }
 
     if (!cart) {
-      res.json({ success: false, message: "The cart is empty!" });
-      return;
+      return res
+        .status(STATUS.BAD_REQUEST)
+        .json({ success: false, message: MESSAGES.CART.EMPTY });
     }
 
     let subtotal = 0;
@@ -754,8 +749,9 @@ const applyCoupon = async (req, res) => {
     const currDate = Date.now();
 
     if (subtotal < coupon.minPurchase || coupon.validity < currDate) {
-      res.json({ success: false, message: "The coupon is not valid!" });
-      return;
+      return res
+        .status(STATUS.BAD_REQUEST)
+        .json({ success: false, message: MESSAGES.COUPON.INVALID });
     }
 
     const couponDiscountAmount = (subtotal * coupon.discount) / 100;
@@ -766,7 +762,7 @@ const applyCoupon = async (req, res) => {
     const gst = subtotal * 0.18;
     const totalAmount = subtotal - couponDiscount + (cart.shipping || 0);
 
-    res.status(200).json({
+    res.status(STATUS.OK).json({
       success: true,
       subtotal: parseFloat(subtotal.toFixed(2)),
       gst: parseFloat(gst.toFixed(2)),
@@ -776,8 +772,8 @@ const applyCoupon = async (req, res) => {
       code,
     });
   } catch (err) {
-    console.error("Error applying the coupon: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.APPLY_COUPON, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 

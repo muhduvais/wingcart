@@ -1,5 +1,7 @@
 const User = require("../model/usersModel");
 const Category = require("../model/categoriesModel");
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
 
 const ITEMS_PER_PAGE = 5;
 
@@ -20,7 +22,8 @@ const toCategoryMgmt = async (req, res) => {
       .skip(skip)
       .limit(ITEMS_PER_PAGE);
 
-    const totalCategories = await User.countDocuments(query);
+    // count categories (fixed to use Category)
+    const totalCategories = await Category.countDocuments(query);
 
     const totalPages = Math.ceil(totalCategories / ITEMS_PER_PAGE);
 
@@ -33,8 +36,8 @@ const toCategoryMgmt = async (req, res) => {
       search: search,
     });
   } catch (err) {
-    console.error("Error fetching categories:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_CATEGORIES, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -56,13 +59,13 @@ const verifyAddCategory = async (req, res) => {
       });
       await category.save();
       console.log("Category saved");
-      res.status(200).json({ success: true });
+      res.status(STATUS.OK).json({ success: true, message: MESSAGES.CATEGORY.ADD_SUCCESS });
     } else {
-      res.status(200).json({ message: "Category already exists!" });
+      res.status(STATUS.OK).json({ message: MESSAGES.CATEGORY.ALREADY_EXISTS });
     }
   } catch (err) {
-    console.error("Error adding category", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.ADD_CATEGORY, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -75,17 +78,17 @@ const categoryListToggle = async (req, res) => {
         { _id: categoryId },
         { $set: { isListed: false } }
       );
-      res.status(200).json({ message: "Category Unlisted" });
+      res.status(STATUS.OK).json({ message: MESSAGES.CATEGORY.UNLISTED });
     } else {
       await Category.updateOne(
         { _id: categoryId },
         { $set: { isListed: true } }
       );
-      res.status(200).json({ message: "Category Listed" });
+      res.status(STATUS.OK).json({ message: MESSAGES.CATEGORY.LISTED });
     }
   } catch (err) {
-    console.error("Error on toggle list:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.CATEGORY_LIST_TOGGLE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -95,8 +98,8 @@ const toEditCategory = async (req, res) => {
     const category = await Category.findOne({ _id: categoryId });
     res.render("editCategory", { category, categoryId });
   } catch (err) {
-    console.error("Error fetching edit category:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_EDIT_CATEGORY, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -111,7 +114,7 @@ const verifyEditCategory = async (req, res) => {
     });
 
     if (existingCategory) {
-      return res.status(200).json({ message: "Category name already exists!" });
+      return res.status(STATUS.OK).json({ message: MESSAGES.CATEGORY.ALREADY_EXISTS });
     }
 
     await Category.updateOne(
@@ -120,10 +123,10 @@ const verifyEditCategory = async (req, res) => {
     );
 
     console.log("Category updated");
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true, message: MESSAGES.CATEGORY.UPDATE_SUCCESS });
   } catch (err) {
-    console.error("Error editing category!", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.EDIT_CATEGORY, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
