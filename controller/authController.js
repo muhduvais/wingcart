@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../model/sendEmail");
 const sendForgotEmail = require("../model/sendForgotEmail");
 const generateOtp = require("../model/generateOtp");
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
 require("dotenv").config();
 
 const userLogin = (req, res) => {
@@ -23,13 +25,13 @@ const verifyLogin = async (req, res) => {
     console.log("L User: ", user);
 
     if (!user) {
-      res.status(401).json({ message: "*Invalid email or password!" });
+      res.status(STATUS.UNAUTHORIZED).json({ message: MESSAGES.AUTH.INVALID_CREDENTIALS });
       return;
     }
 
     if (user.isBlocked) {
-      res.status(403).json({
-        message: "*Your access is blocked! Please contact the support team.",
+      res.status(STATUS.FORBIDDEN).json({
+        message: MESSAGES.AUTH.ACCESS_BLOCKED,
       });
       return;
     }
@@ -39,14 +41,14 @@ const verifyLogin = async (req, res) => {
     console.log("Compare pass: ", comparePass);
 
     if (!comparePass) {
-      res.status(200).json({ message: "*Invalid email or password!" });
+      res.status(STATUS.OK).json({ message: MESSAGES.AUTH.INVALID_CREDENTIALS });
       return;
     }
     req.session.user = user._id;
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (err) {
-    console.error("Error logging in", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.AUTH_LOGIN_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -65,13 +67,13 @@ const verifySignup = async (req, res) => {
 
     if (existingEmail) {
       res.render("signup", {
-        signupMessage: "Email is already registered!",
+        signupMessage: MESSAGES.AUTH.EMAIL_REGISTERED,
         formData: { fname, lname, age, phone, email },
       });
       return;
     } else if (existingPhone) {
       res.render("signup", {
-        signupMessage: "Phone number is already registered!",
+        signupMessage: MESSAGES.AUTH.PHONE_REGISTERED,
         formData: { fname, lname, age, phone, email },
       });
       return;
@@ -92,12 +94,13 @@ const verifySignup = async (req, res) => {
       otp,
       createdAt,
     };
+
     await sendEmail(email, otp);
 
-    res.redirect("/verifyOtp");
+    res.redirect(`/verifyOtp`);
   } catch (err) {
-    console.error("Error registering user", err);
-    res.status(500).send("Error registering user");
+    console.error(MESSAGES.ERRORS.AUTH_REGISTER_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -106,7 +109,7 @@ const resendOtp = async (req, res) => {
     const { signupData } = req.session;
 
     if (!signupData) {
-      console.log("Session expired or invalid!");
+      console.warn(MESSAGES.COMMON.SESSION_EXPIRED);
       return;
     }
 
@@ -119,7 +122,7 @@ const resendOtp = async (req, res) => {
     console.log("Otp sent successfully!");
     console.log(otp);
   } catch (err) {
-    console.log("Error resending the otp", err);
+    console.error(MESSAGES.ERRORS.AUTH_RESEND_OTP_ERROR, err);
   }
 };
 
@@ -127,7 +130,7 @@ const getVerifyOtp = (req, res) => {
   const signupData = req.session.signupData;
   if (!signupData) {
     res.render("signup", {
-      signupMessage: "Session has expired. Please try again!",
+      signupMessage: MESSAGES.COMMON.SESSION_EXPIRED,
     });
     return;
   }
@@ -142,10 +145,11 @@ const verifyOtp = async (req, res) => {
 
     if (!signupData) {
       res.render("signup", {
-        signupMessage: "Session has expired. Please try again!",
+        signupMessage: MESSAGES.COMMON.SESSION_EXPIRED,
       });
+      return;
     } else if (!otp) {
-      return res.render("signupOtp", { errMsg: "PLease enter the OTP" });
+      return res.render("signupOtp", { errMsg: MESSAGES.AUTH.OTP_REQUIRED });
     }
 
     const { createdAt } = signupData;
@@ -154,7 +158,7 @@ const verifyOtp = async (req, res) => {
     console.log(timeDifference);
 
     if (timeDifference > 120) {
-      return res.render("signupOtp", { errMsg: "OTP expired!" });
+      return res.render("signupOtp", { errMsg: MESSAGES.AUTH.OTP_EXPIRED });
     }
 
     if (signupData.otp === otp) {
@@ -169,17 +173,13 @@ const verifyOtp = async (req, res) => {
 
       await newUser.save();
       req.session.signupData = null;
-      res.redirect("/userLogin?registerMsg=Registered Successfully...");
-      res.json({ success: true });
-      res.redirect("/userLogin?successMsg=Registration successful...");
+      return res.redirect(`/userLogin?successMsg=${encodeURIComponent(MESSAGES.AUTH.REGISTRATION_SUCCESS)}`);
     } else {
-      res.json({ success: false });
-      res.render("signupOtp", { errorMsg: "Invalid OTP!" });
       console.log("OTP does not Match!");
-      res.render("signupOtp", { errMsg: "Invalid OTP" });
+      return res.render("signupOtp", { errMsg: MESSAGES.AUTH.OTP_INVALID });
     }
   } catch (err) {
-    console.log("Error verifying OTP", err);
+    console.error(MESSAGES.ERRORS.AUTH_OTP_ERROR, err);
   }
 };
 
@@ -194,8 +194,8 @@ const toChangePass = async (req, res) => {
     const user = await User.findById(userId);
     res.render("userChangePassword", { user, userId });
   } catch (err) {
-    console.error("Error fetching userChangePassword", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.AUTH_CHANGE_PASS_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -207,7 +207,7 @@ const verifyChangePass = async (req, res) => {
     const comparePass = await bcrypt.compare(password, user.password);
 
     if (!comparePass) {
-      res.status(200).json({ message: "Invalid current password!" });
+      res.status(200).json({ message: MESSAGES.AUTH.INVALID_CURRENT_PASSWORD });
       return;
     }
 
@@ -216,10 +216,10 @@ const verifyChangePass = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (err) {
-    console.error("Error changing the password", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.AUTH_CHANGE_PASS_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -228,8 +228,8 @@ const forgotPass = async (req, res) => {
     const message = req.query.message;
     res.render("forgotPass", { message });
   } catch (err) {
-    console.error("Error fetching forgot passwword: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.AUTH_FORGOT_PASS_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -239,8 +239,8 @@ const verifyForgotPass = async (req, res) => {
     const user = await User.findOne({ email: email });
 
     if (!user) {
+      console.warn(MESSAGES.AUTH.EMAIL_NOT_REGISTERED);
       res.json({ success: false });
-      console.log("Email is not registered!");
       return;
     }
 
@@ -248,8 +248,8 @@ const verifyForgotPass = async (req, res) => {
     console.log("Successfully sent!");
     res.json({ success: true });
   } catch (err) {
-    console.error("Error sending link to the mail: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.AUTH_FORGOT_PASS_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -267,8 +267,8 @@ const resetForgotPass = async (req, res) => {
 
     res.render("resetForgotPass", { email });
   } catch (err) {
-    console.error("Error sending link to the mail: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.AUTH_RESET_PASS_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -277,12 +277,9 @@ const verifyResetPass = async (req, res) => {
     const { pass, email } = req.body;
     const user = await User.findOne({ email });
 
-    console.log("new pass: ", pass);
-    console.log("user: ", user);
-
     if (!user) {
       res.json({ success: false });
-      console.log("Reset Email is not registered!");
+      console.warn(MESSAGES.AUTH.EMAIL_NOT_REGISTERED);
       return;
     }
 
@@ -294,8 +291,8 @@ const verifyResetPass = async (req, res) => {
     console.log("Password successfully updated!");
     res.json({ success: true });
   } catch (err) {
-    console.error("Error reseting the password: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.AUTH_RESET_PASS_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 

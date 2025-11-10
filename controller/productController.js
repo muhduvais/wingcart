@@ -19,6 +19,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
+
 const ITEMS_PER_PAGE = 5;
 
 const toProductMgmt = async (req, res) => {
@@ -48,8 +51,8 @@ const toProductMgmt = async (req, res) => {
       search: search,
     });
   } catch (err) {
-    console.error("Error fetching products:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_PRODUCTS, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -59,8 +62,8 @@ const toAddProduct = async (req, res) => {
     const brands = await Brand.find({});
     res.render("addProduct", { categories, brands });
   } catch (err) {
-    console.error("Error fetching add product:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_ADD_PRODUCT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -88,7 +91,7 @@ const verifyAddProduct = async (req, res) => {
     const width = 300;
     const height = 300;
 
-    if (req.files.image1) {
+    if (req.files && req.files.image1) {
       const processedImage1 = await processImage(
         req.files.image1[0],
         width,
@@ -96,7 +99,7 @@ const verifyAddProduct = async (req, res) => {
       );
       images.push(processedImage1);
     }
-    if (req.files.image2) {
+    if (req.files && req.files.image2) {
       const processedImage2 = await processImage(
         req.files.image2[0],
         width,
@@ -104,7 +107,7 @@ const verifyAddProduct = async (req, res) => {
       );
       images.push(processedImage2);
     }
-    if (req.files.image3) {
+    if (req.files && req.files.image3) {
       const processedImage3 = await processImage(
         req.files.image3[0],
         width,
@@ -131,14 +134,14 @@ const verifyAddProduct = async (req, res) => {
       });
 
       await newProduct.save();
-      console.log("Product saved");
-      res.status(200).json({ success: true });
+      console.log(MESSAGES.PRODUCT.ADD_SUCCESS);
+      res.status(STATUS.OK).json({ success: true });
     } else {
-      res.status(200).json({ message: "Product name already exists!" });
+      res.status(STATUS.OK).json({ message: MESSAGES.PRODUCT.ALREADY_EXISTS });
     }
   } catch (err) {
-    console.error("Error adding the product", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.ADD_PRODUCT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -152,8 +155,8 @@ const processImage = async (file, width, height) => {
     await sharp(file.path).toFile(outputPath);
     return `cropped-${file.filename}`;
   } catch (err) {
-    console.error("Error processing image:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.PROCESS_IMAGE, err);
+    throw err;
   }
 };
 
@@ -165,8 +168,8 @@ const toEditProduct = async (req, res) => {
     const product = await Product.findOne({ _id: productId });
     res.render("editProduct", { product, categories, brands, productId });
   } catch (err) {
-    console.error("Error fetching edit product:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_EDIT_PRODUCT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -198,7 +201,7 @@ const verifyEditProduct = async (req, res) => {
     const width = 300;
     const height = 300;
 
-    if (req.files.image1) {
+    if (req.files && req.files.image1) {
       const processedImage1 = await processImage(
         req.files.image1[0],
         width,
@@ -211,7 +214,7 @@ const verifyEditProduct = async (req, res) => {
       images.push(existingImage1);
     }
 
-    if (req.files.image2) {
+    if (req.files && req.files.image2) {
       const processedImage2 = await processImage(
         req.files.image2[0],
         width,
@@ -222,7 +225,7 @@ const verifyEditProduct = async (req, res) => {
       images.push(existingImage2);
     }
 
-    if (req.files.image3) {
+    if (req.files && req.files.image3) {
       const processedImage3 = await processImage(
         req.files.image3[0],
         width,
@@ -253,8 +256,8 @@ const verifyEditProduct = async (req, res) => {
         }
       );
 
-      console.log("Product updated");
-      res.status(200).json({ success: true });
+      console.log(MESSAGES.PRODUCT.UPDATE_SUCCESS);
+      res.status(STATUS.OK).json({ success: true });
 
       //////
       const carts = await Cart.find({
@@ -280,11 +283,11 @@ const verifyEditProduct = async (req, res) => {
       }
       //////
     } else {
-      res.status(200).json({ message: "Product name already exists!" });
+      res.status(STATUS.OK).json({ message: MESSAGES.PRODUCT.ALREADY_EXISTS });
     }
   } catch (err) {
-    console.error("Error editing the product", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.EDIT_PRODUCT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -297,14 +300,14 @@ const productListToggle = async (req, res) => {
         { _id: productId },
         { $set: { isListed: false } }
       );
-      res.status(200).json({ message: "Product Unlisted" });
+      res.status(STATUS.OK).json({ message: MESSAGES.PRODUCT.UNLISTED });
     } else {
       await Product.updateOne({ _id: productId }, { $set: { isListed: true } });
-      res.status(200).json({ message: "Product Listed" });
+      res.status(STATUS.OK).json({ message: MESSAGES.PRODUCT.LISTED });
     }
   } catch (err) {
-    console.error("Error on product list toggle:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.PRODUCT_LIST_TOGGLE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 

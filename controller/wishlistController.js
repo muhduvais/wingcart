@@ -4,12 +4,14 @@ const Cart = require("../model/cartModel");
 const Wishlist = require("../model/wishlistModel");
 require("dotenv").config();
 
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
+
 const toWishlist = async (req, res) => {
   try {
     const userId = req.session.user;
     const user = await User.findById(userId);
 
-    // Retrieve the user's wishlist and populate products
     let wishlist = await Wishlist.findOne({ user: userId }).populate(
       "products.product"
     );
@@ -30,15 +32,16 @@ const toWishlist = async (req, res) => {
       ? cart.products.map((item) => item.product._id.toString())
       : [];
 
-    wishlist.products = wishlist.products.filter(
-      (item) => !cartProductIds.includes(item.product._id.toString())
-    );
+    if (wishlist) {
+      wishlist.products = wishlist.products.filter(
+        (item) => !cartProductIds.includes(item.product._id.toString())
+      );
+      await wishlist.save();
+    }
 
-    await wishlist.save();
-
-    const wishlistProductIds = wishlist.products.map(
-      (item) => item.product._id
-    );
+    const wishlistProductIds = wishlist
+      ? wishlist.products.map((item) => item.product._id)
+      : [];
 
     const products = await Product.find({
       _id: { $in: wishlistProductIds },
@@ -61,8 +64,8 @@ const toWishlist = async (req, res) => {
       products,
     });
   } catch (err) {
-    console.error("Error fetching wishlist", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_WISHLIST, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -77,10 +80,10 @@ const addToWishlist = async (req, res) => {
         (item) => item.product.toString() === productId
       );
       if (isInCart) {
-        return res.json({
+        return res.status(STATUS.OK).json({
           success: false,
           inCart: true,
-          message: "Product is already in the cart!",
+          message: MESSAGES.WISHLIST.PRODUCT_IN_CART,
         });
       }
     }
@@ -97,22 +100,20 @@ const addToWishlist = async (req, res) => {
       (item) => item.product.toString() === productId
     );
     if (existingProduct) {
-      return res.json({
+      return res.status(STATUS.OK).json({
         success: false,
         existing: true,
-        message: "Product already added!",
+        message: MESSAGES.WISHLIST.ALREADY_ADDED,
       });
     }
 
     wishlist.products.push({ product: productId });
     await wishlist.save();
 
-    res
-      .status(200)
-      .json({ success: true, message: "Product added to wishlist!" });
+    res.status(STATUS.OK).json({ success: true, message: MESSAGES.WISHLIST.ADDED });
   } catch (err) {
-    console.error("Error adding to wishlist: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.ADD_WISHLIST, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -125,8 +126,8 @@ const removeFromWishlist = async (req, res) => {
 
     if (!wishlist) {
       return res
-        .status(404)
-        .json({ success: false, message: "Wishlist not found" });
+        .status(STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.WISHLIST.NOT_FOUND });
     }
 
     wishlist.products = wishlist.products.filter(
@@ -135,10 +136,10 @@ const removeFromWishlist = async (req, res) => {
 
     await wishlist.save();
 
-    res.json({ success: true, message: "Product removed from wishlist" });
+    res.status(STATUS.OK).json({ success: true, message: MESSAGES.WISHLIST.REMOVED });
   } catch (err) {
-    console.error("Error removing product from wishlist:", err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error(MESSAGES.ERRORS.REMOVE_WISHLIST, err);
+    res.status(STATUS.SERVER_ERROR).json({ success: false, message: MESSAGES.COMMON.SERVER_ERROR });
   }
 };
 

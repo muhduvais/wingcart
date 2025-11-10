@@ -2,6 +2,8 @@ const Category = require("../model/categoriesModel");
 const Product = require("../model/productsModel");
 const Coupon = require("../model/couponsModel");
 const Offer = require("../model/offersModel");
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
 
 const toOffersAndCoupons = async (req, res) => {
   try {
@@ -27,8 +29,8 @@ const toOffersAndCoupons = async (req, res) => {
 
     res.render("offersAndCoupons", { coupons, offers, products, categories });
   } catch (error) {
-    console.error("Error fetching offers and coupons", error);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_OFFERS_COUPONS, error);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -36,8 +38,8 @@ const toCreateCoupon = async (req, res) => {
   try {
     res.render("addCoupon");
   } catch (error) {
-    console.error("Error fetching add coupon", error);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_ADD_COUPON, error);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -55,7 +57,7 @@ const verifyCreateCoupon = async (req, res) => {
     const existingCoupon = await Coupon.findOne({ code: couponCode });
 
     if (existingCoupon) {
-      return res.status(400).json({ success: false, exist: true });
+      return res.status(STATUS.BAD_REQUEST).json({ success: false, exist: true });
     }
 
     const coupon = new Coupon({
@@ -68,10 +70,10 @@ const verifyCreateCoupon = async (req, res) => {
     });
 
     await coupon.save();
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (error) {
-    console.error("Error creating coupon", error);
-    res.status(500).json({ success: false });
+    console.error(MESSAGES.ERRORS.CREATE_COUPON, error);
+    res.status(STATUS.SERVER_ERROR).json({ success: false });
   }
 };
 
@@ -93,7 +95,7 @@ const verifyEditCoupon = async (req, res) => {
     });
 
     if (existingCoupon) {
-      return res.status(400).json({ success: false, exist: true });
+      return res.status(STATUS.BAD_REQUEST).json({ success: false, exist: true });
     }
 
     await Coupon.findByIdAndUpdate(couponId, {
@@ -105,10 +107,10 @@ const verifyEditCoupon = async (req, res) => {
       validity: validity,
     });
 
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (error) {
-    console.error("Error editing coupon", error);
-    res.status(500).json({ success: false });
+    console.error(MESSAGES.ERRORS.EDIT_COUPON, error);
+    res.status(STATUS.SERVER_ERROR).json({ success: false });
   }
 };
 
@@ -116,10 +118,10 @@ const deleteCoupon = async (req, res) => {
   try {
     const couponId = req.params.coupon_id;
     await Coupon.findByIdAndDelete(couponId);
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (error) {
-    console.error("Error deleting coupon", error);
-    res.status(500).json({ success: false });
+    console.error(MESSAGES.ERRORS.DELETE_COUPON, error);
+    res.status(STATUS.SERVER_ERROR).json({ success: false });
   }
 };
 

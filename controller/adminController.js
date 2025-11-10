@@ -2,6 +2,8 @@ const User = require("../model/usersModel");
 const Order = require("../model/ordersModel");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs");
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
 
 const generatePDF = (reportData) => {
   return new Promise((resolve, reject) => {
@@ -271,8 +273,8 @@ const toAdminDash = async (req, res) => {
       topBrands,
     });
   } catch (err) {
-    console.log("Error fetching admin dashboard", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_ADMIN_DASH, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -290,20 +292,20 @@ const verifyLogin = async (req, res) => {
     const admin = await User.findOne({ email });
 
     if (!admin || password !== admin.password) {
-      res.status(200).json({ message: "*Invalid email or password!" });
+      res.status(STATUS.OK).json({ message: MESSAGES.AUTH.INVALID_CREDENTIALS });
     } else {
       req.session.admin = admin;
-      res.status(200).json({ success: true });
+      res.status(STATUS.OK).json({ success: true });
     }
   } catch (err) {
-    console.log(err, "Error logging in!");
-    res.status(500).send("Internal server error!");
+    console.error(MESSAGES.ERRORS.ADMIN_LOGIN_ERROR, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
 const adminLogout = (req, res) => {
   delete req.session.admin;
-  res.render("adminLogin", { logoutMsg: "Logout successfully..." });
+  res.render("adminLogin", { logoutMsg: MESSAGES.AUTH.LOGOUT_SUCCESS });
 };
 
 //////////////////////////////////
@@ -339,8 +341,8 @@ const toUserMgmt = async (req, res) => {
       search: search,
     });
   } catch (err) {
-    console.error("Error fetching users:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.FETCH_USERS, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -352,14 +354,14 @@ const userBlockToggle = async (req, res) => {
     console.log(userId, isBlocked);
     if (isBlocked === true) {
       await User.updateOne({ _id: userId }, { $set: { isBlocked: false } });
-      res.status(200).json({ message: "User unblocked" });
+      res.status(STATUS.OK).json({ message: MESSAGES.ADMIN.USER_UNBLOCKED });
     } else {
       await User.updateOne({ _id: userId }, { $set: { isBlocked: true } });
-      res.status(200).json({ message: "User blocked" });
+      res.status(STATUS.OK).json({ message: MESSAGES.ADMIN.USER_BLOCKED });
     }
   } catch (err) {
-    console.error("Error on block toggle:", err);
-    res.status(500).send("Internal Server Error");
+    console.error(MESSAGES.ERRORS.BLOCK_TOGGLE, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -367,8 +369,8 @@ const toSalesReport = async (req, res) => {
   try {
     res.render("adminSalesReport");
   } catch (err) {
-    console.error("Error fetching sales report: ", err);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_SALES_REPORT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -477,8 +479,6 @@ const generateSalesReport = async (req, res) => {
       })
       .filter((order) => order !== undefined);
 
-    console.log("Report: ", report);
-
     res.json({
       totalOrders,
       totalSales,
@@ -486,114 +486,124 @@ const generateSalesReport = async (req, res) => {
       orders: report,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to generate sales report" });
+    console.error(MESSAGES.ERRORS.GENERATE_SALES_REPORT, error);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
 const downloadSalesReport = async (req, res) => {
   const { format, reportType, startDate, endDate } = req.query;
 
-  const reportData = await generateReportData(reportType, startDate, endDate);
+  try {
+    const reportData = await generateReportData(reportType, startDate, endDate);
 
-  if (format === "pdf") {
-    const pdfBuffer = await generatePDF(reportData);
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=sales_report.pdf"
-    );
-    res.send(pdfBuffer);
-  } else if (format === "excel") {
-    const excelBuffer = await generateExcel(reportData);
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=sales_report.xlsx"
-    );
-    res.send(excelBuffer);
-  } else {
-    res.status(400).send("Invalid format");
+    if (format === "pdf") {
+      const pdfBuffer = await generatePDF(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=sales_report.pdf"
+      );
+      res.send(pdfBuffer);
+    } else if (format === "excel") {
+      const excelBuffer = await generateExcel(reportData);
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=sales_report.xlsx"
+      );
+      res.send(excelBuffer);
+    } else {
+      res.status(STATUS.BAD_REQUEST).send(MESSAGES.COMMON.VALIDATION_ERROR);
+    }
+  } catch (err) {
+    console.error(MESSAGES.ERRORS.DOWNLOAD_SALES_REPORT, err);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
 const generateReportData = async (reportType, startDate, endDate) => {
-  let filter = {};
-  const currentDate = new Date();
+  try {
+    let filter = {};
+    const currentDate = new Date();
 
-  switch (reportType) {
-    case "daily":
-      filter.orderDate = {
-        $gte: new Date(currentDate.setHours(0, 0, 0, 0)),
-        $lte: new Date(currentDate.setHours(23, 59, 59, 999)),
-      };
-      break;
-    case "weekly":
-      const weekStartDate = new Date(
-        currentDate.setDate(currentDate.getDate() - currentDate.getDay())
-      );
-      const weekEndDate = new Date(weekStartDate);
-      weekEndDate.setDate(weekStartDate.getDate() + 6);
-      weekEndDate.setHours(23, 59, 59, 999);
-      filter.orderDate = { $gte: weekStartDate, $lte: weekEndDate };
-      break;
-    case "monthly":
-      const monthStartDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      );
-      const monthEndDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
-      );
-      monthEndDate.setHours(23, 59, 59, 999);
-      filter.orderDate = { $gte: monthStartDate, $lte: monthEndDate };
-      break;
-    case "custom":
-      if (startDate && endDate) {
+    switch (reportType) {
+      case "daily":
         filter.orderDate = {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate),
+          $gte: new Date(currentDate.setHours(0, 0, 0, 0)),
+          $lte: new Date(currentDate.setHours(23, 59, 59, 999)),
         };
-      }
-      break;
-  }
+        break;
+      case "weekly":
+        const weekStartDate = new Date(
+          currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+        );
+        const weekEndDate = new Date(weekStartDate);
+        weekEndDate.setDate(weekStartDate.getDate() + 6);
+        weekEndDate.setHours(23, 59, 59, 999);
+        filter.orderDate = { $gte: weekStartDate, $lte: weekEndDate };
+        break;
+      case "monthly":
+        const monthStartDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
+        const monthEndDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        );
+        monthEndDate.setHours(23, 59, 59, 999);
+        filter.orderDate = { $gte: monthStartDate, $lte: monthEndDate };
+        break;
+      case "custom":
+        if (startDate && endDate) {
+          filter.orderDate = {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          };
+        }
+        break;
+    }
 
-  const orders = await Order.find(filter).populate("products.product");
+    const orders = await Order.find(filter).populate("products.product");
 
-  const report = orders.map((order) => {
-    const discountAmount = order.coupon
-      ? (order.totalAmount * order.coupon.discount) / 100
-      : 0;
+    const report = orders.map((order) => {
+      const discountAmount = order.coupon
+        ? (order.totalAmount * order.coupon.discount) / 100
+        : 0;
+      return {
+        orderId: order.orderId,
+        orderDate: order.orderDate,
+        totalAmount: order.totalAmount,
+        discountAmount: isNaN(discountAmount) ? 0 : discountAmount,
+        products: order.products.map((item) => ({
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
+    });
+
+    const totalDiscounts = report.reduce(
+      (acc, order) => acc + order.discountAmount,
+      0
+    );
+
     return {
-      orderId: order.orderId,
-      orderDate: order.orderDate,
-      totalAmount: order.totalAmount,
-      discountAmount: isNaN(discountAmount) ? 0 : discountAmount,
-      products: order.products.map((item) => ({
-        productName: item.product.name,
-        quantity: item.quantity,
-        price: item.price,
-      })),
+      totalOrders: orders.length,
+      totalSales: orders.reduce((acc, order) => acc + order.totalAmount, 0),
+      totalDiscounts: totalDiscounts,
+      orders: report,
     };
-  });
-
-  const totalDiscounts = report.reduce(
-    (acc, order) => acc + order.discountAmount,
-    0
-  );
-
-  return {
-    totalOrders: orders.length,
-    totalSales: orders.reduce((acc, order) => acc + order.totalAmount, 0),
-    totalDiscounts: totalDiscounts,
-    orders: report,
-  };
+  } catch (err) {
+    console.error(MESSAGES.ERRORS.REPORT_DATA_GENERATION, err);
+    throw err;
+  }
 };
 
 module.exports = {

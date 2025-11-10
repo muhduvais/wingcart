@@ -87,13 +87,16 @@ const storage = multer.diskStorage({
   },
 });
 
+const { STATUS } = require("../enums/statusCodes");
+const { MESSAGES } = require("../constants/messages");
+
 const toCreateOffer = async (req, res) => {
   try {
     const products = await Product.find().select("_id name");
     res.render("createOffer", { products });
   } catch (error) {
-    console.error("Error fetching create offer", error);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_CREATE_OFFER, error);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -102,8 +105,8 @@ const toCreateCategoryOffer = async (req, res) => {
     const categories = await Category.find().select("_id name");
     res.render("createCategoryOffer", { categories });
   } catch (error) {
-    console.error("Error fetching create category offer", error);
-    res.status(500).send("Internal server error");
+    console.error(MESSAGES.ERRORS.FETCH_CREATE_CATEGORY_OFFER, error);
+    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
   }
 };
 
@@ -127,10 +130,10 @@ const verifyProductOffer = async (req, res) => {
       { $addToSet: { offers: offer._id } }
     );
 
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (error) {
-    console.error("Error creating offer", error);
-    res.status(500).json({ success: false });
+    console.error(MESSAGES.ERRORS.CREATE_OFFER, error);
+    res.status(STATUS.SERVER_ERROR).json({ success: false, message: MESSAGES.COMMON.SERVER_ERROR });
   }
 };
 
@@ -154,10 +157,10 @@ const verifyCategoryOffer = async (req, res) => {
       { $addToSet: { offers: offer._id } }
     );
 
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (error) {
-    console.error("Error creating category offer", error);
-    res.status(500).json({ success: false });
+    console.error(MESSAGES.ERRORS.CREATE_CATEGORY_OFFER, error);
+    res.status(STATUS.SERVER_ERROR).json({ success: false, message: MESSAGES.COMMON.SERVER_ERROR });
   }
 };
 
@@ -170,17 +173,19 @@ const toggleOfferStatus = async (req, res) => {
 
     const offer = await Offer.findById(offer_id);
     if (!offer) {
+      console.warn(MESSAGES.ERRORS.TOGGLE_OFFER_NOT_FOUND, offer_id);
       return res
-        .status(404)
-        .json({ success: false, message: "offer not found!" });
+        .status(STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.OFFER.NOT_FOUND });
     }
 
     offer.isActive = isActive;
     await offer.save();
 
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Internal server error!" });
+    console.error(MESSAGES.ERRORS.TOGGLE_OFFER_ERROR, error);
+    res.status(STATUS.SERVER_ERROR).json({ success: false, message: MESSAGES.COMMON.SERVER_ERROR });
   }
 };
 
@@ -271,10 +276,10 @@ const verifyEditOffer = async (req, res) => {
       item: items,
     });
 
-    res.status(200).json({ success: true });
+    res.status(STATUS.OK).json({ success: true });
   } catch (error) {
-    console.error("Error editing offer", error);
-    res.status(500).json({ success: false });
+    console.error(MESSAGES.ERRORS.EDIT_OFFER, error);
+    res.status(STATUS.SERVER_ERROR).json({ success: false, message: MESSAGES.COMMON.SERVER_ERROR });
   }
 };
 
