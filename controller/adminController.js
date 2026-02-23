@@ -386,108 +386,130 @@ const generateSalesReport = async (req, res) => {
   switch (reportType) {
     case "daily":
       filter.orderDate = {
-        $gte: new Date(currentDate.setHours(0, 0, 0, 0)),
-        $lte: new Date(currentDate.setHours(23, 59, 59, 999)),
+        $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        $lte: new Date(new Date().setHours(23, 59, 59, 999)),
       };
       break;
     case "weekly":
       const today = new Date();
-      const firstDayOfWeek = today.getDate() - today.getDay();
-      const lastDayOfWeek = firstDayOfWeek + 6;
-
-      const startOfWeek = new Date(today.setDate(firstDayOfWeek));
-      startOfWeek.setHours(0, 0, 0, 0);
-
-      const endOfWeek = new Date(today.setDate(lastDayOfWeek));
-      endOfWeek.setHours(23, 59, 59, 999);
-
-      filter.orderDate = { $gte: startOfWeek, $lte: endOfWeek };
+      const first = today.getDate() - today.getDay();
+      filter.orderDate = {
+        $gte: new Date(new Date(today.setDate(first)).setHours(0, 0, 0, 0)),
+        $lte: new Date(new Date(today.setDate(first + 6)).setHours(23, 59, 59, 999)),
+      };
       break;
     case "monthly":
-      const startOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      );
-      const endOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
-      );
-      endOfMonth.setHours(23, 59, 59, 999);
-
-      filter.orderDate = { $gte: startOfMonth, $lte: endOfMonth };
+      filter.orderDate = {
+        $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+        $lte: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999),
+      };
       break;
     case "custom":
       if (startDate && endDate) {
         filter.orderDate = {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate),
+          $gte: new Date(new Date(startDate).setHours(0, 0, 0, 0)),
+          $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999)),
         };
       }
       break;
   }
 
   try {
-    const totalOrders = await Order.countDocuments(filter);
-    const orders = await Order.find(filter)
-      .populate("products.product")
-      .sort({ orderDate: -1 })
-      .skip(skip)
-      .limit(limit);
+    const results = await Order.aggregate([
+      { $match: filter },
+      {
+        $facet: {
+          totals: [
+            {
+              $group: {
+                _id: null,
+                totalSales: { $sum: "$totalAmount" },
+                totalDiscounts: {
+                  $sum: {
+                    $cond: [
+                      { $gt: ["$discount", 0] },
+                      "$discount",
+                      {
+                        $let: {
+                          vars: {
+                            rawDiscount: {
+                              $divide: [
+                                { $multiply: ["$totalAmount", { $ifNull: ["$coupon.discount", 0] }] },
+                                100,
+                              ],
+                            },
+                          },
+                          in: {
+                            $cond: [
+                              { $gt: ["$$rawDiscount", { $ifNull: ["$coupon.maxAmount", Infinity] }] },
+                              { $ifNull: ["$coupon.maxAmount", 0] },
+                              "$$rawDiscount",
+                            ],
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          paginatedOrders: [
+            { $sort: { orderDate: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "products",
+                localField: "products.product",
+                foreignField: "_id",
+                as: "productDetails",
+              },
+            },
+          ],
+        },
+      },
+    ]);
 
-    let totalSales = 0;
-    let totalDiscounts = 0;
+    const stats = results[0].totals[0] || { totalSales: 0, totalDiscounts: 0, count: 0 };
+    const rawOrders = results[0].paginatedOrders;
 
-    const report = orders
-      .map((order) => {
-        const filteredProducts = order.products.filter(
-          (item) =>
-            item.status === "delivered" ||
-            item.status === "return requested" ||
-            "return accepted" ||
-            "return rejected"
-        );
+    const report = rawOrders.map((order) => {
+      let calculatedDiscount = order.discount || 0;
 
-        if (filteredProducts.length > 0) {
-          let discountAmount =
-            order.coupon !== null
-              ? (order.totalAmount * order.coupon.discount) / 100
-              : 0;
-          if (discountAmount > order.coupon.maxAmount) {
-            discountAmount = order.coupon.maxAmount;
-          }
-          const orderTotal = filteredProducts.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0
-          );
-
-          totalSales += orderTotal;
-          totalDiscounts += isNaN(discountAmount) ? 0 : discountAmount;
-
-          return {
-            orderId: order.orderId,
-            orderDate: order.orderDate,
-            products: filteredProducts.map((item) => ({
-              productName: item.product.name,
-              quantity: item.quantity,
-              price: item.price,
-            })),
-            discountAmount: isNaN(discountAmount) ? 0 : discountAmount,
-          };
+      if (!calculatedDiscount && order.coupon) {
+        calculatedDiscount = (order.totalAmount * order.coupon.discount) / 100;
+        if (order.coupon.maxAmount && calculatedDiscount > order.coupon.maxAmount) {
+          calculatedDiscount = order.coupon.maxAmount;
         }
-      })
-      .filter((order) => order !== undefined);
+      }
+
+      return {
+        orderId: order.orderId,
+        orderDate: order.orderDate,
+        totalAmount: order.totalAmount,
+        discountAmount: Number(calculatedDiscount.toFixed(2)),
+        products: order.products.map((p, idx) => ({
+          name: order.productDetails[idx]?.name || "Product",
+          quantity: p.quantity,
+          price: p.price,
+          status: p.status,
+        })),
+      };
+    });
 
     res.json({
-      totalOrders,
-      totalSales,
-      totalDiscounts,
+      totalOrders: stats.count,
+      totalSales: Number(stats.totalSales.toFixed(2)),
+      totalDiscounts: Number(stats.totalDiscounts.toFixed(2)),
       orders: report,
+      currentPage: page,
+      totalPages: Math.ceil(stats.count / limit),
     });
   } catch (error) {
-    console.error(MESSAGES.ERRORS.GENERATE_SALES_REPORT, error);
-    res.status(STATUS.SERVER_ERROR).send(MESSAGES.COMMON.SERVER_ERROR);
+    console.error(error);
+    res.status(500).json({ success: false });
   }
 };
 

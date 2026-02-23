@@ -259,91 +259,173 @@
         </div>
 
         <div class="container">
-          <div class="page-inner">
-            <div class="page-header mb-5">
-              <h4 class="page-title">Order Management</h4>
-              <ul class="breadcrumbs">
-                <li class="nav-home">
-                  <a href="/admin/dashboard">
-                    <i class="icon-home"></i>
-                  </a>
-                </li>
-                <li class="separator">
-                  <i class="icon-arrow-right"></i>
-                </li>
-                <li class="nav-item">
-                  <p style="margin-bottom: 0;">Order Management</p>
-                </li>
-              </ul>
-            </div>
+  <div class="page-inner">
+    <div class="page-header mb-4">
+      <h4 class="page-title">Sales Analytics</h4>
+      <ul class="breadcrumbs">
+        <li class="nav-home">
+          <a href="/admin/dashboard"><i class="icon-home"></i></a>
+        </li>
+        <li class="separator"><i class="icon-arrow-right"></i></li>
+        <li class="nav-item"><p class="mb-0">Sales Report</p></li>
+      </ul>
+    </div>
 
-
-            <!-- //////// -->
-            <div class="container mt-5">
-              <h2>Sales Report</h2>
-              <div class="card p-3 mb-3">
-                  <div class="row">
-                      <div class="col-md-3">
-                          <label for="reportType">Report Type</label>
-                          <select id="reportType" class="form-control" onchange="toggleDateFields()">
-                              <option value="daily">Daily</option>
-                              <option value="weekly">Weekly</option>
-                              <option value="monthly">Monthly</option>
-                              <option value="custom">Custom Date Range</option>
-                          </select>
-                      </div>
-                      <div class="col-md-3 date-field" style="display:none;">
-                          <label for="startDate">Start Date</label>
-                          <input type="date" id="startDate" class="form-control">
-                      </div>
-                      <div class="col-md-3 date-field" style="display:none;">
-                          <label for="endDate">End Date</label>
-                          <input type="date" id="endDate" class="form-control">
-                      </div>
-                      <div class="col-md-3 d-flex align-items-end">
-                          <button class="btn btn-primary" onclick="generateReport(1)">Generate Sales Report</button>
-                      </div>
-                  </div>
-              </div>
-              <div class="card p-4 mb-3">
-                  <h5><strong>Overall Sales Report</strong></h5>
-                  <p>Total Orders: <span id="totalOrders"></span></p>
-                  <p>Total Sales Amount: <span id="totalSales"></span></p>
-                  <p>Total Discounts: <span id="totalDiscounts"></span></p>
-              </div>
-              <div class="card p-4">
-                  <h5><strong>Sales Report Details</strong></h5>
-                  <table class="table table-striped">
-                      <thead>
-                          <tr>
-                              <th>Order ID</th>
-                              <th>Date</th>
-                              <th>Product</th>
-                              <th>Quantity</th>
-                              <th>Price</th>
-                              <th>Total</th>
-                              <th>Discount</th>
-                          </tr>
-                      </thead>
-                      <tbody id="reportDetails"></tbody>
-                  </table>
-                  <!-- Pagination Controls -->
-                  <div id="paginationControls" class="d-flex justify-content-center mt-3">
-                      <button class="btn btn-secondary" id="prevPage" onclick="changePage(-1)" disabled>Previous</button>
-                      <span class="mx-2" id="pageInfo"></span>
-                      <button class="btn btn-secondary" id="nextPage" onclick="changePage(1)">Next</button>
-                  </div>
-              </div>
-              <div class="mt-3">
-                  <button class="btn btn-secondary" onclick="downloadReport('pdf')">Download PDF</button>
-                  <button class="btn btn-secondary" onclick="downloadReport('excel')">Download Excel</button>
-              </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Filter Report</div>
           </div>
-              <!-- //////////// -->
-
-
+          <div class="card-body">
+            <div class="row align-items-end">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label for="reportType">Report Type</label>
+                  <select id="reportType" class="form-select" onchange="toggleDateFields()">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="custom">Custom Date Range</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3 date-field" style="display:none;">
+                <div class="form-group">
+                  <label for="startDate">Start Date</label>
+                  <input type="date" id="startDate" class="form-control">
+                </div>
+              </div>
+              <div class="col-md-3 date-field" style="display:none;">
+                <div class="form-group">
+                  <label for="endDate">End Date</label>
+                  <input type="date" id="endDate" class="form-control">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <button class="btn btn-primary w-100" onclick="generateReport(1)">
+                    <i class="fas fa-sync-alt"></i> Generate Report
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-sm-6 col-md-4">
+        <div class="card card-stats card-round">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-icon">
+                <div class="icon-big text-center icon-primary bubble-shadow-small">
+                  <i class="fas fa-shopping-bag"></i>
+                </div>
+              </div>
+              <div class="col col-stats ms-3 ms-sm-0">
+                <div class="numbers">
+                  <p class="card-category">Total Orders</p>
+                  <h4 class="card-title" id="totalOrders">0</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-md-4">
+        <div class="card card-stats card-round">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-icon">
+                <div class="icon-big text-center icon-success bubble-shadow-small">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+              </div>
+              <div class="col col-stats ms-3 ms-sm-0">
+                <div class="numbers">
+                  <p class="card-category">Total Revenue</p>
+                  <h4 class="card-title" id="totalSales">₹0.00</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-md-4">
+        <div class="card card-stats card-round">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-icon">
+                <div class="icon-big text-center icon-secondary bubble-shadow-small">
+                  <i class="fas fa-percentage"></i>
+                </div>
+              </div>
+              <div class="col col-stats ms-3 ms-sm-0">
+                <div class="numbers">
+                  <p class="card-category">Total Discounts</p>
+                  <h4 class="card-title" id="totalDiscounts">₹0.00</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-title">Sales Details</div>
+            <div>
+              <button class="btn btn-outline-danger btn-sm" onclick="downloadReport('pdf')">
+                <i class="fas fa-file-pdf"></i> PDF
+              </button>
+              <button class="btn btn-outline-success btn-sm" onclick="downloadReport('excel')">
+                <i class="fas fa-file-excel"></i> Excel
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Product Details</th>
+                    <th class="text-end">Discount</th>
+                    <th class="text-end">Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="reportDetails">
+                  </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div id="paginationControls" class="d-flex justify-content-between align-items-center">
+              <span class="text-muted" id="pageInfo">Page 1 of 1</span>
+              <nav>
+                <ul class="pagination mb-0">
+                  <li class="page-item">
+                    <button class="btn btn-sm btn-link" id="prevPage" onclick="changePage(-1)" disabled>Previous</button>
+                  </li>
+                  <li class="page-item">
+                    <button class="btn btn-sm btn-link" id="nextPage" onclick="changePage(1)">Next</button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
         <footer class="footer">
           <div class="container-fluid d-flex justify-content-between">
@@ -394,53 +476,54 @@
   }
 
   async function generateReport(page = 1) {
-      const reportType = document.getElementById('reportType').value;
-      const startDate = document.getElementById('startDate').value;
-      const endDate = document.getElementById('endDate').value;
+    const reportType = document.getElementById('reportType').value;
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
 
-      const response = await fetch(`/admin/generateSalesReport?page=${page}&limit=${itemsPerPage}`, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ reportType, startDate, endDate })
-      });
+    const response = await fetch(`/admin/generateSalesReport?page=${page}&limit=${itemsPerPage}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportType, startDate, endDate })
+    });
 
-      const report = await response.json();
+    const report = await response.json();
 
-      if (report.isActive === false) {
-        window.location.href = '/admin/login';
-      }
+    // Stats
+    document.getElementById('totalOrders').textContent = report.totalOrders;
+    document.getElementById('totalSales').textContent = `₹${report.totalSales.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    document.getElementById('totalDiscounts').textContent = `₹${report.totalDiscounts.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
-      document.getElementById('totalOrders').textContent = report.totalOrders;
-      document.getElementById('totalSales').textContent = `₹${report.totalSales.toFixed(2)}`;
-      document.getElementById('totalDiscounts').textContent = `₹${report.totalDiscounts.toFixed(2)}`;
+    const reportDetails = document.getElementById('reportDetails');
+    reportDetails.innerHTML = '';
 
-      const reportDetails = document.getElementById('reportDetails');
-      reportDetails.innerHTML = '';
-      report.orders.forEach(order => {
-          order.products.forEach(product => {
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                  <td>${order.orderId}</td>
-                  <td>${new Date(order.orderDate).toLocaleDateString()}</td>
-                  <td>${product.productName}</td>
-                  <td>${product.quantity}</td>
-                  <td>₹${product.price.toFixed(2)}</td>
-                  <td>₹${(product.price * product.quantity).toFixed(2)}</td>
-                  <td>₹${order.discountAmount.toFixed(2)}</td>
-              `;
-              reportDetails.appendChild(row);
-          });
-      });
+    if (report.orders.length === 0) {
+        reportDetails.innerHTML = '<tr><td colspan="5" class="text-center p-5">No records found for this period.</td></tr>';
+    }
 
-      // Update pagination controls
-      currentPage = page;
-      totalPages = Math.ceil(report.totalOrders / itemsPerPage);
-      document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
-      document.getElementById('prevPage').disabled = currentPage === 1;
-      document.getElementById('nextPage').disabled = currentPage === totalPages;
-  }
+    report.orders.forEach(order => {
+        const row = document.createElement('tr');
+        // Create a list of products within the order cell
+        const productInfo = order.products.map(p => 
+            `<small>• ${p.name} (x${p.quantity})</small>`
+        ).join('<br>');
+
+        row.innerHTML = `
+            <td><span class="fw-bold">${order.orderId}</span></td>
+            <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+            <td>${productInfo}</td>
+            <td class="text-end text-danger">- ₹${order.discountAmount.toFixed(2)}</td>
+            <td class="text-end fw-bold">₹${order.totalAmount.toFixed(2)}</td>
+        `;
+        reportDetails.appendChild(row);
+    });
+
+    // Pagination
+    currentPage = page;
+    totalPages = report.totalPages;
+    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage === totalPages;
+}
 
   function changePage(direction) {
       const newPage = currentPage + direction;
